@@ -1,0 +1,338 @@
+// SaaS E-Commerce & ERP multi-tenant — Perú
+// Aislamiento por columna: cada fila de datos de negocio lleva tenant_id. Es más barato de operar
+// que un esquema o base por tenant, pero exige disciplina real: TODO repositorio/query que toque
+// una tabla tenant-scoped debe filtrar por tenantId, siempre. Un solo query sin ese filtro es un
+// negocio viendo los datos de otro — esta es la responsabilidad más importante de la capa de
+// datos en todo el proyecto.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Plataforma (SaaS) ─────────────────────────────────────────────────────────────────────────
+
+enum PlanTier {
+  FREE
+  STARTER
+  PRO
+}
+
+// Operadores del SaaS mismo (no pertenecen a ningún negocio cliente) — deliberadamente un modelo
+// separado de User, no un rol más dentro de él. Mezclarlos habría requerido tenantId nullable en
+// User, y un NULL no protege unicidad de email entre superadmins (Postgres permite NULLs
+// duplicados en una unique constraint) — separarlos evita ese hueco de raíz.
+model PlatformAdmin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("platform_admins")
+}
+
+model Tenant {
+  id                String   @id @default(uuid())
+  slug              String   @unique // subdominio: {slug}.tusaas.pe — ver middleware.ts
+  customDomain      String?  @unique @map("custom_domain")
+  businessName      String   @map("business_name")
+  ruc               String?
+  fiscalAddress     String?  @map("fiscal_address")
+  logoUrl           String?  @map("logo_url")
+  primaryColor      String?  @map("primary_color")
+  planTier          PlanTier @default(FREE)
+  planProductLimit  Int?     @map("plan_product_limit")
+  planInvoiceLimit  Int?     @map("plan_invoice_limit")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  users          User[]
+  categories     Category[]
+  products       Product[]
+  orders         Order[]
+  invoices       Invoice[]
+  invoiceCounters InvoiceCounter[]
+  stockMovements StockMovement[]
+
+  @@map("tenants")
+}
+
+// ── Usuarios de un negocio (tenant-scoped) ───────────────────────────────────────────────────
+
+enum UserRole {
+  OWNER    // dueño del negocio — acceso total a su tenant
+  SELLER   // vendedor/staff — POS, inventario, sin config/facturación fiscal
+  CUSTOMER // cliente final de la tienda pública de ese tenant
+}
+
+model User {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email        String
+  passwordHash String   @map("password_hash")
+  name         String
+  role         UserRole @default(CUSTOMER)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  orders         Order[]
+  stockMovements StockMovement[]
+
+  // El mismo email puede repetirse entre negocios distintos (son clientes/usuarios
+  // independientes), pero no dos veces dentro del mismo tenant.
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("users")
+}
+
+// ── Catálogo e inventario ────────────────────────────────────────────────────────────────────
+
+model Category {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name     String
+  slug     String
+
+  products Product[]
+
+  @@unique([tenantId, slug]) // único por negocio, no globalmente
+  @@index([tenantId])
+  @@map("categories")
+}
+
+model Product {
+  id          String    @id @default(uuid())
+  tenantId    String    @map("tenant_id")
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoryId  String?   @map("category_id")
+  category    Category? @relation(fields: [categoryId], references: [id])
+  name        String
+  slug        String
+  description String?
+  brand       String?
+  isFeatured  Boolean   @default(false) @map("is_featured")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  variants ProductVariant[]
+  images   ProductImage[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+  @@index([tenantId, isFeatured])
+  @@map("products")
+}
+
+// attributes es un bag libre (switch, color, talla...) — mismo patrón usado en Flashkings para no
+// requerir una migración cada vez que un negocio vende algo con una dimensión de variante nueva.
+model ProductVariant {
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id") // denormalizado: permite filtrar por tenant sin JOIN a Product
+  productId     String   @map("product_id")
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku           String
+  name          String
+  price         Decimal  @db.Decimal(10, 2)
+  costPrice     Decimal  @map("cost_price") @db.Decimal(10, 2)
+  stock         Int      @default(0)
+  reservedStock Int      @default(0) @map("reserved_stock")
+  attributes    Json     @default("{}")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  stockMovements StockMovement[]
+  orderItems     OrderItem[]
+  invoiceItems   InvoiceItem[]
+
+  @@unique([tenantId, sku]) // el SKU es único DENTRO de un negocio, no entre negocios distintos
+  @@index([tenantId])
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id        String  @id @default(uuid())
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  altText   String? @map("alt_text")
+  isPrimary Boolean @default(false) @map("is_primary")
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+enum StockMovementType {
+  IN         // entrada: compra a proveedor, devolución de cliente
+  OUT        // salida: venta, merma, robo
+  ADJUSTMENT // ajuste manual tras conteo físico
+}
+
+// Kardex: registro inmutable de cada movimiento — nunca se edita ni se borra una fila existente,
+// una corrección se hace con un movimiento ADJUSTMENT nuevo. stock en ProductVariant es la
+// posición actual (denormalizada para lectura rápida); StockMovement es el historial auditable
+// que explica cómo se llegó ahí.
+model StockMovement {
+  id          String            @id @default(uuid())
+  tenantId    String            @map("tenant_id")
+  tenant      Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  variantId   String            @map("variant_id")
+  variant     ProductVariant    @relation(fields: [variantId], references: [id])
+  type        StockMovementType
+  quantity    Int               // siempre positivo; `type` da la dirección
+  reason      String?           // "Compra proveedor X", "Merma", "Conteo físico mensual"
+  referenceId String?           @map("reference_id") // opcional: id de la Order/Invoice que originó este movimiento
+  createdById String            @map("created_by_id")
+  createdBy   User              @relation(fields: [createdById], references: [id])
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@index([variantId])
+  @@map("stock_movements")
+}
+
+// ── Ventas ────────────────────────────────────────────────────────────────────────────────────
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  IN_PREPARATION
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum OrderChannel {
+  ONLINE // tienda pública del tenant
+  POS    // venta presencial registrada por un SELLER/OWNER
+}
+
+model Order {
+  id              String       @id @default(uuid())
+  tenantId        String       @map("tenant_id")
+  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId          String?      @map("user_id") // null = cliente invitado (solo canal ONLINE)
+  user            User?        @relation(fields: [userId], references: [id])
+  channel         OrderChannel @default(ONLINE)
+  status          OrderStatus  @default(PENDING_PAYMENT)
+  totalAmount     Decimal      @map("total_amount") @db.Decimal(10, 2)
+  customerName    String       @map("customer_name")
+  customerEmail   String?      @map("customer_email")
+  customerPhone   String?      @map("customer_phone")
+  shippingAddress String?      @map("shipping_address") // no aplica a ventas POS presenciales
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  items   OrderItem[]
+  invoice Invoice?
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String         @id @default(uuid())
+  orderId   String         @map("order_id")
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId String         @map("variant_id")
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Int
+  price     Decimal        @db.Decimal(10, 2) // precio unitario congelado al momento de la venta
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+// ── Facturación electrónica (SUNAT) ─────────────────────────────────────────────────────────
+
+enum InvoiceType {
+  BOLETA
+  FACTURA
+  NOTA_CREDITO
+  NOTA_DEBITO
+}
+
+enum InvoiceStatus {
+  DRAFT  // creada localmente, aún no enviada al PSE/OSE
+  ISSUED
+  FAILED
+  VOID
+}
+
+// Serie/correlativo por (tenant, tipo de comprobante) — cada negocio numera sus propios
+// comprobantes de forma independiente, empezando cada tipo (boleta/factura/notas) en su propia
+// secuencia. Mismo patrón de Flashkings (upsert+increment atómico), aquí con clave compuesta.
+model InvoiceCounter {
+  tenantId   String      @map("tenant_id")
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  type       InvoiceType
+  lastNumber Int         @default(0) @map("last_number")
+
+  @@id([tenantId, type])
+  @@map("invoice_counters")
+}
+
+model Invoice {
+  id       String        @id @default(uuid())
+  tenantId String        @map("tenant_id")
+  tenant   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderId  String?       @unique @map("order_id") // nullable: una venta POS puede facturarse sin un Order online
+  order    Order?        @relation(fields: [orderId], references: [id])
+  type     InvoiceType
+  status   InvoiceStatus @default(DRAFT)
+  series   String        // B001, F001... — ver InvoiceCounter
+  number   Int
+
+  documentType   String  @map("document_type") // DNI, RUC, CE, PASAPORTE
+  documentNumber String  @map("document_number")
+  businessName   String? @map("business_name") // razón social del comprador — solo FACTURA
+
+  // Desglose fiscal — SUNAT exige reportar cada tipo de operación por separado, no solo el total.
+  taxedAmount      Decimal @default(0) @map("taxed_amount") @db.Decimal(10, 2) // gravadas (afectas a IGV)
+  exemptAmount     Decimal @default(0) @map("exempt_amount") @db.Decimal(10, 2) // exoneradas
+  unaffectedAmount Decimal @default(0) @map("unaffected_amount") @db.Decimal(10, 2) // inafectas
+  igvAmount        Decimal @default(0) @map("igv_amount") @db.Decimal(10, 2) // IGV 18% sobre taxedAmount
+  totalAmount      Decimal @map("total_amount") @db.Decimal(10, 2)
+
+  // Para notas de crédito/débito: qué comprobante corrigen.
+  relatedInvoiceId String?   @map("related_invoice_id")
+  relatedInvoice   Invoice?  @relation("InvoiceCorrections", fields: [relatedInvoiceId], references: [id])
+  corrections      Invoice[] @relation("InvoiceCorrections")
+
+  pdfUrl           String?  @map("pdf_url")
+  xmlUrl           String?  @map("xml_url")
+  cdrUrl           String?  @map("cdr_url") // Constancia de Recepción SUNAT
+  providerResponse Json?    @map("provider_response") // respuesta cruda del PSE/OSE, para auditoría
+  issuedAt         DateTime? @map("issued_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  items InvoiceItem[]
+
+  @@index([tenantId])
+  @@index([tenantId, type])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String          @id @default(uuid())
+  invoiceId   String          @map("invoice_id")
+  invoice     Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  variantId   String?         @map("variant_id")
+  variant     ProductVariant? @relation(fields: [variantId], references: [id])
+  description String          // nombre del producto al momento de facturar — no depende de que el producto siga existiendo
+  quantity    Int
+  unitPrice   Decimal         @map("unit_price") @db.Decimal(10, 2)
+  igvAmount   Decimal         @default(0) @map("igv_amount") @db.Decimal(10, 2)
+  totalAmount Decimal         @map("total_amount") @db.Decimal(10, 2)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
