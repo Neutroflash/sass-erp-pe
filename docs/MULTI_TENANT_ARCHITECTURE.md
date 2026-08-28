@@ -32,57 +32,73 @@ La primera versión de este árbol usaba `(tenant)` como *route group* — no ap
 
 Nota aparte, ya corregida una vez en este proyecto: un prefijo con guion bajo (`_sites`) es una **carpeta privada** para Next.js (mismo mecanismo que `_components`) — queda excluida del árbol de rutas por convención. De ahí el nombre final `sites/`, sin guion bajo.
 
+## Las rutas de API también viven bajo `sites/[tenant]/` — no en `app/api/` a secas
+
+Segunda corrección real, más sutil que la anterior: el `matcher` de `middleware.ts` es `/((?!_next/static|_next/image|favicon.ico).*)` — **todo**, sin excepción para `/api/**`. Eso significa que una request del navegador a `{slug}.tusaas.pe/api/auth/login` pasa por el mismo rewrite que cualquier página: termina en `/sites/{slug}/api/auth/login` server-side. Un Route Handler puesto en `app/api/auth/login/route.ts` (nivel superior) nunca la recibiría — solo respondería a requests hacia el dominio raíz.
+
+Regla que queda de esto: **si una ruta de API es sobre datos de UN negocio (login de su usuario, sus productos, sus órdenes), vive en `app/sites/[tenant]/api/**`.** Solo lo que es genuinamente de la plataforma entera (registrar un negocio nuevo — todavía no existe un tenant al que pertenecer — o un webhook de un proveedor externo que no conoce el concepto de subdominio) vive en `app/api/**` a secas, y lo que es del `PlatformAdmin` vive en `app/admin/api/**` (mismo rewrite, prefijo `/admin`).
+
 ## Árbol de directorios
 
 ```
 saas-erp-pe/
 ├── prisma/
-│   └── schema.prisma              # Tenant, PlatformAdmin, User, Category, Product, ProductVariant,
-│                                   # ProductImage, StockMovement, Order, OrderItem, Invoice,
-│                                   # InvoiceItem, InvoiceCounter — ver el archivo, cada modelo
-│                                   # tiene comentarios explicando las decisiones no obvias.
+│   ├── schema.prisma               # Tenant (con features Json), PlatformAdmin, User, Category,
+│   │                                # Product, ProductVariant, ProductImage, StockMovement, Order,
+│   │                                # OrderItem, Invoice, InvoiceItem, InvoiceCounter
+│   └── seed.ts                     # Cliente Piloto (piloto-01) + su usuario OWNER
 ├── src/
-│   ├── middleware.ts               # resuelve el tenant a partir del hostname
+│   ├── middleware.ts                # resuelve el tenant a partir del hostname
+│   ├── domain/
+│   │   ├── tenant-features.ts        # TenantFeatures, defaults, parseTenantFeatures() defensivo
+│   │   ├── inventory/                # VACÍO — Fase 2
+│   │   ├── orders/                   # VACÍO — Fase 2
+│   │   └── invoicing/                # VACÍO — Fase 3
 │   ├── lib/
-│   │   ├── prisma.ts                # singleton de PrismaClient
-│   │   └── tenant-context.ts        # getCurrentTenant() — lee el header que deja el middleware
-│   ├── domain/                      # lógica de negocio pura, agnóstica de HTTP (mismo espíritu que
-│   │   │                             # la Clean Architecture del backend de Flashkings) — VACÍO
-│   │   │                             # todavía, se puebla en la Fase 2+ del roadmap.
-│   │   ├── inventory/
-│   │   ├── orders/
-│   │   └── invoicing/
+│   │   ├── prisma.ts                 # singleton de PrismaClient
+│   │   ├── tenant-context.ts         # getCurrentTenant() — lee el header que deja el middleware
+│   │   ├── password.ts               # bcrypt hash/verify
+│   │   ├── jwt.ts                    # firma/verifica tokens — dos espacios separados (tenant/platform)
+│   │   ├── session-cookies.ts        # cookies httpOnly host-only (sin `domain`, ver arriba)
+│   │   ├── auth.ts                   # getCurrentTenantUser(), getCurrentPlatformAdmin(), authenticate*()
+│   │   ├── features.ts               # getTenantFeatures(), hasFeature()
+│   │   ├── feature-guards.ts         # requireFeature() (páginas), assertFeatureOrRespond403() (API)
+│   │   └── utils.ts                  # cn(), formatPrice()
 │   ├── components/
-│   │   ├── storefront/              # UI de la tienda pública de un tenant
-│   │   ├── panel/                   # UI del panel de gestión de un tenant (inventario, POS, facturación)
-│   │   └── platform-admin/          # UI del panel del SUPERADMIN
+│   │   ├── storefront/               # VACÍO — UI de la tienda pública, Fase 2
+│   │   ├── panel/
+│   │   │   └── Sidebar.tsx            # nav dinámico según TenantFeatures — implementado
+│   │   └── platform-admin/           # VACÍO — Fase 1 (auth de PlatformAdmin)
 │   └── app/
 │       ├── layout.tsx
-│       ├── globals.css
-│       ├── (marketing)/             # tusaas.pe — route group, no aparece en la URL
-│       │   ├── page.tsx              # landing — implementado
-│       │   ├── precios/page.tsx      # implementado (datos de ejemplo, sin conectar a Tenant.planTier todavía)
-│       │   └── registro/             # onboarding de un negocio nuevo — PENDIENTE (Fase 1)
-│       ├── admin/                   # admin.tusaas.pe — panel del SUPERADMIN
-│       │   └── tenants/page.tsx      # lista de negocios — implementado, sin auth todavía (Fase 1)
-│       ├── sites/[tenant]/          # {slug}.tusaas.pe (o dominio propio, cuando exista la Fase 4)
-│       │   ├── page.tsx              # home de la tienda — implementado (esqueleto)
-│       │   ├── catalogo/             # PENDIENTE (Fase 2)
-│       │   ├── producto/[slug]/      # PENDIENTE (Fase 2)
-│       │   ├── checkout/             # PENDIENTE (Fase 2)
-│       │   └── panel/                # gestión del negocio — todo PENDIENTE
-│       │       ├── inventario/       # Fase 2
-│       │       ├── kardex/           # Fase 2
-│       │       ├── pedidos/          # Fase 2
-│       │       ├── pos/              # Fase 3
-│       │       ├── facturacion/      # Fase 3
-│       │       └── configuracion/    # Fase 1 (logo/colores/RUC) + Fase 3 (métodos de pago)
+│       ├── globals.css                # tema oscuro, mismos tokens que ADMIN_DESIGN_SYSTEM.md de Flashkings
+│       ├── (marketing)/               # tusaas.pe — route group, no aparece en la URL
+│       │   ├── page.tsx                # landing — implementado
+│       │   ├── precios/page.tsx        # implementado (datos de ejemplo)
+│       │   └── registro/               # PENDIENTE: falta el formulario (el endpoint ya existe, ver abajo)
+│       ├── admin/                     # admin.tusaas.pe — panel del SUPERADMIN
+│       │   ├── tenants/page.tsx        # lista de negocios — implementado, sin auth todavía (Fase 1)
+│       │   └── api/auth/               # PENDIENTE: login/logout de PlatformAdmin (el modelo y los
+│       │                                # helpers ya existen, falta el Route Handler y la página)
+│       ├── sites/[tenant]/            # {slug}.tusaas.pe (o dominio propio, cuando exista la Fase 4)
+│       │   ├── page.tsx                # home de la tienda — implementado (esqueleto)
+│       │   ├── ingresar/page.tsx       # login del usuario del tenant — implementado
+│       │   ├── catalogo/               # PENDIENTE (Fase 2)
+│       │   ├── producto/[slug]/        # PENDIENTE (Fase 2)
+│       │   ├── checkout/               # PENDIENTE (Fase 2)
+│       │   ├── api/auth/               # login/logout del usuario del tenant — implementado
+│       │   └── panel/
+│       │       ├── layout.tsx          # guard: sesión + mismo tenant + rol OWNER/SELLER — implementado
+│       │       ├── page.tsx            # dashboard con tarjetas condicionadas a features — implementado
+│       │       ├── facturacion/page.tsx # ejemplo de requireFeature() bloqueando sunatInvoicing — implementado
+│       │       ├── inventario/         # PENDIENTE (Fase 2)
+│       │       ├── kardex/             # PENDIENTE (Fase 2)
+│       │       ├── pedidos/            # PENDIENTE (Fase 2)
+│       │       ├── pos/                # PENDIENTE (Fase 3)
+│       │       └── configuracion/      # PENDIENTE (Fase 1 — logo/colores/RUC/features)
 │       └── api/
-│           ├── auth/                 # PENDIENTE (Fase 1)
-│           ├── products/             # PENDIENTE (Fase 2)
-│           ├── orders/               # PENDIENTE (Fase 2)
-│           ├── invoices/             # PENDIENTE (Fase 3)
-│           └── webhooks/pse/         # callback del proveedor de facturación — PENDIENTE (Fase 3)
+│           ├── tenants/route.ts        # POST — registro de un negocio nuevo (Tenant + OWNER) — implementado
+│           └── webhooks/pse/           # PENDIENTE (Fase 3)
 ├── .env.example
 └── docs/
     ├── MULTI_TENANT_ARCHITECTURE.md  # este archivo
@@ -91,4 +107,6 @@ saas-erp-pe/
 
 ## Estado real a la fecha de este commit
 
-Lo único **verificado con build real** (no solo escrito): la estructura de carpetas completa, el schema de Prisma (`prisma generate` corre limpio), el middleware de resolución de tenant, `lib/prisma.ts` + `lib/tenant-context.ts`, y dos páginas de extremo a extremo (`/admin/tenants` listando tenants reales vía Prisma, `/sites/[tenant]` resolviendo el tenant actual vía el header del middleware) — `bunx tsc --noEmit` y `bun run build` pasan limpios. Todo lo marcado PENDIENTE arriba es exactamente eso: carpetas creadas, sin implementación.
+**Verificado en vivo** (no solo con build): `bunx tsc --noEmit` y `bun run build` limpios (12 rutas), más un flujo completo contra una base Postgres real — `POST /api/tenants` registrando el negocio "negocio-b", login de su `OWNER`, dashboard del Cliente Piloto (sembrado vía `prisma/seed.ts`) mostrando exactamente sus 4 tarjetas activas, `/panel/facturacion` redirigiendo por tener `sunatInvoicing: false`, el link correspondiente ausente del Sidebar, y — el más importante de confirmar en vivo y no solo argumentar — la sesión del `OWNER` de "negocio-b" **no viajó** al pedir el panel de "piloto-01": la cookie es host-only, así que el navegador nunca la adjuntó a esa request, antes incluso de que el guard de código llegara a chequear nada.
+
+Todo lo marcado PENDIENTE arriba es exactamente eso: en el mejor de los casos el backend/helper ya existe (auth de PlatformAdmin, registro de tenant), pero falta la página o el Route Handler que lo expone.

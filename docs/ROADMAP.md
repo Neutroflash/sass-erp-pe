@@ -8,17 +8,18 @@ Orden pensado para nunca quedar con un sistema a medias (cada fase cierra un flu
 - Dos páginas de punta a punta como prueba de que el patrón funciona (`/admin/tenants`, `/sites/[tenant]`) — build y typecheck verificados.
 - **No hecho todavía, y a propósito**: nada de autenticación, nada de UI real, nada de lógica de negocio. Es el esqueleto, no el producto.
 
-## Fase 1 — Plataforma y onboarding
+## Fase 1 — Plataforma, onboarding y feature flags
 
-Objetivo: un negocio puede registrarse solo y llegar a un panel vacío pero suyo, protegido.
+Objetivo: un negocio puede registrarse solo y llegar a un panel vacío pero suyo, protegido — y ese panel muestra solo los módulos que ese negocio tiene contratados.
 
-1. Auth de `PlatformAdmin` (login simple, cookie httpOnly — mismo patrón ya probado en Flashkings: JWT access+refresh, bcrypt).
-2. Auth de `User` dentro de un tenant (un `OWNER` se crea automáticamente al registrar el negocio). Ojo con el diseño ya tomado: el mismo email puede repetirse *entre* tenants distintos (son personas/cuentas independientes) — la unicidad es `(tenantId, email)`, nunca `email` a secas.
-3. `/registro` (en `(marketing)`): formulario que crea `Tenant` + su primer `User` (`OWNER`) en una sola transacción. Validar que el `slug` elegido esté libre *antes* de mostrar éxito, no después.
-4. Guard de acceso en `/admin/**` (rol `PlatformAdmin`) y en `/sites/[tenant]/panel/**` (rol `OWNER`/`SELLER` del *mismo* tenant que la URL — validar ambas cosas, no solo "está logueado").
-5. `/sites/[tenant]/panel/configuracion`: logo, colores, RUC, razón social, dirección fiscal — hoy son columnas de `Tenant` sin ninguna UI que las edite.
+1. ✅ Auth de `User` dentro de un tenant — JWT access+refresh, bcrypt, cookies httpOnly `sameSite: strict` **host-only** (sin `domain` explícito), a propósito: eso es lo que hace que la sesión de un negocio jamás viaje a otro aunque compartan `tusaas.pe`, verificado en vivo (ver más abajo). El mismo email puede repetirse *entre* tenants distintos — la unicidad es `(tenantId, email)`, nunca `email` a secas.
+2. ✅ `POST /api/tenants` (dominio raíz): crea `Tenant` + su primer `User` (`OWNER`) en una transacción, con `features` en el default (`DEFAULT_TENANT_FEATURES`). Verificado en vivo. **Pendiente**: el formulario (`/registro` hoy no tiene UI, solo el endpoint).
+3. ✅ Guard de acceso en `/sites/[tenant]/panel/**` (`panel/layout.tsx`): sesión válida, **del mismo tenant** que la URL, rol `OWNER`/`SELLER` (nunca `CUSTOMER`). Verificado en vivo con dos negocios distintos.
+4. ✅ **Feature flags** (`Tenant.features`, `src/domain/tenant-features.ts`, `src/lib/features.ts`, `src/lib/feature-guards.ts`): `hasFeature()`, guard de página (`requireFeature`, redirige) y de Route Handler (`assertFeatureOrRespond403`, 403 real), `Sidebar` que solo renderiza los módulos activos, dashboard con tarjetas condicionadas. Seed del Cliente Piloto. Todo verificado en vivo — login, dashboard con las 4 tarjetas correctas, `/panel/facturacion` redirigiendo por tener `sunatInvoicing: false`, y el link correspondiente ausente del Sidebar.
+5. ❌ Auth de `PlatformAdmin` — el modelo y `src/lib/auth.ts`/`jwt.ts`/`session-cookies.ts` ya soportan esto (mismo mecanismo, secrets separados), pero no hay ni un solo `PlatformAdmin` sembrado ni una página de login para `admin.tusaas.pe` todavía.
+6. ❌ `/sites/[tenant]/panel/configuracion`: logo, colores, RUC, razón social, dirección fiscal — columnas de `Tenant` sin ninguna UI que las edite. Activar/desactivar `features` por tenant también falta acá (hoy solo se setean por seed o en el registro).
 
-**Punto delicado de esta fase**: el guard de rol debe verificar tenant Y rol juntos. Un `OWNER` del negocio A autenticado que visita `/sites/negocio-b/panel` debe rebotar — no alcanza con "es OWNER de algo".
+**Punto delicado de esta fase, ya resuelto y confirmado en vivo, no solo razonado**: el aislamiento entre tenants no depende únicamente del chequeo `user.tenantId !== tenant.id` en el guard — la cookie de sesión de un negocio, al ser host-only, ni siquiera *llega* al servidor en una request hacia el subdominio de otro negocio. El chequeo de código es la segunda capa, no la única.
 
 ## Fase 2 — Inventario, catálogo y ventas online
 

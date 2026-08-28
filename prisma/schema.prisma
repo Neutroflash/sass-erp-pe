@@ -48,6 +48,14 @@ model Tenant {
   planTier          PlanTier @default(FREE)
   planProductLimit  Int?     @map("plan_product_limit")
   planInvoiceLimit  Int?     @map("plan_invoice_limit")
+  // Matriz de módulos activos para este negocio (inventario, márgenes, validación de
+  // órdenes, POS, facturación SUNAT...). Guardado como JSON en vez de una columna booleana por
+  // módulo a propósito: agregar un módulo nuevo no debe pedir una migración de schema, solo un
+  // nuevo campo en la interfaz TenantFeatures (src/domain/tenant-features.ts) — esa misma
+  // interfaz es la que valida/rellena valores por defecto para tenants creados antes de que ese
+  // campo existiera, así que un @default acá abajo NO es la fuente de verdad de qué pasa si
+  // falta una clave; lo es parseTenantFeatures().
+  features          Json     @default("{}")
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
