@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -88,23 +89,28 @@ export function OrdersTable({ orders }: { orders: AdminOrderRow[] }) {
                 <Badge variant={STATUS_VARIANT[order.status]}>{STATUS_LABEL[order.status]}</Badge>
               </td>
               <td className="p-3">
-                {order.status === "PENDING_PAYMENT" ? (
-                  <div className="flex gap-2">
-                    <Button size="sm" disabled={pendingId === order.id} onClick={() => act(order.id, "confirm-payment")}>
-                      Confirmar pago
+                <div className="flex flex-wrap gap-2">
+                  {order.status === "PENDING_PAYMENT" && (
+                    <>
+                      <Button size="sm" disabled={pendingId === order.id} onClick={() => act(order.id, "confirm-payment")}>
+                        Confirmar pago
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={pendingId === order.id}
+                        onClick={() => act(order.id, "reject-payment")}
+                      >
+                        Rechazar
+                      </Button>
+                    </>
+                  )}
+                  <Link href={`/panel/pedidos/${order.id}`}>
+                    <Button size="sm" variant="ghost">
+                      Ver
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={pendingId === order.id}
-                      onClick={() => act(order.id, "reject-payment")}
-                    >
-                      Rechazar
-                    </Button>
-                  </div>
-                ) : (
-                  <span className="text-xs text-zinc-600">—</span>
-                )}
+                  </Link>
+                </div>
               </td>
             </tr>
           ))}

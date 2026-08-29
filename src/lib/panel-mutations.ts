@@ -80,3 +80,23 @@ export type StockMovementInput =
 export function createStockMovement(data: StockMovementInput) {
   return request("/api/stock-movements", { method: "POST", body: JSON.stringify(data) });
 }
+
+export interface PosSaleInput {
+  customerName?: string;
+  items: { variantId: string; quantity: number }[];
+}
+
+export function createPosSale(data: PosSaleInput) {
+  return request<{ orderId: string; totalAmount: number }>("/api/pos/sale", { method: "POST", body: JSON.stringify(data) });
+}
+
+export interface IssueInvoiceInput {
+  type: "BOLETA" | "FACTURA";
+  documentType: "DNI" | "RUC" | "CE" | "PASAPORTE";
+  documentNumber: string;
+  businessName?: string;
+}
+
+export function issueInvoice(orderId: string, data: IssueInvoiceInput) {
+  return request(`/api/orders/${orderId}/invoice`, { method: "POST", body: JSON.stringify(data) });
+}
