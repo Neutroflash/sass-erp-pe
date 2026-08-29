@@ -33,7 +33,7 @@ Objetivo: un negocio carga productos y un cliente final le compra en línea.
 6. ✅ `/panel/pedidos`: lista de pedidos con botones "Confirmar pago"/"Rechazar" (gateado por el feature `orderValidation`), conectado a `POST /api/orders/:id/confirm-payment` y `/reject-payment` — cierra el loop de la tarjeta "Validaciones pendientes" del dashboard. Verificado en vivo: confirmar decrementa `stock` y pone `PAID`; rechazar libera `reserved_stock` sin tocar `stock` y pone `CANCELLED`.
 7. ✅ Página de confirmación de pedido (`/pedido/[orderId]/confirmacion`), pública vía UUID no adivinable.
 8. ❌ **No incluido, a propósito** (fuera del alcance pedido): pasarela de pago real (Culqi u otra) — el checkout actual asume cobro fuera de la plataforma (Yape/Plin/efectivo) confirmado a mano por el staff, suficiente para el Cliente Piloto. Si un cliente futuro necesita cobro en línea automático, es un módulo nuevo detrás de un puerto tipo `IPaymentGateway`, no un cambio a lo ya construido.
-9. ❌ Test de concurrencia *cross-tenant* explícito (mismo SKU en dos tenants, agotar stock de uno y confirmar que el otro no se ve afectado) — no corrido; el índice `(tenantId, sku)` y el `tenant_id` en el `WHERE` del lock lo garantizan por diseño, pero queda como verificación pendiente de menor prioridad.
+9. ✅ Test de concurrencia *cross-tenant* (mismo SKU `CROSS-01` creado en piloto-01 y negocio-b, stock=1 en cada uno): agotar el de piloto-01 (`reserved_stock` 0→1) dejó `negocio-b` completamente intacto (`stock=1, reserved_stock=0`), que pudo vender su propia unidad sin ningún bloqueo — confirma que el `tenant_id` en el `WHERE` del lock aísla incluso con SKUs idénticos entre negocios.
 
 ## Fase 3 — POS y Facturación Electrónica SUNAT ✅ (parcial, verificado en vivo)
 
