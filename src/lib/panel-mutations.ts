@@ -100,3 +100,22 @@ export interface IssueInvoiceInput {
 export function issueInvoice(orderId: string, data: IssueInvoiceInput) {
   return request(`/api/orders/${orderId}/invoice`, { method: "POST", body: JSON.stringify(data) });
 }
+
+export interface UpdateTenantSettingsInput {
+  businessName?: string;
+  ruc?: string;
+  fiscalAddress?: string;
+  logoUrl?: string;
+  primaryColor?: string;
+  features?: Partial<{
+    sunatInvoicing: boolean;
+    inventoryManagement: boolean;
+    profitMargins: boolean;
+    orderValidation: boolean;
+    posWeb: boolean;
+  }>;
+}
+
+export function updateTenantSettings(data: UpdateTenantSettingsInput) {
+  return request("/api/settings", { method: "PATCH", body: JSON.stringify(data) });
+}

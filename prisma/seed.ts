@@ -17,6 +17,19 @@ const PILOT_FEATURES: TenantFeatures = {
 async function main() {
   const passwordHash = await bcrypt.hash("Piloto123!", 12);
 
+  // SUPERADMIN de la plataforma (admin.tusaas.pe) — separado de cualquier User de tenant, ver el
+  // comentario en schema.prisma sobre por qué es su propio modelo y no un rol más.
+  const platformAdminPasswordHash = await bcrypt.hash("SuperAdmin123!", 12);
+  await prisma.platformAdmin.upsert({
+    where: { email: "admin@tusaas.pe" },
+    update: {},
+    create: {
+      email: "admin@tusaas.pe",
+      passwordHash: platformAdminPasswordHash,
+      name: "SuperAdmin",
+    },
+  });
+
   const tenant = await prisma.tenant.upsert({
     where: { slug: "piloto-01" },
     update: { features: PILOT_FEATURES as unknown as Prisma.InputJsonValue },
@@ -41,6 +54,7 @@ async function main() {
 
   console.log(`Seed completado — piloto-01.tusaas.pe (dev: localhost:3000 con Host: piloto-01.localhost)`);
   console.log(`Ingresar con owner@piloto.pe / Piloto123!`);
+  console.log(`SuperAdmin: admin@tusaas.pe / SuperAdmin123! (en admin.tusaas.pe/ingresar)`);
 }
 
 main()
