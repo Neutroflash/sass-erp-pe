@@ -33,8 +33,12 @@ export async function POST(req: NextRequest) {
 
   const passwordHash = await PasswordHasher.hash(password);
 
-  // Tenant + su primer usuario (OWNER) en una sola transacción — nunca debería poder existir un
-  // negocio sin al menos un dueño que pueda entrar a gestionarlo.
+  // Tenant + su primer usuario (OWNER) + su PlatformSubscription, en una sola transacción — nunca
+  // debería poder existir un negocio sin al menos un dueño, ni un tenant sin una fila de
+  // suscripción (incluso en FREE, que nunca se cobra — ver billing-cycle.ts) que trackee desde
+  // cuándo es cliente de la plataforma.
+  const now = new Date();
+  const oneMonthFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
   const tenant = await prisma.$transaction(async (tx) => {
     const newTenant = await tx.tenant.create({
       data: {
@@ -51,6 +55,9 @@ export async function POST(req: NextRequest) {
         name: ownerName,
         role: "OWNER",
       },
+    });
+    await tx.platformSubscription.create({
+      data: { tenantId: newTenant.id, currentPeriodStart: now, currentPeriodEnd: oneMonthFromNow },
     });
     return newTenant;
   });

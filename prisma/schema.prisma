@@ -44,7 +44,16 @@ enum SunatEnvironment {
 model Tenant {
   id                String   @id @default(uuid())
   slug              String   @unique // subdominio: {slug}.tusaas.pe — ver middleware.ts
-  customDomain      String?  @unique @map("custom_domain")
+  // Dominio propio (ej. tiendadeljuan.pe) — solo `customDomain` importa para el middleware
+  // (único, y solo se llena tras verificar). Los otros dos son el estado de una verificación EN
+  // CURSO: nunca se resuelve tráfico hacia un dominio reclamado pero no verificado — ver
+  // src/domain/custom-domain.ts. Sin `@unique` en `customDomainPending` a propósito: dos tenants
+  // pueden estar en medio de "reclamar" el mismo dominio sin conflicto hasta que uno lo verifique
+  // de verdad (que sí exige el `@unique` de `customDomain`).
+  customDomain                 String?   @unique @map("custom_domain")
+  customDomainPending          String?   @map("custom_domain_pending")
+  customDomainVerificationToken String?  @map("custom_domain_verification_token")
+  customDomainVerifiedAt       DateTime? @map("custom_domain_verified_at")
   businessName      String   @map("business_name")
   ruc               String?
   fiscalAddress     String?  @map("fiscal_address")
@@ -84,8 +93,65 @@ model Tenant {
   invoices       Invoice[]
   invoiceCounters InvoiceCounter[]
   stockMovements StockMovement[]
+  platformSubscription PlatformSubscription?
 
   @@map("tenants")
+}
+
+// ── Cobro del SaaS a sus propios tenants (no confundir con Order/Invoice, que son las VENTAS de
+// un tenant a SU cliente final) ──────────────────────────────────────────────────────────────
+
+enum PlatformSubscriptionStatus {
+  ACTIVE    // al día
+  PAST_DUE  // el último cobro falló — el tenant sigue operando, es una señal para el SuperAdmin,
+            // no un corte de servicio automático (ver Fase 4 del roadmap: sin enforcement duro)
+  CANCELLED
+}
+
+enum PlatformChargeStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+// Una fila por tenant que no está en plan FREE — se crea automáticamente al registrarse
+// (POST /api/tenants), incluso en FREE, para tener un solo lugar que trackea "desde cuándo es
+// cliente" independientemente de si alguna vez lo cobramos.
+model PlatformSubscription {
+  id                 String                     @id @default(uuid())
+  tenantId           String                     @unique @map("tenant_id")
+  tenant             Tenant                     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  status             PlatformSubscriptionStatus @default(ACTIVE)
+  currentPeriodStart DateTime                   @map("current_period_start")
+  currentPeriodEnd   DateTime                   @map("current_period_end")
+  createdAt          DateTime                   @default(now()) @map("created_at")
+  updatedAt          DateTime                   @updatedAt @map("updated_at")
+
+  charges PlatformCharge[]
+
+  @@map("platform_subscriptions")
+}
+
+// Un cobro puntual de un ciclo — `tenantId` denormalizado (además de vía subscription) porque el
+// listado del SuperAdmin filtra por tenant mucho más seguido que por subscription.
+model PlatformCharge {
+  id               String                @id @default(uuid())
+  subscriptionId   String                @map("subscription_id")
+  subscription     PlatformSubscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  tenantId         String                @map("tenant_id")
+  planTier         PlanTier              @map("plan_tier") // congelado al momento del cobro — si el tenant cambia de plan después, este registro no debe mutar retroactivamente
+  amount           Decimal               @db.Decimal(10, 2)
+  periodStart      DateTime              @map("period_start")
+  periodEnd        DateTime              @map("period_end")
+  status           PlatformChargeStatus  @default(PENDING)
+  providerChargeId String?               @map("provider_charge_id")
+  providerResponse Json?                 @map("provider_response")
+  paidAt           DateTime?             @map("paid_at")
+  createdAt        DateTime              @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@index([subscriptionId])
+  @@map("platform_charges")
 }
 
 // ── Usuarios de un negocio (tenant-scoped) ───────────────────────────────────────────────────

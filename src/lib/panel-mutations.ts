@@ -150,3 +150,20 @@ export function saveSunatConfig(data: SunatConfigInput) {
 export function deleteSunatConfig() {
   return request<{ configured: boolean }>("/api/settings/sunat", { method: "DELETE" });
 }
+
+export function claimCustomDomain(domain: string) {
+  return request<{ domain: string; txtRecordName: string; txtRecordValue: string }>("/api/settings/custom-domain", {
+    method: "POST",
+    body: JSON.stringify({ domain }),
+  });
+}
+
+// El 409 ("todavía no se encontró el registro TXT") llega como excepción, no como
+// `{verified: false}` — ver request(): cualquier respuesta no-2xx se convierte en throw.
+export function verifyCustomDomain() {
+  return request<{ verified: true; customDomain: string }>("/api/settings/custom-domain/verify", { method: "POST" });
+}
+
+export function removeCustomDomain() {
+  return request<{ ok: boolean }>("/api/settings/custom-domain", { method: "DELETE" });
+}

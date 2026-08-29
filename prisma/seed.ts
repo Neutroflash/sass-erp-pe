@@ -52,6 +52,17 @@ async function main() {
     },
   });
 
+  const now = new Date();
+  await prisma.platformSubscription.upsert({
+    where: { tenantId: tenant.id },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      currentPeriodStart: now,
+      currentPeriodEnd: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+    },
+  });
+
   console.log(`Seed completado — piloto-01.tusaas.pe (dev: localhost:3000 con Host: piloto-01.localhost)`);
   console.log(`Ingresar con owner@piloto.pe / Piloto123!`);
   console.log(`SuperAdmin: admin@tusaas.pe / SuperAdmin123! (en admin.tusaas.pe/ingresar)`);

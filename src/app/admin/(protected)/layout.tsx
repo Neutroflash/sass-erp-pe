@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getCurrentPlatformAdmin } from "@/lib/auth";
 import { LogoutButton } from "@/components/admin/LogoutButton";
 
@@ -20,6 +21,14 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
         </div>
         <LogoutButton />
       </header>
+      <nav className="mb-6 flex gap-4 text-sm">
+        <Link href="/tenants" className="text-zinc-400 hover:text-zinc-100">
+          Negocios
+        </Link>
+        <Link href="/subscriptions" className="text-zinc-400 hover:text-zinc-100">
+          Suscripciones
+        </Link>
+      </nav>
       {children}
     </div>
   );

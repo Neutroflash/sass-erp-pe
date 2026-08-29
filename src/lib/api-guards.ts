@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CurrentTenantUser, getCurrentTenantUser } from "./auth";
+import { CurrentPlatformAdmin, CurrentTenantUser, getCurrentPlatformAdmin, getCurrentTenantUser } from "./auth";
 import { getCurrentTenant } from "./tenant-context";
 
 export interface TenantStaffContext {
@@ -41,4 +41,14 @@ export async function requireTenantOwner(): Promise<TenantStaffContext | NextRes
   }
 
   return { user, tenantId: tenant.id };
+}
+
+/** Para Route Handlers bajo /admin/api/**: exige una sesión de PlatformAdmin válida — nunca la de
+ * un User de tenant, aunque sea OWNER (espacios de auth completamente separados, ver jwt.ts). */
+export async function requirePlatformAdmin(): Promise<CurrentPlatformAdmin | NextResponse> {
+  const admin = await getCurrentPlatformAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+  return admin;
 }

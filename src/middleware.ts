@@ -30,8 +30,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // 4) Dominio propio de un tenant (ej. tiendadeljuan.pe) -> hay que resolver qué tenant es dueño
-  // de ese dominio antes de poder rewritear. Esto SIGUE PENDIENTE de implementación real — ver la
-  // nota grande abajo, es la pieza técnica más delicada de todo el middleware.
+  // de ese dominio antes de poder rewritear — ver resolveCustomDomain() abajo.
   return resolveCustomDomain(req, hostname);
 }
 
@@ -48,27 +47,26 @@ function rewriteToTenant(req: NextRequest, slug: string) {
   return res;
 }
 
-// PENDIENTE DE IMPLEMENTAR — no es un placeholder trivial, es la pieza que más vale la pena
-// diseñar bien antes de escribirla:
+// Resuelve un dominio propio (ej. tiendadeljuan.pe) vía api/resolve-domain — un Route Handler en
+// runtime Node, porque Middleware corre en Edge Runtime y no puede abrir la conexión TCP
+// persistente que Prisma necesita. Ver el comentario grande en ese Route Handler sobre el
+// trade-off de latencia y el camino de upgrade (Edge Config/Upstash) cuando haga falta.
 //
-// Next.js Middleware corre en el Edge Runtime, que NO soporta el cliente estándar de Prisma (este
-// necesita una conexión TCP persistente que el runtime Edge no permite abrir). Osea: NO se puede
-// simplemente hacer `prisma.tenant.findUnique({ where: { customDomain: hostname } })` acá adentro.
-//
-// Opciones reales, en orden de preferencia:
-//   a) Vercel Edge Config — almacén clave-valor pensado exactamente para esto (lecturas de
-//      middleware, latencia de un dígito de milisegundos). Se actualiza (vía su API normal, desde
-//      un Route Handler con Node runtime) cada vez que un tenant configura o cambia su dominio.
-//   b) Upstash Redis vía su cliente REST (@upstash/redis) — si el proyecto ya usa Upstash para
-//      otra cosa, evita sumar un almacén más. Compatible con Edge porque habla HTTP, no TCP.
-//   c) Como último recurso, un Route Handler propio con `export const runtime = "nodejs"` que sí
-//      puede usar Prisma, llamado desde acá vía fetch — agrega latencia (un salto de red extra
-//      por cada request a un dominio propio), usar solo si (a) y (b) no son viables.
-//
-// Mientras esto no esté resuelto, cualquier dominio no reconocido cae al sitio de marketing en
-// vez de a un tenant fantasma — nunca se debe rewritear a un tenant sin confirmar que existe.
-function resolveCustomDomain(req: NextRequest, _hostname: string): NextResponse {
-  return NextResponse.next();
+// Cualquier dominio no reconocido (o que falle el lookup) cae al sitio de marketing en vez de a
+// un tenant fantasma — nunca se rewritea hacia un tenant sin confirmar antes que existe.
+async function resolveCustomDomain(req: NextRequest, hostname: string): Promise<NextResponse> {
+  try {
+    const lookupUrl = new URL("/api/resolve-domain", req.url);
+    lookupUrl.searchParams.set("host", hostname);
+    const res = await fetch(lookupUrl, { headers: { "x-middleware-internal": "1" } });
+    if (!res.ok) return NextResponse.next();
+
+    const { slug } = (await res.json()) as { slug: string };
+    return rewriteToTenant(req, slug);
+  } catch {
+    // Lookup caído/timeout — mismo criterio que "no reconocido": nunca se asume un tenant.
+    return NextResponse.next();
+  }
 }
 
 export const config = {

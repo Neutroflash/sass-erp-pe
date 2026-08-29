@@ -4,9 +4,16 @@ import { getCurrentTenant } from "@/lib/tenant-context";
 import { getCurrentTenantUser } from "@/lib/auth";
 import { parseTenantFeatures } from "@/domain/tenant-features";
 import { resolvePlanLimits, startOfCurrentMonth } from "@/domain/plan-limits";
+import { PLAN_PRICE_PEN } from "@/domain/platform-billing/pricing";
+import { verificationRecordName } from "@/domain/custom-domain";
+import { formatPrice } from "@/lib/utils";
 import { SettingsForm } from "@/components/panel/SettingsForm";
 import { SunatCredentialsForm } from "@/components/panel/SunatCredentialsForm";
+import { CustomDomainForm } from "@/components/panel/CustomDomainForm";
+import { PlanSelector } from "@/components/panel/PlanSelector";
 import { Badge } from "@/components/ui/badge";
+
+const SUBSCRIPTION_STATUS_LABEL: Record<string, string> = { ACTIVE: "Al día", PAST_DUE: "Pago pendiente", CANCELLED: "Cancelada" };
 
 export const dynamic = "force-dynamic";
 
@@ -52,12 +59,16 @@ export default async function ConfiguracionPage() {
       sunatEnvironment: true,
       sunatSolUser: true,
       sunatCertificateEnc: true,
+      customDomain: true,
+      customDomainPending: true,
+      customDomainVerificationToken: true,
     },
   });
 
-  const [productCount, invoicesThisMonth] = await Promise.all([
+  const [productCount, invoicesThisMonth, subscription] = await Promise.all([
     prisma.product.count({ where: { tenantId: tenant.id } }),
     prisma.invoice.count({ where: { tenantId: tenant.id, createdAt: { gte: startOfCurrentMonth() } } }),
+    prisma.platformSubscription.findUnique({ where: { tenantId: tenant.id } }),
   ]);
   const limits = resolvePlanLimits(row);
 
@@ -68,11 +79,28 @@ export default async function ConfiguracionPage() {
       <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-yellow-400/80">Plan y uso</h2>
-          <Badge variant="outline">{row.planTier}</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">{row.planTier}</Badge>
+            {subscription && (
+              <Badge variant={subscription.status === "ACTIVE" ? "success" : subscription.status === "PAST_DUE" ? "destructive" : "outline"}>
+                {SUBSCRIPTION_STATUS_LABEL[subscription.status] ?? subscription.status}
+              </Badge>
+            )}
+          </div>
         </div>
         <div className="flex flex-col gap-4">
           <UsageBar label="Productos en catálogo" used={productCount} limit={limits.productLimit} />
           <UsageBar label="Comprobantes emitidos este mes" used={invoicesThisMonth} limit={limits.invoiceLimit} />
+        </div>
+        {subscription && (
+          <p className="mt-3 text-xs text-zinc-500">
+            {PLAN_PRICE_PEN[row.planTier] === 0
+              ? "Plan gratuito, sin cobro."
+              : `${formatPrice(PLAN_PRICE_PEN[row.planTier])}/mes · próximo cobro el ${new Date(subscription.currentPeriodEnd).toLocaleDateString("es-PE")}`}
+          </p>
+        )}
+        <div className="mt-4 border-t border-zinc-800/60 pt-4">
+          <PlanSelector currentPlan={row.planTier} />
         </div>
       </div>
 
@@ -92,6 +120,15 @@ export default async function ConfiguracionPage() {
           configured: Boolean(row.sunatSolUser && row.sunatCertificateEnc),
           environment: row.sunatEnvironment,
           solUser: row.sunatSolUser,
+        }}
+      />
+
+      <CustomDomainForm
+        initial={{
+          customDomain: row.customDomain,
+          pending: row.customDomainPending,
+          txtRecordName: row.customDomainPending ? verificationRecordName(row.customDomainPending) : null,
+          txtRecordValue: row.customDomainVerificationToken,
         }}
       />
     </div>

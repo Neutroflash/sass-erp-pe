@@ -2,33 +2,30 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { PLAN_LIMITS } from "@/domain/plan-limits";
+import { PLAN_PRICE_PEN } from "@/domain/platform-billing/pricing";
 
-const PLANS = [
-  {
-    tier: "FREE",
-    label: "Gratis",
-    productLimit: 20,
-    invoiceLimit: 15,
-    highlight: false,
-    features: ["Hasta 20 productos", "15 comprobantes al mes", "Inventario y kardex", "Tienda online"],
-  },
-  {
-    tier: "STARTER",
-    label: "Starter",
-    productLimit: 200,
-    invoiceLimit: 200,
-    highlight: true,
-    features: ["Hasta 200 productos", "200 comprobantes al mes", "Todo lo del plan Gratis", "Punto de venta (POS)", "Reportes"],
-  },
-  {
-    tier: "PRO",
-    label: "Pro",
-    productLimit: null,
-    invoiceLimit: null,
-    highlight: false,
-    features: ["Productos ilimitados", "Comprobantes ilimitados", "Todo lo del plan Starter", "Soporte prioritario"],
-  },
-] as const;
+const PLAN_META = {
+  FREE: { label: "Gratis", highlight: false, extraFeatures: ["Inventario y kardex", "Tienda online"] },
+  STARTER: { label: "Starter", highlight: true, extraFeatures: ["Todo lo del plan Gratis", "Punto de venta (POS)", "Reportes"] },
+  PRO: { label: "Pro", highlight: false, extraFeatures: ["Todo lo del plan Starter", "Soporte prioritario"] },
+} as const;
+
+const PLANS = (Object.keys(PLAN_META) as (keyof typeof PLAN_META)[]).map((tier) => {
+  const limits = PLAN_LIMITS[tier];
+  const meta = PLAN_META[tier];
+  return {
+    tier,
+    label: meta.label,
+    highlight: meta.highlight,
+    price: PLAN_PRICE_PEN[tier],
+    features: [
+      limits.productLimit === null ? "Productos ilimitados" : `Hasta ${limits.productLimit} productos`,
+      limits.invoiceLimit === null ? "Comprobantes ilimitados" : `${limits.invoiceLimit} comprobantes al mes`,
+      ...meta.extraFeatures,
+    ],
+  };
+});
 
 export default function PricingPage() {
   return (
@@ -53,6 +50,10 @@ export default function PricingPage() {
               </span>
             )}
             <h2 className="text-lg font-bold text-zinc-100">{plan.label}</h2>
+            <p className="mt-1 text-2xl font-bold text-zinc-100">
+              {plan.price === 0 ? "Gratis" : `S/ ${plan.price}`}
+              {plan.price > 0 && <span className="text-sm font-normal text-zinc-500">/mes</span>}
+            </p>
             <ul className="my-4 flex flex-1 flex-col gap-2">
               {plan.features.map((f) => (
                 <li key={f} className="flex items-start gap-2 text-sm text-zinc-400">
