@@ -5,6 +5,13 @@ export interface ParsedCertificate {
   privateKeyPem: string;
   /** DER en base64, sin cabeceras PEM — es lo que va dentro de <ds:X509Certificate>. */
   certificateDerBase64: string;
+  /** DER crudo — lo que se hashea para <xades:CertDigest> (XAdES-BES). */
+  certificateDer: Buffer;
+  /** Emisor en formato "CN=...,O=...,C=..." — best-effort, ver el comentario en xades.ts sobre
+   * por qué este campo pesa menos que CertDigest en la validación real. */
+  issuerName: string;
+  /** Número de serie en decimal (X509SerialNumber de XAdES lo exige así, no en hex). */
+  serialNumberDecimal: string;
 }
 
 /**
@@ -28,7 +35,21 @@ export function parsePfx(pfxBuffer: Buffer, password: string): ParsedCertificate
 
   const privateKeyPem = forge.pki.privateKeyToPem(keyBag.key);
   const certificatePem = forge.pki.certificateToPem(certBag.cert);
-  const certificateDerBase64 = forge.util.encode64(forge.asn1.toDer(forge.pki.certificateToAsn1(certBag.cert)).getBytes());
+  const derBytes = forge.asn1.toDer(forge.pki.certificateToAsn1(certBag.cert)).getBytes();
+  const certificateDer = Buffer.from(derBytes, "binary");
+  const certificateDerBase64 = forge.util.encode64(derBytes);
 
-  return { certificatePem, privateKeyPem, certificateDerBase64 };
+  // RFC2253-ish, orden inverso al de forge (que lista del más general al más específico) — best
+  // effort: distintos emisores usan atributos distintos y el orden exacto no está 100%
+  // estandarizado entre implementaciones. El campo que SUNAT valida criptográficamente de verdad
+  // es CertDigest (el hash del certificado), no este texto descriptivo.
+  const issuerName = certBag.cert.issuer.attributes
+    .slice()
+    .reverse()
+    .map((attr) => `${attr.shortName ?? attr.name}=${attr.value}`)
+    .join(",");
+
+  const serialNumberDecimal = BigInt(`0x${certBag.cert.serialNumber}`).toString(10);
+
+  return { certificatePem, privateKeyPem, certificateDerBase64, certificateDer, issuerName, serialNumberDecimal };
 }
