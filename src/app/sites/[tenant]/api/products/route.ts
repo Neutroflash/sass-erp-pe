@@ -4,9 +4,10 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { getCurrentTenantUser } from "@/lib/auth";
-import { requireTenantStaff } from "@/lib/api-guards";
+import { requireTenantOwner } from "@/lib/api-guards";
 import { slugify } from "@/lib/slugify";
 import { toPublicProduct } from "@/domain/inventory/product";
+import { resolvePlanLimits } from "@/domain/plan-limits";
 
 const productInclude = { variants: true, images: true } satisfies Prisma.ProductInclude;
 
@@ -19,10 +20,11 @@ const listQuerySchema = z.object({
   search: z.string().optional(),
 });
 
-// Público — la tienda de este tenant lo consume sin sesión. Si quien pregunta SÍ es staff de este
-// mismo tenant (OWNER/SELLER autenticado), devuelve la forma completa (con costPrice); a
-// cualquiera otro consumidor (cliente final, anónimo) se le sanitiza — mismo patrón "sanitizar en
-// la frontera" que Flashkings, ver toPublicProduct().
+// Público — la tienda de este tenant lo consume sin sesión. Solo si quien pregunta es el OWNER de
+// este mismo tenant devuelve la forma completa (con costPrice) — un SELLER, aunque sea staff, no
+// ve costos ni margen (ver Fase 4 del roadmap, "roles más finos"); a cualquier otro consumidor
+// (SELLER, cliente final, anónimo) se le sanitiza — mismo patrón "sanitizar en la frontera" que
+// Flashkings, ver toPublicProduct().
 export async function GET(req: NextRequest) {
   const tenant = await getCurrentTenant();
   const query = listQuerySchema.parse(Object.fromEntries(req.nextUrl.searchParams));
@@ -39,10 +41,10 @@ export async function GET(req: NextRequest) {
   const products = await prisma.product.findMany({ where, include: productInclude, orderBy: { createdAt: "desc" } });
 
   const user = await getCurrentTenantUser();
-  const isStaff = user && user.tenantId === tenant.id && user.role !== "CUSTOMER";
+  const isOwner = user && user.tenantId === tenant.id && user.role === "OWNER";
 
   return NextResponse.json({
-    items: isStaff
+    items: isOwner
       ? products.map((p) => ({ ...p, variants: p.variants.map((v) => ({ ...v, price: Number(v.price), costPrice: Number(v.costPrice) })) }))
       : products.map(toPublicProduct),
   });
@@ -67,7 +69,10 @@ const createProductSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const auth = await requireTenantStaff();
+  // OWNER-only: crear un producto fija su costPrice inicial — una decisión de margen, no una
+  // operación de piso de venta (ver Fase 4 del roadmap, "roles más finos"). Un SELLER sigue
+  // pudiendo editar precio/stock de lo ya creado (ver PATCH .../variants/[id]).
+  const auth = await requireTenantOwner();
   if (auth instanceof NextResponse) return auth;
 
   const parsed = createProductSchema.safeParse(await req.json());
@@ -75,6 +80,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Datos de entrada inválidos", details: parsed.error.flatten() }, { status: 400 });
   }
   const input = parsed.data;
+
+  const tenant = await prisma.tenant.findUniqueOrThrow({
+    where: { id: auth.tenantId },
+    select: { planTier: true, planProductLimit: true, planInvoiceLimit: true },
+  });
+  const { productLimit } = resolvePlanLimits(tenant);
+  if (productLimit !== null) {
+    const currentCount = await prisma.product.count({ where: { tenantId: auth.tenantId } });
+    if (currentCount >= productLimit) {
+      return NextResponse.json(
+        { error: `Alcanzaste el límite de ${productLimit} productos de tu plan (${tenant.planTier}). Sube de plan para agregar más.` },
+        { status: 409 },
+      );
+    }
+  }
 
   if (input.categoryId) {
     const category = await prisma.category.findFirst({ where: { id: input.categoryId, tenantId: auth.tenantId } });

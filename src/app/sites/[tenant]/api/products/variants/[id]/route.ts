@@ -20,6 +20,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "Datos de entrada inválidos" }, { status: 400 });
   }
 
+  // costPrice define el margen del negocio — un SELLER puede ajustar precio/stock del día a día,
+  // pero no el costo (ver Fase 4 del roadmap, "roles más finos"). Rechazo explícito, no un
+  // silencioso "ignoro el campo": si un SELLER lo mandó, algo en el cliente está mal.
+  if (parsed.data.costPrice !== undefined && auth.user.role !== "OWNER") {
+    return NextResponse.json({ error: "Solo el dueño del negocio puede editar el costo" }, { status: 403 });
+  }
+
   const existing = await prisma.productVariant.findFirst({ where: { id: params.id, tenantId: auth.tenantId } });
   if (!existing) {
     return NextResponse.json({ error: "Variante no encontrada" }, { status: 404 });

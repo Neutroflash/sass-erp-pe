@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, Package, Receipt, ShoppingCart, Sliders, Warehouse } from "lucide-react";
+import { BarChart3, LayoutGrid, Package, Receipt, ShoppingCart, Sliders, Warehouse } from "lucide-react";
 import type { TenantFeatures } from "@/domain/tenant-features";
+import type { UserRole } from "@prisma/client";
 import { cn } from "@/lib/utils";
 
 interface NavLink {
@@ -12,6 +13,8 @@ interface NavLink {
   icon: typeof LayoutGrid;
   /** undefined = siempre visible (dashboard, configuración) — no todo link depende de un módulo. */
   feature?: keyof TenantFeatures;
+  /** true = solo OWNER (además del filtro de `feature`, si tiene uno) — ver Fase 4, roles más finos. */
+  ownerOnly?: boolean;
 }
 
 // El orden acá es el orden en pantalla. "Dashboard" y "Configuración" no tienen `feature`: todo
@@ -23,17 +26,19 @@ const LINKS: NavLink[] = [
   { href: "/panel/pedidos", label: "Pedidos", icon: ShoppingCart, feature: "orderValidation" },
   { href: "/panel/pos", label: "Punto de venta", icon: ShoppingCart, feature: "posWeb" },
   { href: "/panel/facturacion", label: "Facturación SUNAT", icon: Receipt, feature: "sunatInvoicing" },
-  { href: "/panel/configuracion", label: "Configuración", icon: Sliders },
+  { href: "/panel/reportes", label: "Reportes", icon: BarChart3, ownerOnly: true },
+  { href: "/panel/configuracion", label: "Configuración", icon: Sliders, ownerOnly: true },
 ];
 
 // Mismo lenguaje visual que el panel admin de Flashkings (ver ADMIN_DESIGN_SYSTEM.md en ese
 // repo): tarjeta glassmorphism, acento dorado en el ítem activo, denso y sin animación.
-export function Sidebar({ features }: { features: TenantFeatures }) {
+export function Sidebar({ features, role }: { features: TenantFeatures; role: UserRole }) {
   const pathname = usePathname();
-  // El link de un módulo desactivado simplemente no se renderiza — no aparece tachado ni
-  // deshabilitado, desaparece. La app.route (feature-guards.ts) es la barrera real; esto es solo
-  // no ofrecer un camino a algo que la ruta va a rechazar de todas formas.
-  const visibleLinks = LINKS.filter((link) => !link.feature || features[link.feature]);
+  // El link de un módulo desactivado (o restringido a OWNER, para un SELLER) simplemente no se
+  // renderiza — no aparece tachado ni deshabilitado, desaparece. El guard real sigue viviendo en
+  // la ruta (feature-guards.ts / el redirect de cada page.tsx OWNER-only); esto es solo no ofrecer
+  // un camino a algo que la ruta va a rechazar de todas formas.
+  const visibleLinks = LINKS.filter((link) => (!link.feature || features[link.feature]) && (!link.ownerOnly || role === "OWNER"));
 
   return (
     <nav className="flex h-fit flex-col gap-1 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-4 backdrop-blur-md">

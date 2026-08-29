@@ -1,11 +1,19 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
+import { getCurrentTenantUser } from "@/lib/auth";
 import { CreateProductForm } from "@/components/panel/CreateProductForm";
 
 export const dynamic = "force-dynamic";
 
+// OWNER-only: crear un producto fija su costPrice inicial — ver el comentario en POST /api/products.
 export default async function NewProductPage() {
   const tenant = await getCurrentTenant();
+  const user = await getCurrentTenantUser();
+  if (!user || user.role !== "OWNER") {
+    redirect("/panel/inventario");
+  }
+
   const categories = await prisma.category.findMany({ where: { tenantId: tenant.id }, orderBy: { name: "asc" } });
 
   return (

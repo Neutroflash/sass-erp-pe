@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 const inputClass =
   "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
 
-function VariantRow({ variant }: { variant: AdminProductVariant }) {
+function VariantRow({ variant, canSeeCost }: { variant: AdminProductVariant; canSeeCost: boolean }) {
   const router = useRouter();
   const [price, setPrice] = useState(String(variant.price));
   const [costPrice, setCostPrice] = useState(String(variant.costPrice));
@@ -20,7 +20,10 @@ function VariantRow({ variant }: { variant: AdminProductVariant }) {
   async function handleSave() {
     setSaving(true);
     try {
-      await updateVariant(variant.id, { price: Number(price), costPrice: Number(costPrice), stock: Number(stock) });
+      // Un SELLER (canSeeCost=false) nunca manda costPrice en el payload — ni siquiera el valor sin
+      // tocar del prop, para no depender de que el backend lo ignore silenciosamente (que además no
+      // hace: PATCH .../variants/[id] rechaza con 403 si costPrice viene de alguien que no es OWNER).
+      await updateVariant(variant.id, { price: Number(price), stock: Number(stock), ...(canSeeCost ? { costPrice: Number(costPrice) } : {}) });
       router.refresh();
     } finally {
       setSaving(false);
@@ -36,19 +39,23 @@ function VariantRow({ variant }: { variant: AdminProductVariant }) {
       <td className="p-3">
         <input type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} className={cn(inputClass, "w-24")} />
       </td>
-      <td className="p-3">
-        <input
-          type="number"
-          step="0.01"
-          value={costPrice}
-          onChange={(e) => setCostPrice(e.target.value)}
-          className={cn(inputClass, "w-24")}
-        />
-      </td>
-      <td className="p-3 text-sm">
-        <span className={margin >= 0 ? "text-emerald-400" : "text-red-400"}>{formatPrice(margin)}</span>{" "}
-        <span className="text-zinc-500">({marginPct.toFixed(0)}%)</span>
-      </td>
+      {canSeeCost && (
+        <>
+          <td className="p-3">
+            <input
+              type="number"
+              step="0.01"
+              value={costPrice}
+              onChange={(e) => setCostPrice(e.target.value)}
+              className={cn(inputClass, "w-24")}
+            />
+          </td>
+          <td className="p-3 text-sm">
+            <span className={margin >= 0 ? "text-emerald-400" : "text-red-400"}>{formatPrice(margin)}</span>{" "}
+            <span className="text-zinc-500">({marginPct.toFixed(0)}%)</span>
+          </td>
+        </>
+      )}
       <td className="p-3">
         <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} className={cn(inputClass, "w-20")} />
       </td>
@@ -62,11 +69,11 @@ function VariantRow({ variant }: { variant: AdminProductVariant }) {
   );
 }
 
-function ProductGroup({ product }: { product: AdminProduct }) {
+function ProductGroup({ product, canSeeCost, columnCount }: { product: AdminProduct; canSeeCost: boolean; columnCount: number }) {
   return (
     <>
       <tr className="border-b border-zinc-800/60 bg-white/[0.02]">
-        <td colSpan={7} className="p-3">
+        <td colSpan={columnCount} className="p-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <span className="font-semibold text-zinc-100">{product.name}</span>
@@ -77,16 +84,20 @@ function ProductGroup({ product }: { product: AdminProduct }) {
         </td>
       </tr>
       {product.variants.map((variant) => (
-        <VariantRow key={variant.id} variant={variant} />
+        <VariantRow key={variant.id} variant={variant} canSeeCost={canSeeCost} />
       ))}
     </>
   );
 }
 
-export function InventoryTable({ products }: { products: AdminProduct[] }) {
+// costo/margen visibles solo para OWNER — ver el comentario en PATCH .../variants/[id]/route.ts y
+// en la GET de /api/products sobre por qué un SELLER nunca los ve, ni siquiera de solo lectura.
+export function InventoryTable({ products, canSeeCost }: { products: AdminProduct[]; canSeeCost: boolean }) {
   if (products.length === 0) {
     return <p className="py-8 text-center text-zinc-500">Todavía no hay productos — creá el primero.</p>;
   }
+
+  const columnCount = canSeeCost ? 7 : 5;
 
   return (
     <div className="overflow-x-auto rounded-2xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md">
@@ -95,8 +106,12 @@ export function InventoryTable({ products }: { products: AdminProduct[] }) {
           <tr>
             <th className="p-3">SKU</th>
             <th className="p-3">Precio</th>
-            <th className="p-3">Costo</th>
-            <th className="p-3">Margen</th>
+            {canSeeCost && (
+              <>
+                <th className="p-3">Costo</th>
+                <th className="p-3">Margen</th>
+              </>
+            )}
             <th className="p-3">Stock</th>
             <th className="p-3">Reservado</th>
             <th className="p-3"></th>
@@ -104,7 +119,7 @@ export function InventoryTable({ products }: { products: AdminProduct[] }) {
         </thead>
         <tbody>
           {products.map((product) => (
-            <ProductGroup key={product.id} product={product} />
+            <ProductGroup key={product.id} product={product} canSeeCost={canSeeCost} columnCount={columnCount} />
           ))}
         </tbody>
       </table>

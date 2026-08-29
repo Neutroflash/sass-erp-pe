@@ -1,7 +1,8 @@
 import type { PrismaClient, Prisma } from "@prisma/client";
 import { invoicingGateway } from "@/lib/invoicing-gateway";
 import { calculateTaxBreakdown } from "./tax";
-import { OrderNotPaidError, InvoiceAlreadyIssuedError } from "./errors";
+import { OrderNotPaidError, InvoiceAlreadyIssuedError, InvoicePlanLimitError } from "./errors";
+import { resolvePlanLimits, startOfCurrentMonth } from "@/domain/plan-limits";
 
 const SERIES: Record<"BOLETA" | "FACTURA", string> = { BOLETA: "B001", FACTURA: "F001" };
 
@@ -35,6 +36,22 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
   }
   if (order.invoice) {
     throw new InvoiceAlreadyIssuedError();
+  }
+
+  const tenant = await prisma.tenant.findUniqueOrThrow({
+    where: { id: params.tenantId },
+    select: { planTier: true, planProductLimit: true, planInvoiceLimit: true },
+  });
+  const { invoiceLimit } = resolvePlanLimits(tenant);
+  if (invoiceLimit !== null) {
+    const issuedThisMonth = await prisma.invoice.count({
+      where: { tenantId: params.tenantId, createdAt: { gte: startOfCurrentMonth() } },
+    });
+    if (issuedThisMonth >= invoiceLimit) {
+      throw new InvoicePlanLimitError(
+        `Alcanzaste el límite de ${invoiceLimit} comprobantes este mes en tu plan (${tenant.planTier}). Sube de plan para emitir más.`,
+      );
+    }
   }
 
   const totalAmount = Number(order.totalAmount);

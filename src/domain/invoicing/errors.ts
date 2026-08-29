@@ -11,3 +11,10 @@ export class InvoiceAlreadyIssuedError extends Error {
     this.name = "InvoiceAlreadyIssuedError";
   }
 }
+
+export class InvoicePlanLimitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvoicePlanLimitError";
+  }
+}

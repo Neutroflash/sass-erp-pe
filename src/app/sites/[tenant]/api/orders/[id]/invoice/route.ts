@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireTenantStaff } from "@/lib/api-guards";
 import { assertFeatureOrRespond403 } from "@/lib/feature-guards";
 import { issueInvoiceForOrder } from "@/domain/invoicing/issue-invoice";
-import { OrderNotPaidError, InvoiceAlreadyIssuedError } from "@/domain/invoicing/errors";
+import { OrderNotPaidError, InvoiceAlreadyIssuedError, InvoicePlanLimitError } from "@/domain/invoicing/errors";
 
 const issueInvoiceSchema = z
   .object({
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     });
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (err) {
-    if (err instanceof OrderNotPaidError || err instanceof InvoiceAlreadyIssuedError) {
+    if (err instanceof OrderNotPaidError || err instanceof InvoiceAlreadyIssuedError || err instanceof InvoicePlanLimitError) {
       return NextResponse.json({ error: err.message }, { status: 409 });
     }
     if (err instanceof Error && err.message === "Orden no encontrada") {

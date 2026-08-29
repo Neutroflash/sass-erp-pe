@@ -22,7 +22,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
 
   return (
     <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 md:grid-cols-[220px_1fr]">
-      <Sidebar features={features} />
+      <Sidebar features={features} role={user.role} />
       <div className="min-w-0">{children}</div>
     </div>
   );
