@@ -44,6 +44,37 @@ export interface SunatInvoicePayload {
   lineas: SunatInvoiceLine[];
 }
 
+/** Catálogo 01 de SUNAT — tipo de documento electrónico. Un solo lugar para este mapeo: usado por
+ * el gateway (armar el nombre de archivo a enviar) y por retry.ts (reenvío de PENDING_SUNAT), que
+ * antes de esto solo sabía de Boleta/Factura y habría construido mal el nombre de archivo de una
+ * nota reenviada. */
+export const SUNAT_DOCUMENT_TYPE_CODE: Record<"BOLETA" | "FACTURA" | "NOTA_CREDITO" | "NOTA_DEBITO", string> = {
+  FACTURA: "01",
+  BOLETA: "03",
+  NOTA_CREDITO: "07",
+  NOTA_DEBITO: "08",
+};
+
+export interface SunatRelatedDocument {
+  tipoDocumento: "01" | "03"; // el comprobante que la nota corrige — siempre Boleta o Factura
+  serie: string;
+  numero: number;
+}
+
+export interface SunatNotePayload {
+  tipoNota: "07" | "08"; // 07=Nota de Crédito, 08=Nota de Débito (catálogo 01)
+  serie: string;
+  numero: number;
+  fechaEmision: Date;
+  /** Catálogo 09 (nota de crédito) o 10 (nota de débito) de SUNAT — el motivo de la nota. */
+  motivoCodigo: string;
+  motivoDescripcion: string;
+  documentoRelacionado: SunatRelatedDocument;
+  emisor: SunatPartyInfo;
+  cliente: SunatCustomerInfo;
+  lineas: SunatInvoiceLine[];
+}
+
 export interface SunatCertificateConfig {
   pfxBuffer: Buffer;
   password: string;

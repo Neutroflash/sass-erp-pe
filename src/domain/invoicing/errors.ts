@@ -18,3 +18,17 @@ export class InvoicePlanLimitError extends Error {
     this.name = "InvoicePlanLimitError";
   }
 }
+
+export class RelatedInvoiceNotIssuedError extends Error {
+  constructor(message = "Solo se puede emitir una nota contra un comprobante ya emitido ante SUNAT") {
+    super(message);
+    this.name = "RelatedInvoiceNotIssuedError";
+  }
+}
+
+export class InvalidNoteReasonError extends Error {
+  constructor(message = "El motivo de la nota no es válido para este tipo de nota") {
+    super(message);
+    this.name = "InvalidNoteReasonError";
+  }
+}

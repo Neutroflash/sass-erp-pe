@@ -101,6 +101,18 @@ export function issueInvoice(orderId: string, data: IssueInvoiceInput) {
   return request(`/api/orders/${orderId}/invoice`, { method: "POST", body: JSON.stringify(data) });
 }
 
+export interface IssueCreditDebitNoteInput {
+  type: "NOTA_CREDITO" | "NOTA_DEBITO";
+  reasonCode: string;
+  mode: "FULL" | "CUSTOM";
+  customAmount?: number;
+  customDescription?: string;
+}
+
+export function issueCreditDebitNote(invoiceId: string, data: IssueCreditDebitNoteInput) {
+  return request(`/api/invoices/${invoiceId}/notes`, { method: "POST", body: JSON.stringify(data) });
+}
+
 export interface UpdateTenantSettingsInput {
   businessName?: string;
   ruc?: string;

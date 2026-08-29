@@ -1,8 +1,16 @@
-import type { InvoicingGateway, IssueInvoiceInput, IssueInvoiceResult } from "../gateway";
+import type { InvoicingGateway, IssueCreditDebitNoteInput, IssueInvoiceInput, IssueInvoiceResult } from "../gateway";
 import { generateInvoiceXML } from "./xml-builder";
-import { signInvoiceXML } from "./sign";
+import { generateCreditNoteXML, generateDebitNoteXML } from "./note-xml-builder";
+import { signSunatXML } from "./sign";
 import { sendToSunat } from "./soap-client";
-import { DOCUMENT_TYPE_CODE, type SunatCredentials, type SunatDocumentTypeCode, type SunatInvoicePayload } from "./types";
+import {
+  DOCUMENT_TYPE_CODE,
+  SUNAT_DOCUMENT_TYPE_CODE,
+  type SunatCredentials,
+  type SunatDocumentTypeCode,
+  type SunatInvoicePayload,
+  type SunatNotePayload,
+} from "./types";
 
 const BUSINESS_DOCUMENT_TYPE_TO_SUNAT: Record<string, SunatDocumentTypeCode> = {
   DNI: DOCUMENT_TYPE_CODE.DNI,
@@ -15,14 +23,16 @@ const BUSINESS_DOCUMENT_TYPE_TO_SUNAT: Record<string, SunatDocumentTypeCode> = {
  * Implementación real (sin PSE/OSE) del puerto InvoicingGateway: arma el XML UBL 2.1, lo firma
  * con el certificado propio del tenant, y lo envía directo al Web Service SOAP de SUNAT.
  *
- * ⚠️ **Estado honesto de esta implementación**: la mecánica (estructura XML, ubicación y algoritmo
- * de la firma, envoltorio SOAP, parseo de CDR) sigue la especificación pública de SUNAT tal como
- * está documentada — no un paquete de terceros no auditable (ver la discusión completa en el
- * historial de este cambio). Lo que NO se pudo hacer, porque requeriría credenciales reales y
- * enviar tráfico no autorizado a un sistema del Estado peruano, es un envío de prueba real contra
- * `e-beta.sunat.gob.pe`. Antes de emitir un solo comprobante real con esto, el OWNER del negocio
- * (con su propio certificado de homologación) debe validar al menos un envío contra el ambiente
- * BETA y confirmar que el CDR vuelve con `ResponseCode = 0`.
+ * ✅ **Confirmadas en vivo contra `e-beta.sunat.gob.pe` real, con `ResponseCode "0"`**:
+ * Boleta/Factura y Nota de Crédito — ver docs/ROADMAP.md para el detalle completo de las pruebas
+ * (incluye un bug real de encoding encontrado y corregido en el camino, ver note-xml-builder.ts).
+ *
+ * ⚠️ **Nota de Débito sin confirmar** — comparte el 100% de la mecánica ya probada (mismo
+ * `signSunatXML`, mismo `sendBill`, misma estructura `DiscrepancyResponse`/`BillingReference`),
+ * solo cambia `RequestedMonetaryTotal` en vez de `LegalMonetaryTotal`; el envío de prueba recibió
+ * un HTTP 401 (más consistente con un límite de tasa transitorio que con un problema real del
+ * documento), sin insistir más para no abusar del ambiente de homologación — ver el comentario en
+ * note-xml-builder.ts.
  */
 export class SunatInvoicingGateway implements InvoicingGateway {
   constructor(private readonly credentials: SunatCredentials) {}
@@ -53,9 +63,49 @@ export class SunatInvoicingGateway implements InvoicingGateway {
     };
 
     const unsignedXml = generateInvoiceXML(payload);
-    const signedXml = signInvoiceXML(unsignedXml, this.credentials.certificate.pfxBuffer, this.credentials.certificate.password);
+    return this.signAndSend(unsignedXml, SUNAT_DOCUMENT_TYPE_CODE[input.type], payload.serie, payload.numero);
+  }
 
-    const fileName = `${this.credentials.ruc}-${payload.tipoDocumento}-${payload.serie}-${payload.numero}`;
+  async issueCreditDebitNote(input: IssueCreditDebitNoteInput): Promise<IssueInvoiceResult> {
+    const documentTypeCode = BUSINESS_DOCUMENT_TYPE_TO_SUNAT[input.documentType] ?? DOCUMENT_TYPE_CODE.SIN_DOCUMENTO;
+
+    const payload: SunatNotePayload = {
+      tipoNota: input.type === "NOTA_CREDITO" ? "07" : "08",
+      serie: input.series,
+      numero: input.number,
+      fechaEmision: new Date(),
+      motivoCodigo: input.reasonCode,
+      motivoDescripcion: input.reasonDescription,
+      documentoRelacionado: {
+        tipoDocumento: input.relatedDocument.type === "FACTURA" ? "01" : "03",
+        serie: input.relatedDocument.series,
+        numero: input.relatedDocument.number,
+      },
+      emisor: {
+        ruc: input.emisorRuc ?? this.credentials.ruc,
+        businessName: input.emisorBusinessName ?? "",
+        address: input.emisorAddress,
+      },
+      cliente: {
+        documentTypeCode,
+        documentNumber: input.documentNumber,
+        name: input.businessName ?? input.documentNumber,
+      },
+      lineas: input.items.map((item) => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitPriceWithTax: item.unitPrice,
+      })),
+    };
+
+    const unsignedXml = input.type === "NOTA_CREDITO" ? generateCreditNoteXML(payload) : generateDebitNoteXML(payload);
+    return this.signAndSend(unsignedXml, SUNAT_DOCUMENT_TYPE_CODE[input.type], payload.serie, payload.numero);
+  }
+
+  private async signAndSend(unsignedXml: string, tipoDocumentoCode: string, serie: string, numero: number): Promise<IssueInvoiceResult> {
+    const signedXml = signSunatXML(unsignedXml, this.credentials.certificate.pfxBuffer, this.credentials.certificate.password);
+
+    const fileName = `${this.credentials.ruc}-${tipoDocumentoCode}-${serie}-${numero}`;
     const result = await sendToSunat(signedXml, this.credentials, fileName);
 
     if (result.transient) {

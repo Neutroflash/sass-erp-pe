@@ -2,8 +2,9 @@ import type { PrismaClient, Prisma } from "@prisma/client";
 import { resolveInvoicingGateway } from "@/lib/invoicing-gateway";
 import { sunatRetryScheduler } from "@/lib/sunat-retry-queue";
 import { calculateTaxBreakdown } from "./tax";
-import { OrderNotPaidError, InvoiceAlreadyIssuedError, InvoicePlanLimitError } from "./errors";
-import { resolvePlanLimits, startOfCurrentMonth } from "@/domain/plan-limits";
+import { OrderNotPaidError, InvoiceAlreadyIssuedError } from "./errors";
+import { reserveInvoiceNumber } from "./counter";
+import { getTenantForInvoicing } from "./tenant-invoicing-info";
 
 const SERIES: Record<"BOLETA" | "FACTURA", string> = { BOLETA: "B001", FACTURA: "F001" };
 
@@ -39,21 +40,7 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
     throw new InvoiceAlreadyIssuedError();
   }
 
-  const tenant = await prisma.tenant.findUniqueOrThrow({
-    where: { id: params.tenantId },
-    select: { planTier: true, planProductLimit: true, planInvoiceLimit: true, ruc: true, businessName: true, fiscalAddress: true },
-  });
-  const { invoiceLimit } = resolvePlanLimits(tenant);
-  if (invoiceLimit !== null) {
-    const issuedThisMonth = await prisma.invoice.count({
-      where: { tenantId: params.tenantId, createdAt: { gte: startOfCurrentMonth() } },
-    });
-    if (issuedThisMonth >= invoiceLimit) {
-      throw new InvoicePlanLimitError(
-        `Alcanzaste el límite de ${invoiceLimit} comprobantes este mes en tu plan (${tenant.planTier}). Sube de plan para emitir más.`,
-      );
-    }
-  }
+  const tenant = await getTenantForInvoicing(prisma, params.tenantId);
 
   const totalAmount = Number(order.totalAmount);
   const orderBreakdown = calculateTaxBreakdown(totalAmount);
@@ -71,16 +58,8 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
     };
   });
 
-  // upsert+increment sobre la clave compuesta (tenantId, type) — mismo mecanismo que
-  // Flashkings, con la clave compuesta agregada para que cada negocio numere sus boletas/facturas
-  // de forma independiente (B001-1/F001-1 por tenant, no globalmente).
-  const counter = await prisma.invoiceCounter.upsert({
-    where: { tenantId_type: { tenantId: params.tenantId, type: params.type } },
-    create: { tenantId: params.tenantId, type: params.type, lastNumber: 1 },
-    update: { lastNumber: { increment: 1 } },
-  });
   const series = SERIES[params.type];
-  const number = counter.lastNumber;
+  const number = await reserveInvoiceNumber(prisma, params.tenantId, params.type, series);
 
   const gateway = await resolveInvoicingGateway(prisma, params.tenantId);
   const result = await gateway.issueInvoice({

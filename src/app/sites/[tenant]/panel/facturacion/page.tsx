@@ -30,9 +30,12 @@ export default async function FacturacionPage() {
 
   const invoices = await prisma.invoice.findMany({
     where: { tenantId: tenant.id },
+    include: { relatedInvoice: { select: { orderId: true, type: true, series: true, number: true } } },
     orderBy: { createdAt: "desc" },
     take: 100,
   });
+
+  const TYPE_LABEL: Record<string, string> = { BOLETA: "Boleta", FACTURA: "Factura", NOTA_CREDITO: "N. Crédito", NOTA_DEBITO: "N. Débito" };
 
   return (
     <div className="flex flex-col gap-6">
@@ -69,7 +72,12 @@ export default async function FacturacionPage() {
                 <tr key={inv.id} className="border-b border-zinc-800/60">
                   <td className="p-3 text-sm text-zinc-500">{new Date(inv.createdAt).toLocaleString("es-PE")}</td>
                   <td className="p-3 text-sm text-zinc-200">
-                    {inv.type === "BOLETA" ? "Boleta" : inv.type === "FACTURA" ? "Factura" : inv.type} {inv.series}-{inv.number}
+                    {TYPE_LABEL[inv.type] ?? inv.type} {inv.series}-{inv.number}
+                    {inv.relatedInvoice && (
+                      <span className="ml-1 text-xs text-zinc-500">
+                        (corrige {TYPE_LABEL[inv.relatedInvoice.type]} {inv.relatedInvoice.series}-{inv.relatedInvoice.number})
+                      </span>
+                    )}
                   </td>
                   <td className="p-3 text-sm text-zinc-400">
                     {inv.documentType} {inv.documentNumber}
@@ -81,8 +89,8 @@ export default async function FacturacionPage() {
                   </td>
                   <td className="p-3">
                     <div className="flex items-center gap-3">
-                      {inv.orderId && (
-                        <Link href={`/panel/pedidos/${inv.orderId}`} className="text-xs text-yellow-400 hover:underline">
+                      {(inv.orderId ?? inv.relatedInvoice?.orderId) && (
+                        <Link href={`/panel/pedidos/${inv.orderId ?? inv.relatedInvoice?.orderId}`} className="text-xs text-yellow-400 hover:underline">
                           Ver pedido
                         </Link>
                       )}

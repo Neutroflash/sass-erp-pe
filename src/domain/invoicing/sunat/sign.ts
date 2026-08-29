@@ -13,8 +13,9 @@ const serializer = new XMLSerializer();
 
 /**
  * Firma **XAdES-BES** (no XMLDSig plano) insertada dentro de
- * `ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent` — xml-builder.ts deja ese nodo vacío
- * listo para esto.
+ * `ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent` — agnóstica del tipo de documento UBL
+ * (Invoice/CreditNote/DebitNote comparten esa misma estructura de extensión), sirve para firmar
+ * boletas/facturas (xml-builder.ts) y notas de crédito/débito (note-xml-builder.ts) por igual.
  *
  * Se construye a mano en dos referencias (no con el `addReference()` de alto nivel de xml-crypto)
  * porque esa API no expone un hook para agregar una segunda `Reference` con contenido
@@ -51,7 +52,7 @@ const serializer = new XMLSerializer();
  * eso es una validación de confianza de certificado, no de formato del documento, y no hay forma
  * de probarlo sin uno real.
  */
-export function signInvoiceXML(unsignedXml: string, pfxBuffer: Buffer, pfxPassword: string): string {
+export function signSunatXML(unsignedXml: string, pfxBuffer: Buffer, pfxPassword: string): string {
   const cert = parsePfx(pfxBuffer, pfxPassword);
   const signingTime = new Date();
 

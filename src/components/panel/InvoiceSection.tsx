@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { issueInvoice, type IssueInvoiceInput } from "@/lib/panel-mutations";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { CreditDebitNoteForm, type NoteSummary } from "./CreditDebitNoteForm";
 
 const inputClass =
   "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
@@ -19,6 +20,8 @@ export interface OrderInvoiceSummary {
   documentNumber: string;
   businessName: string | null;
   pdfUrl: string | null;
+  totalAmount: number;
+  notes: NoteSummary[];
 }
 
 // Emisión manual: ningún tenant está registrado como emisor electrónico ante SUNAT todavía, así
@@ -34,19 +37,27 @@ export function InvoiceSection({ orderId, invoice }: { orderId: string; invoice:
 
   if (invoice) {
     return (
-      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
-        <span className="text-xs uppercase tracking-wide text-zinc-500">Comprobante</span>
-        <p className="mt-1 text-zinc-100">
-          {invoice.type === "BOLETA" ? "Boleta" : "Factura"} {invoice.series}-{invoice.number}
-        </p>
-        <p className="text-sm text-zinc-400">
-          {invoice.documentType} {invoice.documentNumber}
-          {invoice.businessName ? ` · ${invoice.businessName}` : ""}
-        </p>
-        {invoice.pdfUrl && (
-          <a href={invoice.pdfUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm text-yellow-400 hover:underline">
-            Ver PDF
-          </a>
+      <div className="flex flex-col gap-4">
+        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+          <span className="text-xs uppercase tracking-wide text-zinc-500">Comprobante</span>
+          <p className="mt-1 text-zinc-100">
+            {invoice.type === "BOLETA" ? "Boleta" : "Factura"} {invoice.series}-{invoice.number}
+          </p>
+          <p className="text-sm text-zinc-400">
+            {invoice.documentType} {invoice.documentNumber}
+            {invoice.businessName ? ` · ${invoice.businessName}` : ""}
+          </p>
+          {invoice.pdfUrl && (
+            <a href={invoice.pdfUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm text-yellow-400 hover:underline">
+              Ver PDF
+            </a>
+          )}
+        </div>
+
+        {/* Solo tiene sentido corregir un comprobante que SUNAT ya aceptó — uno PENDING_SUNAT/FAILED
+            todavía no es un documento válido que corregir. */}
+        {invoice.status === "ISSUED" && (
+          <CreditDebitNoteForm invoiceId={invoice.id} invoiceTotal={invoice.totalAmount} notes={invoice.notes} />
         )}
       </div>
     );

@@ -295,16 +295,21 @@ enum InvoiceStatus {
   VOID
 }
 
-// Serie/correlativo por (tenant, tipo de comprobante) — cada negocio numera sus propios
-// comprobantes de forma independiente, empezando cada tipo (boleta/factura/notas) en su propia
-// secuencia. Mismo patrón de Flashkings (upsert+increment atómico), aquí con clave compuesta.
+// Serie/correlativo por (tenant, tipo de comprobante, serie) — cada negocio numera sus propios
+// comprobantes de forma independiente, empezando cada secuencia en su propia serie. `series` es
+// parte de la clave (no solo `type`) porque una nota de crédito/débito NO tiene una única serie
+// por tipo como Boleta/Factura: su serie depende de qué documento corrige (FC01 si corrige una
+// Factura, BC01 si corrige una Boleta — ver src/domain/plan... resolveNoteSeries en
+// issue-note.ts), y cada combinación necesita su propia secuencia independiente, nunca compartida.
+// Mismo patrón de Flashkings (upsert+increment atómico), aquí con clave compuesta de tres partes.
 model InvoiceCounter {
   tenantId   String      @map("tenant_id")
   tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   type       InvoiceType
+  series     String
   lastNumber Int         @default(0) @map("last_number")
 
-  @@id([tenantId, type])
+  @@id([tenantId, type, series])
   @@map("invoice_counters")
 }
 

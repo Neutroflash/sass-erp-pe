@@ -25,7 +25,10 @@ export default async function OrderDetailPage({ params }: { params: { id: string
   const [order, features] = await Promise.all([
     prisma.order.findFirst({
       where: { id: params.id, tenantId: tenant.id },
-      include: { items: { include: { variant: { select: { sku: true, name: true } } } }, invoice: true },
+      include: {
+        items: { include: { variant: { select: { sku: true, name: true } } } },
+        invoice: { include: { corrections: true } },
+      },
     }),
     getTenantFeatures(tenant.id),
   ]);
@@ -42,6 +45,15 @@ export default async function OrderDetailPage({ params }: { params: { id: string
         documentNumber: order.invoice.documentNumber,
         businessName: order.invoice.businessName,
         pdfUrl: order.invoice.pdfUrl,
+        totalAmount: Number(order.invoice.totalAmount),
+        notes: order.invoice.corrections.map((note) => ({
+          id: note.id,
+          type: note.type as "NOTA_CREDITO" | "NOTA_DEBITO",
+          status: note.status,
+          series: note.series,
+          number: note.number,
+          totalAmount: Number(note.totalAmount),
+        })),
       }
     : null;
 

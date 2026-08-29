@@ -34,6 +34,31 @@ export interface IssueInvoiceResult {
   signedXml?: string;
 }
 
+export interface RelatedDocumentInput {
+  type: "BOLETA" | "FACTURA";
+  series: string;
+  number: number;
+}
+
+export interface IssueCreditDebitNoteInput {
+  tenantId: string;
+  type: "NOTA_CREDITO" | "NOTA_DEBITO";
+  series: string;
+  number: number;
+  /** Catálogo 09 (nota de crédito) o 10 (nota de débito) de SUNAT. */
+  reasonCode: string;
+  reasonDescription: string;
+  relatedDocument: RelatedDocumentInput;
+  documentType: string;
+  documentNumber: string;
+  businessName?: string;
+  items: InvoiceLineInput[];
+  totalAmount: number;
+  emisorRuc?: string;
+  emisorBusinessName?: string;
+  emisorAddress?: string;
+}
+
 /**
  * Puerto hacia quien sea que efectivamente emita el comprobante ante SUNAT — un PSE/OSE de pago
  * (ej. Nubefact) o, como implementamos acá, integración directa sin intermediario
@@ -44,4 +69,5 @@ export interface IssueInvoiceResult {
  */
 export interface InvoicingGateway {
   issueInvoice(input: IssueInvoiceInput): Promise<IssueInvoiceResult>;
+  issueCreditDebitNote(input: IssueCreditDebitNoteInput): Promise<IssueInvoiceResult>;
 }

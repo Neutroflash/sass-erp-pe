@@ -2,6 +2,7 @@ import type { PrismaClient, Prisma } from "@prisma/client";
 import { resolveSunatCredentials } from "@/lib/sunat-credentials";
 import { sunatRetryScheduler } from "@/lib/sunat-retry-queue";
 import { sendToSunat } from "./soap-client";
+import { SUNAT_DOCUMENT_TYPE_CODE } from "./types";
 
 /**
  * Reintenta un envío que quedó en PENDING_SUNAT — reenvía el `signedXml` ya persistido tal cual
@@ -16,8 +17,7 @@ export async function retryPendingSunatInvoice(prisma: PrismaClient, invoiceId: 
   const credentials = await resolveSunatCredentials(prisma, invoice.tenantId);
   if (!credentials) return; // el tenant borró sus credenciales entre medio — nada que reintentar
 
-  const tipoDocumento = invoice.type === "FACTURA" ? "01" : "03";
-  const fileName = `${credentials.ruc}-${tipoDocumento}-${invoice.series}-${invoice.number}`;
+  const fileName = `${credentials.ruc}-${SUNAT_DOCUMENT_TYPE_CODE[invoice.type]}-${invoice.series}-${invoice.number}`;
   const result = await sendToSunat(invoice.signedXml, credentials, fileName);
 
   if (result.transient) {
