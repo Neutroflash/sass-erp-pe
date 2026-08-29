@@ -21,15 +21,19 @@ Objetivo: un negocio puede registrarse solo y llegar a un panel vacío pero suyo
 
 **Punto delicado de esta fase, ya resuelto y confirmado en vivo, no solo razonado**: el aislamiento entre tenants no depende únicamente del chequeo `user.tenantId !== tenant.id` en el guard — la cookie de sesión de un negocio, al ser host-only, ni siquiera *llega* al servidor en una request hacia el subdominio de otro negocio. El chequeo de código es la segunda capa, no la única.
 
-## Fase 2 — Inventario, catálogo y ventas online
+## Fase 2 — Inventario, catálogo y ventas online ✅ (hecho, verificado en vivo)
 
 Objetivo: un negocio carga productos y un cliente final le compra en línea.
 
-1. CRUD de `Category`/`Product`/`ProductVariant`/`ProductImage`, todo scoped por `tenantId` — literalmente el mismo panel de Flashkings (`InventoryTable`, `CreateProductForm`, `ProductImagesModal`) adaptado para leer/escribir siempre con el tenant actual en el filtro. Es la parte con más código ya resuelto en el otro repo; el trabajo real acá es la adaptación multi-tenant, no el diseño desde cero.
-2. Kardex: cada cambio de `stock` en `ProductVariant` genera una fila en `StockMovement` en la misma transacción — nunca se actualiza `stock` sin dejar rastro de por qué.
-3. Tienda pública (`/sites/[tenant]/catalogo`, `/producto/[slug]`) — reusar tal cual se pueda el diseño ya construido en Flashkings (`ProductCard`, `ProductGallery`, `CatalogGrid`), parametrizado por el tenant actual.
-4. `POST /api/orders`: reserva de stock transaccional con lock de fila (`FOR UPDATE`), **igual que en Flashkings, pero el `WHERE` del lock y el conteo de disponibilidad ahora también filtran por `tenantId`** — dos tenants nunca deberían poder bloquearse mutuamente por una fila que ni siquiera comparten, así que en la práctica el índice `(tenantId, sku)` ya lo aísla, pero vale la pena un test de concurrencia que lo confirme explícitamente (crear el mismo SKU en dos tenants distintos, agotar stock del tenant A, confirmar que el tenant B no se ve afectado).
-5. Expiración de reservas (BullMQ + Redis, o el equivalente que se elija) — mismo mecanismo que Flashkings, un solo worker sirviendo a todos los tenants a la vez (la cola ya es multi-tenant por diseño si cada job carga su propio `orderId`).
+1. ✅ CRUD de `Category`/`Product`/`ProductVariant`/`ProductImage`, scoped por `tenantId` (slug y SKU únicos *por tenant*, no globalmente). Panel de inventario (`InventoryTable`, `CreateProductForm`) adaptado del patrón de Flashkings. Verificado en vivo: creación de producto con variantes vía API.
+2. ✅ Kardex: cada cambio de `stock` genera un `StockMovement` (`IN`/`OUT`/`ADJUSTMENT`) en la misma transacción — `/panel/kardex` lista los últimos 100 con formulario de registro manual.
+3. ✅ Tienda pública (`/sites/[tenant]/catalogo`, `/producto/[slug]`) con `ProductCard`, filtros de búsqueda/categoría, sanitización de `costPrice`/`reservedStock` para visitantes no-staff (`toPublicProduct`).
+4. ✅ Carrito (Zustand + `localStorage`, `skipHydration` para evitar el mismatch de hidratación) → `/checkout` → `POST /api/orders`: reserva de stock transaccional con lock de fila (`SELECT ... FOR UPDATE`), `WHERE` del lock filtrado también por `tenant_id`, orden estable de items por `variantId` para evitar deadlocks entre checkouts concurrentes. **Test de concurrencia real corrido contra Postgres**: stock=1, 10 requests simultáneas, exactamente 1 con `201` y 9 con `409 Stock insuficiente` — confirmado, `stock`/`reserved_stock` consistentes al final.
+5. ✅ Expiración de reservas: BullMQ + Redis (mismo contenedor `flashkings-redis` reusado), `jobId = orderId` (idempotente), worker standalone (`src/worker.ts`, `bun run start:worker`) — arrancado y confirmado procesando jobs (incluido un no-op correcto sobre una orden ya resuelta).
+6. ✅ `/panel/pedidos`: lista de pedidos con botones "Confirmar pago"/"Rechazar" (gateado por el feature `orderValidation`), conectado a `POST /api/orders/:id/confirm-payment` y `/reject-payment` — cierra el loop de la tarjeta "Validaciones pendientes" del dashboard. Verificado en vivo: confirmar decrementa `stock` y pone `PAID`; rechazar libera `reserved_stock` sin tocar `stock` y pone `CANCELLED`.
+7. ✅ Página de confirmación de pedido (`/pedido/[orderId]/confirmacion`), pública vía UUID no adivinable.
+8. ❌ **No incluido, a propósito** (fuera del alcance pedido): pasarela de pago real (Culqi u otra) — el checkout actual asume cobro fuera de la plataforma (Yape/Plin/efectivo) confirmado a mano por el staff, suficiente para el Cliente Piloto. Si un cliente futuro necesita cobro en línea automático, es un módulo nuevo detrás de un puerto tipo `IPaymentGateway`, no un cambio a lo ya construido.
+9. ❌ Test de concurrencia *cross-tenant* explícito (mismo SKU en dos tenants, agotar stock de uno y confirmar que el otro no se ve afectado) — no corrido; el índice `(tenantId, sku)` y el `tenant_id` en el `WHERE` del lock lo garantizan por diseño, pero queda como verificación pendiente de menor prioridad.
 
 ## Fase 3 — POS y Facturación Electrónica SUNAT
 

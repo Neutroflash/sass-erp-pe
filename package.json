@@ -5,9 +5,11 @@
   "packageManager": "bun@1.3.14",
   "scripts": {
     "dev": "next dev",
+    "worker:dev": "tsx watch src/worker.ts",
     "postinstall": "prisma generate",
     "build": "next build",
     "start": "prisma migrate deploy && next start",
+    "start:worker": "tsx src/worker.ts",
     "lint": "next lint",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
@@ -16,14 +18,17 @@
   "dependencies": {
     "@prisma/client": "^5.20.0",
     "bcryptjs": "^2.4.3",
+    "bullmq": "^5.13.2",
     "clsx": "^2.1.1",
+    "ioredis": "^5.4.1",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.446.0",
     "next": "14.2.15",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^2.5.2",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zustand": "^4.5.5"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

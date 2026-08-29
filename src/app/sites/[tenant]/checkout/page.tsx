@@ -1,0 +1,101 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCartStore } from "@/store/cart-store";
+import { formatPrice, cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+
+const inputClass =
+  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
+
+// Sin pasarela de pago integrada todavía (Fase 3+ del roadmap si el negocio la pide) — el pedido
+// se crea PENDING_PAYMENT con el stock reservado, y queda a la espera de que el staff lo confirme
+// manualmente desde /panel/pedidos (mismo criterio que orderValidation). Suficiente para un
+// negocio que cobra por Yape/Plin/efectivo fuera de la plataforma, como el Cliente Piloto.
+export default function CheckoutPage() {
+  const router = useRouter();
+  const { items, totalPrice, clear } = useCartStore();
+  const [form, setForm] = useState({ customerName: "", customerEmail: "", customerPhone: "", shippingAddress: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })) }),
+      });
+      const data = (await res.json()) as { orderId?: string; error?: string };
+      if (!res.ok || !data.orderId) throw new Error(data.error ?? "No se pudo crear el pedido");
+      clear();
+      router.push(`/pedido/${data.orderId}/confirmacion`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo crear el pedido");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (items.length === 0) {
+    return <p className="mx-auto max-w-2xl px-4 py-16 text-center text-zinc-500">Tu carrito está vacío.</p>;
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl px-4 py-8">
+      <h1 className="mb-6 text-2xl font-bold text-zinc-100">Checkout</h1>
+
+      <div className="mb-6 flex flex-col gap-2 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-4">
+        {items.map((item) => (
+          <div key={item.variantId} className="flex justify-between text-sm text-zinc-300">
+            <span>
+              {item.productName} — {item.variantName} x{item.quantity}
+            </span>
+            <span>{formatPrice(item.price * item.quantity)}</span>
+          </div>
+        ))}
+        <div className="mt-2 flex justify-between border-t border-zinc-800/60 pt-2 font-bold text-zinc-100">
+          <span>Total</span>
+          <span className="text-yellow-400">{formatPrice(totalPrice())}</span>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <input
+          required
+          placeholder="Nombre completo"
+          value={form.customerName}
+          onChange={(e) => setForm((f) => ({ ...f, customerName: e.target.value }))}
+          className={inputClass}
+        />
+        <input
+          type="email"
+          placeholder="Correo electrónico"
+          value={form.customerEmail}
+          onChange={(e) => setForm((f) => ({ ...f, customerEmail: e.target.value }))}
+          className={inputClass}
+        />
+        <input
+          placeholder="Teléfono"
+          value={form.customerPhone}
+          onChange={(e) => setForm((f) => ({ ...f, customerPhone: e.target.value }))}
+          className={inputClass}
+        />
+        <input
+          placeholder="Dirección de envío"
+          value={form.shippingAddress}
+          onChange={(e) => setForm((f) => ({ ...f, shippingAddress: e.target.value }))}
+          className={cn(inputClass)}
+        />
+        {error && <span className="text-sm text-destructive">{error}</span>}
+        <Button type="submit" disabled={submitting}>
+          {submitting ? "Reservando stock..." : "Confirmar pedido"}
+        </Button>
+      </form>
+    </div>
+  );
+}
