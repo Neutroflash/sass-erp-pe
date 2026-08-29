@@ -119,3 +119,22 @@ export interface UpdateTenantSettingsInput {
 export function updateTenantSettings(data: UpdateTenantSettingsInput) {
   return request("/api/settings", { method: "PATCH", body: JSON.stringify(data) });
 }
+
+export interface SunatConfigInput {
+  environment: "BETA" | "PRODUCCION";
+  solUser: string;
+  solPassword: string;
+  certificateBase64: string;
+  certificatePassword: string;
+}
+
+export function saveSunatConfig(data: SunatConfigInput) {
+  return request<{ configured: boolean; environment: string; solUser: string }>("/api/settings/sunat", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteSunatConfig() {
+  return request<{ configured: boolean }>("/api/settings/sunat", { method: "DELETE" });
+}

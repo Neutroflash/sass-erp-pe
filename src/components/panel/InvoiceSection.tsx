@@ -12,7 +12,7 @@ const inputClass =
 export interface OrderInvoiceSummary {
   id: string;
   type: "BOLETA" | "FACTURA" | "NOTA_CREDITO" | "NOTA_DEBITO";
-  status: "DRAFT" | "ISSUED" | "FAILED" | "VOID";
+  status: "DRAFT" | "PENDING_SUNAT" | "ISSUED" | "FAILED" | "VOID";
   series: string;
   number: number;
   documentType: string;

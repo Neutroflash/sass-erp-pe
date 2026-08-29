@@ -5,6 +5,7 @@ import { getCurrentTenantUser } from "@/lib/auth";
 import { parseTenantFeatures } from "@/domain/tenant-features";
 import { resolvePlanLimits, startOfCurrentMonth } from "@/domain/plan-limits";
 import { SettingsForm } from "@/components/panel/SettingsForm";
+import { SunatCredentialsForm } from "@/components/panel/SunatCredentialsForm";
 import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,9 @@ export default async function ConfiguracionPage() {
       planTier: true,
       planProductLimit: true,
       planInvoiceLimit: true,
+      sunatEnvironment: true,
+      sunatSolUser: true,
+      sunatCertificateEnc: true,
     },
   });
 
@@ -80,6 +84,14 @@ export default async function ConfiguracionPage() {
           logoUrl: row.logoUrl,
           primaryColor: row.primaryColor,
           features: parseTenantFeatures(row.features),
+        }}
+      />
+
+      <SunatCredentialsForm
+        initial={{
+          configured: Boolean(row.sunatSolUser && row.sunatCertificateEnc),
+          environment: row.sunatEnvironment,
+          solUser: row.sunatSolUser,
         }}
       />
     </div>

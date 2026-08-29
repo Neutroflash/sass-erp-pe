@@ -36,6 +36,11 @@ model PlatformAdmin {
   @@map("platform_admins")
 }
 
+enum SunatEnvironment {
+  BETA        // e-beta.sunat.gob.pe — homologación, nunca genera comprobantes válidos
+  PRODUCCION  // e-factura.sunat.gob.pe — comprobantes reales, válidos ante SUNAT
+}
+
 model Tenant {
   id                String   @id @default(uuid())
   slug              String   @unique // subdominio: {slug}.tusaas.pe — ver middleware.ts
@@ -48,6 +53,19 @@ model Tenant {
   planTier          PlanTier @default(FREE)
   planProductLimit  Int?     @map("plan_product_limit")
   planInvoiceLimit  Int?     @map("plan_invoice_limit")
+
+  // Credenciales SUNAT propias del negocio (integración directa, sin PSE/OSE) — ver
+  // src/domain/invoicing/sunat/. Todo lo que termina en "Enc" está cifrado con AES-256-GCM
+  // (src/lib/crypto.ts) antes de tocar la base de datos: nunca se persiste en texto plano un
+  // certificado digital ni la clave SOL, ni siquiera en un entorno de desarrollo — son
+  // credenciales que permiten firmar comprobantes tributarios a nombre de un negocio real.
+  // `sunatEnvironment` nace en BETA a propósito: subir a PRODUCCION es una decisión explícita del
+  // OWNER desde /panel/configuracion, nunca un default.
+  sunatEnvironment             SunatEnvironment @default(BETA) @map("sunat_environment")
+  sunatSolUser                 String?          @map("sunat_sol_user") // usuario secundario SOL, no la Clave SOL principal
+  sunatSolPasswordEnc          Bytes?           @map("sunat_sol_password_enc")
+  sunatCertificateEnc          Bytes?           @map("sunat_certificate_enc") // .pfx/.p12 completo, cifrado
+  sunatCertificatePasswordEnc  Bytes?           @map("sunat_certificate_password_enc")
   // Matriz de módulos activos para este negocio (inventario, márgenes, validación de
   // órdenes, POS, facturación SUNAT...). Guardado como JSON en vez de una columna booleana por
   // módulo a propósito: agregar un módulo nuevo no debe pedir una migración de schema, solo un
@@ -269,9 +287,11 @@ enum InvoiceType {
 }
 
 enum InvoiceStatus {
-  DRAFT  // creada localmente, aún no enviada al PSE/OSE
+  DRAFT          // creada localmente, aún no enviada
+  PENDING_SUNAT  // se intentó enviar y SUNAT no respondió (caído, timeout) — en cola de reintento,
+                 // NO es un rechazo: la venta ya se cerró, solo falta que SUNAT confirme recepción
   ISSUED
-  FAILED
+  FAILED         // SUNAT respondió y RECHAZÓ el comprobante (dato inválido, RUC no habido, etc.)
   VOID
 }
 
@@ -319,6 +339,11 @@ model Invoice {
   xmlUrl           String?  @map("xml_url")
   cdrUrl           String?  @map("cdr_url") // Constancia de Recepción SUNAT
   providerResponse Json?    @map("provider_response") // respuesta cruda del PSE/OSE, para auditoría
+  // XML firmado, persistido tal cual se envió (o se intentó enviar) — necesario para reintentar
+  // un envío PENDING_SUNAT sin volver a firmar (la firma ya es válida, lo que falló fue la
+  // conexión/disponibilidad de SUNAT, no el documento).
+  signedXml        String?   @db.Text @map("signed_xml")
+  sunatRetryCount  Int       @default(0) @map("sunat_retry_count")
   issuedAt         DateTime? @map("issued_at")
   createdAt        DateTime  @default(now()) @map("created_at")
 

@@ -4,14 +4,24 @@ import { getCurrentTenant } from "@/lib/tenant-context";
 import { requireFeature } from "@/lib/feature-guards";
 import { formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { RetrySunatButton } from "@/components/panel/RetrySunatButton";
 
 export const dynamic = "force-dynamic";
 
-const STATUS_VARIANT: Record<string, "success" | "destructive" | "outline"> = {
+const STATUS_VARIANT: Record<string, "success" | "destructive" | "outline" | "secondary"> = {
   ISSUED: "success",
   FAILED: "destructive",
   VOID: "destructive",
   DRAFT: "outline",
+  PENDING_SUNAT: "secondary",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  ISSUED: "Emitido",
+  FAILED: "Rechazado",
+  VOID: "Anulado",
+  DRAFT: "Borrador",
+  PENDING_SUNAT: "Pendiente de envío",
 };
 
 export default async function FacturacionPage() {
@@ -32,7 +42,11 @@ export default async function FacturacionPage() {
         <Link href="/panel/pedidos" className="text-yellow-400 hover:underline">
           Pedidos
         </Link>
-        . Ningún proveedor real (PSE/OSE) está conectado todavía — ver el aviso al pie.
+        . Sin credenciales SUNAT configuradas en{" "}
+        <Link href="/panel/configuracion" className="text-yellow-400 hover:underline">
+          Configuración
+        </Link>
+        , la emisión queda simulada — ver el aviso al pie.
       </p>
 
       {invoices.length === 0 ? (
@@ -63,14 +77,17 @@ export default async function FacturacionPage() {
                   </td>
                   <td className="p-3 text-sm font-medium text-yellow-400">{formatPrice(Number(inv.totalAmount))}</td>
                   <td className="p-3">
-                    <Badge variant={STATUS_VARIANT[inv.status] ?? "outline"}>{inv.status}</Badge>
+                    <Badge variant={STATUS_VARIANT[inv.status] ?? "outline"}>{STATUS_LABEL[inv.status] ?? inv.status}</Badge>
                   </td>
                   <td className="p-3">
-                    {inv.orderId && (
-                      <Link href={`/panel/pedidos/${inv.orderId}`} className="text-xs text-yellow-400 hover:underline">
-                        Ver pedido
-                      </Link>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {inv.orderId && (
+                        <Link href={`/panel/pedidos/${inv.orderId}`} className="text-xs text-yellow-400 hover:underline">
+                          Ver pedido
+                        </Link>
+                      )}
+                      {inv.status === "PENDING_SUNAT" && <RetrySunatButton invoiceId={inv.id} />}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -80,9 +97,9 @@ export default async function FacturacionPage() {
       )}
 
       <p className="text-xs text-zinc-600">
-        Ningún tenant está registrado como emisor electrónico ante SUNAT todavía — los comprobantes emitidos hoy usan un
-        proveedor simulado (ver docs/ROADMAP.md, Fase 3). Al contratar un PSE real, esta página no cambia; solo cambia
-        qué implementación responde detrás de <code className="text-zinc-500">invoicingGateway</code>.
+        Sin credenciales SUNAT configuradas, los comprobantes emitidos usan un proveedor simulado (ver
+        docs/ROADMAP.md). Con credenciales configuradas, la emisión es directa contra SUNAT — sin PSE/OSE de por
+        medio — vía <code className="text-zinc-500">domain/invoicing/sunat/</code>.
       </p>
     </div>
   );
