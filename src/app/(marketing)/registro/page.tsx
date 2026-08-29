@@ -43,7 +43,7 @@ export default function RegistroPage() {
 
   if (registeredSlug) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 text-center">
+      <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 text-center">
         <h1 className="mb-2 text-2xl font-bold text-zinc-100">¡Listo!</h1>
         <p className="mb-6 text-sm text-zinc-400">
           Tu negocio quedó registrado en <span className="text-yellow-400">{registeredSlug}.{ROOT_DOMAIN}</span>.
@@ -56,7 +56,7 @@ export default function RegistroPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-16">
+    <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-16">
       <span className="mb-1 text-xs uppercase tracking-widest text-yellow-400/80">Nuevo negocio</span>
       <h1 className="mb-6 text-2xl font-bold text-zinc-100">Crea tu tienda</h1>
 
