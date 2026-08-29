@@ -110,13 +110,11 @@ export function generateCreditNoteXML(payload: SunatNotePayload): string {
  * `cac:RequestedMonetaryTotal` en vez de `cac:LegalMonetaryTotal` — así lo define el propio schema
  * UBL 2.1 para el tipo de documento DebitNote, no es una elección nuestra.
  *
- * ⚠️ **Sin confirmar contra beta todavía** — a diferencia de CreditNote, el envío de prueba
- * recibió un HTTP 401 (no el error de digest/formato de las rondas anteriores), inmediatamente
- * después de un envío exitoso de CreditNote con las mismas credenciales — más consistente con un
- * límite de tasa transitorio del ambiente beta que con un problema real del documento, pero no se
- * insistió más para no abusar del ambiente de homologación de SUNAT. La estructura comparte el
- * 100% de la mecánica ya confirmada (firma, encoding, DiscrepancyResponse/BillingReference) salvo
- * el intercambio de `RequestedMonetaryTotal`.
+ * ✅ **Confirmada en vivo contra `e-beta.sunat.gob.pe` real** — `ResponseCode "0"`, "La Nota de
+ * Debito numero BD01-1, ha sido aceptada". El primer intento había recibido un HTTP 401
+ * inmediatamente después de un envío exitoso de CreditNote con las mismas credenciales; un
+ * reintento aislado (sin ninguna llamada previa inmediata) confirmó que era exactamente eso — un
+ * límite de tasa transitorio del ambiente beta, no un problema del documento.
  */
 export function generateDebitNoteXML(payload: SunatNotePayload): string {
   const { emisor, cliente, lineas, serie, numero, fechaEmision } = payload;

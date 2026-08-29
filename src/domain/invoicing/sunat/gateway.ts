@@ -23,16 +23,11 @@ const BUSINESS_DOCUMENT_TYPE_TO_SUNAT: Record<string, SunatDocumentTypeCode> = {
  * Implementación real (sin PSE/OSE) del puerto InvoicingGateway: arma el XML UBL 2.1, lo firma
  * con el certificado propio del tenant, y lo envía directo al Web Service SOAP de SUNAT.
  *
- * ✅ **Confirmadas en vivo contra `e-beta.sunat.gob.pe` real, con `ResponseCode "0"`**:
- * Boleta/Factura y Nota de Crédito — ver docs/ROADMAP.md para el detalle completo de las pruebas
- * (incluye un bug real de encoding encontrado y corregido en el camino, ver note-xml-builder.ts).
- *
- * ⚠️ **Nota de Débito sin confirmar** — comparte el 100% de la mecánica ya probada (mismo
- * `signSunatXML`, mismo `sendBill`, misma estructura `DiscrepancyResponse`/`BillingReference`),
- * solo cambia `RequestedMonetaryTotal` en vez de `LegalMonetaryTotal`; el envío de prueba recibió
- * un HTTP 401 (más consistente con un límite de tasa transitorio que con un problema real del
- * documento), sin insistir más para no abusar del ambiente de homologación — ver el comentario en
- * note-xml-builder.ts.
+ * ✅ **Los cuatro tipos de comprobante confirmados en vivo contra `e-beta.sunat.gob.pe` real, con
+ * `ResponseCode "0"`**: Boleta, Factura, Nota de Crédito y Nota de Débito — ver docs/ROADMAP.md
+ * para el detalle completo de las pruebas (incluye un bug real de encoding encontrado y corregido
+ * en el camino, ver note-xml-builder.ts; y un HTTP 401 transitorio en el primer intento de Nota de
+ * Débito, resuelto en un reintento aislado).
  */
 export class SunatInvoicingGateway implements InvoicingGateway {
   constructor(private readonly credentials: SunatCredentials) {}
