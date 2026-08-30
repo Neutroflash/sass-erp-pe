@@ -9,6 +9,7 @@ import { verificationRecordName } from "@/domain/custom-domain";
 import { formatPrice } from "@/lib/utils";
 import { SettingsForm } from "@/components/panel/SettingsForm";
 import { SunatCredentialsForm } from "@/components/panel/SunatCredentialsForm";
+import { IzipayCredentialsForm } from "@/components/panel/IzipayCredentialsForm";
 import { CustomDomainForm } from "@/components/panel/CustomDomainForm";
 import { PlanSelector } from "@/components/panel/PlanSelector";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +61,10 @@ export default async function ConfiguracionPage() {
       sunatEnvironment: true,
       sunatSolUser: true,
       sunatCertificateEnc: true,
+      izipayUsername: true,
+      izipayPasswordEnc: true,
+      izipayPublicKey: true,
+      izipayHmacKeyEnc: true,
       customDomain: true,
       customDomainPending: true,
       customDomainVerificationToken: true,
@@ -122,6 +127,13 @@ export default async function ConfiguracionPage() {
           configured: Boolean(row.sunatSolUser && row.sunatCertificateEnc),
           environment: row.sunatEnvironment,
           solUser: row.sunatSolUser,
+        }}
+      />
+
+      <IzipayCredentialsForm
+        initial={{
+          configured: Boolean(row.izipayUsername && row.izipayPasswordEnc && row.izipayPublicKey && row.izipayHmacKeyEnc),
+          username: row.izipayUsername,
         }}
       />
 

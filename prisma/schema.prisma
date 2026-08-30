@@ -87,6 +87,19 @@ model Tenant {
   sunatSolPasswordEnc          Bytes?           @map("sunat_sol_password_enc")
   sunatCertificateEnc          Bytes?           @map("sunat_certificate_enc") // .pfx/.p12 completo, cifrado
   sunatCertificatePasswordEnc  Bytes?           @map("sunat_certificate_password_enc")
+
+  // Credenciales de Izipay (pasarela de pago real — tarjetas + Yape + Plin), propias de cada
+  // negocio, mismo criterio que SUNAT: cada tenant tiene su propia cuenta comercio, no una cuenta
+  // compartida de la plataforma. `izipayUsername`/`izipayPublicKey` no son secretos (viajan al
+  // frontend igual, la publicKey por diseño), `izipayPasswordEnc`/`izipayHmacKeyEnc` sí, cifrados
+  // igual que las credenciales SUNAT. Sin credenciales completas → el checkout sigue con
+  // confirmación manual (orderValidation), exactamente el comportamiento de antes de esta
+  // integración — ver src/lib/izipay-credentials.ts.
+  izipayUsername    String?  @map("izipay_username")
+  izipayPasswordEnc Bytes?   @map("izipay_password_enc")
+  izipayPublicKey   String?  @map("izipay_public_key")
+  izipayHmacKeyEnc  Bytes?   @map("izipay_hmac_key_enc")
+
   // Matriz de módulos activos para este negocio (inventario, márgenes, validación de
   // órdenes, POS, facturación SUNAT...). Guardado como JSON en vez de una columna booleana por
   // módulo a propósito: agregar un módulo nuevo no debe pedir una migración de schema, solo un

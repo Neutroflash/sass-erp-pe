@@ -5,20 +5,23 @@ import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cart-store";
 import { formatPrice, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { IzipayCheckoutWidget } from "@/components/checkout/IzipayCheckoutWidget";
 
 const inputClass =
   "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
 
-// Sin pasarela de pago integrada todavía (Fase 3+ del roadmap si el negocio la pide) — el pedido
-// se crea PENDING_PAYMENT con el stock reservado, y queda a la espera de que el staff lo confirme
-// manualmente desde /panel/pedidos (mismo criterio que orderValidation). Suficiente para un
-// negocio que cobra por Yape/Plin/efectivo fuera de la plataforma, como el Cliente Piloto.
+// Si el tenant tiene Izipay configurado, el pedido se crea igual (PENDING_PAYMENT + stock
+// reservado) y luego se muestra el widget de pago en línea en vez de navegar directo a la
+// confirmación. Sin Izipay configurado, sigue el flujo de siempre: confirmación manual del staff
+// desde /panel/pedidos (orderValidation) — suficiente para un negocio que cobra por
+// Yape/Plin/efectivo fuera de la plataforma.
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, totalPrice, clear } = useCartStore();
   const [form, setForm] = useState({ customerName: "", customerEmail: "", customerPhone: "", shippingAddress: "" });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [izipayWidget, setIzipayWidget] = useState<{ orderId: string; formToken: string; publicKey: string } | null>(null);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -33,12 +36,28 @@ export default function CheckoutPage() {
       const data = (await res.json()) as { orderId?: string; error?: string };
       if (!res.ok || !data.orderId) throw new Error(data.error ?? "No se pudo crear el pedido");
       clear();
+
+      const tokenRes = await fetch(`/api/orders/${data.orderId}/payment/izipay-token`, { method: "POST" });
+      const tokenData = (await tokenRes.json()) as { configured: boolean; formToken?: string; publicKey?: string };
+      if (tokenRes.ok && tokenData.configured && tokenData.formToken && tokenData.publicKey) {
+        setIzipayWidget({ orderId: data.orderId, formToken: tokenData.formToken, publicKey: tokenData.publicKey });
+        return;
+      }
       router.push(`/pedido/${data.orderId}/confirmacion`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo crear el pedido");
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (izipayWidget) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-8">
+        <h1 className="mb-6 text-2xl font-bold text-zinc-100">Completa tu pago</h1>
+        <IzipayCheckoutWidget {...izipayWidget} />
+      </div>
+    );
   }
 
   if (items.length === 0) {

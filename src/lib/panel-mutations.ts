@@ -148,6 +148,21 @@ export function deleteSunatConfig() {
   return request<{ configured: boolean }>("/api/settings/sunat", { method: "DELETE" });
 }
 
+export interface IzipayConfigInput {
+  username: string;
+  password: string;
+  publicKey: string;
+  hmacKey: string;
+}
+
+export function saveIzipayConfig(data: IzipayConfigInput) {
+  return request<{ configured: boolean; username: string }>("/api/settings/izipay", { method: "PUT", body: JSON.stringify(data) });
+}
+
+export function deleteIzipayConfig() {
+  return request<{ configured: boolean }>("/api/settings/izipay", { method: "DELETE" });
+}
+
 export function claimCustomDomain(domain: string) {
   return request<{ domain: string; txtRecordName: string; txtRecordValue: string }>("/api/settings/custom-domain", {
     method: "POST",
