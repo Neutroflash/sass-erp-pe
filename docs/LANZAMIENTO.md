@@ -27,41 +27,43 @@ No bloquea que el registro de un tenant *funcione* (el envío es best-effort, ve
 
 ## 3. Certificado digital SUNAT acreditado — por cada tenant, no una sola vez
 
-**Esto es lo que cambia respecto a lo que se dijo antes**: no es "un certificado para la plataforma". Cada comprobante se firma y se emite bajo el RUC del negocio que factura — SUNAT valida la firma contra un certificado emitido a **ese RUC específico**, así que **cada tenant que quiera facturación electrónica real necesita comprar y subir su propio certificado**, no uno que la plataforma consiga una vez para todos.
+**Esto es lo que cambia respecto a lo que se dijo antes**: no es "un certificado para la plataforma". Cada comprobante se firma y se emite bajo el RUC del negocio que factura — SUNAT valida la firma contra un certificado emitido a **ese RUC específico**, así que **cada tenant que quiera facturación electrónica real necesita su propio certificado**, no uno que la plataforma consiga una vez para todos.
 
-En la práctica, esto es un paso de **onboarding por negocio**, parecido a pedirle sus datos fiscales — no algo que se resuelve antes del lanzamiento y ya. El pilotazgo actual (Cliente Piloto) usa un certificado de **homologación** (autofirmado, de las credenciales públicas de prueba `MODDATOS` de SUNAT) — sirve contra `e-beta.sunat.gob.pe`, pero SUNAT en producción exige uno emitido por una entidad certificadora acreditada.
+En la práctica, esto es un paso de **onboarding por negocio**, parecido a pedirle sus datos fiscales — no algo que se resuelve antes del lanzamiento y ya. El pilotazgo actual (Cliente Piloto) usa un certificado de **homologación** (autofirmado, de las credenciales públicas de prueba `MODDATOS` de SUNAT) — sirve contra `e-beta.sunat.gob.pe`, pero SUNAT en producción exige uno real.
 
-### Qué es y de dónde sale
+### Opción recomendada: Certificado Digital Tributario (CDT) — gratis, directo de SUNAT
 
-Un certificado digital acreditado ante **INDECOPI** (la autoridad que acredita a las Entidades de Certificación bajo la Infraestructura Oficial de Firma Electrónica — IOFE). El listado oficial y actualizado de entidades acreditadas vive en el **ROPS** (Registro Oficial de Prestadores de Servicio de Certificación Digital) de INDECOPI — es la fuente a consultar en el momento real de compra, no una lista fija acá, porque puede cambiar.
+SUNAT emite su propio certificado gratuito pensado justo para este caso (negocios que arman su propio sistema de emisión, como esta plataforma) — no hace falta pagarle a una entidad certificadora privada salvo que el tenant no califique. Confirmado contra la página oficial de SUNAT (`cpe.sunat.gob.pe/certificado-digital`):
 
-Proveedores mencionados en resultados de búsqueda recientes (verificar acreditación vigente en INDECOPI antes de pagar, no tomar esto como recomendación de ninguno en particular):
-- [Llama.pe](https://llama.pe/certificado-digital-para-factura-electronica-sunat)
-- [Certificados.pe](https://www.certificados.pe/facturacion-electronica.html)
-- [DNP Corp](https://dnp.com.pe/certificados-digitales-peru)
-- Camerfirma Perú
-- RENIEC también emite certificados digitales (para persona natural), aunque el uso más común para facturación electrónica de negocios es vía las entidades privadas de la lista de arriba.
+**Cómo se solicita** (lo hace el propio tenant, con su Clave SOL — no algo que la plataforma pueda tramitar por él):
+1. Entrar a SOL (`sunat.gob.pe`) con RUC + Clave SOL.
+2. `Empresas` → `Comprobantes de Pago` → `Certificado Digital Tributario - CDT`.
+3. `Solicitar Certificado Digital Tributario`, aceptar términos y condiciones, `Enviar Solicitud`.
+4. Ir al Buzón SOL, abrir el mensaje "Emisión de Certificado Digital Tributario".
+5. Crear una clave privada (mínimo 8 caracteres alfanuméricos, se pide dos veces) y descargar `certificado.p12`.
 
-La propia SUNAT tiene una página explicando el requisito: [cpe.sunat.gob.pe/certificado-digital](https://cpe.sunat.gob.pe/certificado-digital).
+**Requisitos de elegibilidad** (entre otros que SUNAT valida al momento de la solicitud):
+- RUC activo y habido, afecto a renta de tercera categoría.
+- Ingresos netos anuales ≤ S/ 1 260 000 (umbral 2019, el que usa la norma vigente) — pensado para MYPE, no para negocios grandes.
+- No ser OSE ni PSE, no tener un CDT vigente, no haber obtenido más de dos CDT antes.
 
-### Requisitos típicos para comprarlo
+**Formato**: `.p12` (PKCS#12) — ya soportado sin cambios: `SunatCredentialsForm.tsx` acepta `.pfx,.p12` y `src/domain/invoicing/sunat/certificate.ts` lo parsea por contenido, no por extensión. El tenant sube ese archivo directo en `/panel/configuracion`.
 
-- Ficha RUC con código QR (no mayor a 30 días de antigüedad).
-- Vigencia de poder del representante legal actualizada (no mayor a 3 meses).
-- Copia de DNI vigente del representante legal.
-- Validación de identidad por videollamada (WhatsApp, según el proveedor).
+**Vigencia y ventana de disponibilidad**: el certificado dura 3 años, pero la norma que autoriza a SUNAT a emitirlos gratis **vence el 31 de diciembre de 2027** — a tener en cuenta para el Cliente Piloto y cualquier tenant que se sume después de esa fecha (en ese punto la opción sería la ruta paga de abajo, salvo que SUNAT extienda el plazo).
 
-### Costo aproximado
+**Aplicabilidad confirmada**: sirve para sistemas de emisión propios (que es exactamente cómo está construida esta plataforma — integración directa, sin PSE/OSE, ver Fase 3 del roadmap), no solo para SEE-SOL.
 
-Varía por vigencia — ejemplo de mercado: ~S/195 por 1 año, ~S/390 por 2 años, ~S/449 por 3 años (montos sin IGV, de un proveedor consultado; cotizar antes de asumir el precio exacto).
+### Alternativa: entidad certificadora privada acreditada — para quien no califica para el CDT
 
-### Formato y cómo entra a la plataforma
+Si un tenant no cumple los requisitos del CDT gratuito (factura más de S/1.26M/año, ya usó sus 2 CDT, ya es OSE/PSE, etc.), la ruta es un certificado de una **Entidad de Certificación acreditada ante INDECOPI** bajo la Infraestructura Oficial de Firma Electrónica (IOFE). El listado oficial vigente vive en el **ROPS** (Registro Oficial de Prestadores de Servicio de Certificación Digital) de INDECOPI — consultarlo al momento real de compra, no fiarse de una lista fija acá porque puede cambiar.
 
-SUNAT/el ecosistema de facturación electrónica peruano trabaja con certificados en formato `.pfx` (PKCS#12) — es exactamente el formato que `/panel/configuracion` (OWNER-only) ya acepta para subir credenciales SUNAT (ver Fase 3 del roadmap, `src/lib/crypto.ts` lo cifra con AES-256-GCM antes de guardarlo, nunca en claro). No hace falta cambiar código: el tenant simplemente sube su certificado real ahí en vez del de homologación.
+Proveedores que aparecen en el mercado (verificar acreditación vigente en INDECOPI antes de pagar, no es una recomendación de ninguno en particular): [Llama.pe](https://llama.pe/certificado-digital-para-factura-electronica-sunat), [Certificados.pe](https://www.certificados.pe/facturacion-electronica.html), [DNP Corp](https://dnp.com.pe/certificados-digitales-peru), Camerfirma Perú.
+
+Requisitos típicos: ficha RUC con QR (<30 días), poder del representante legal vigente (<3 meses), DNI, validación de identidad por videollamada. Costo aproximado: ~S/195 (1 año) a ~S/449 (3 años), sin IGV, de un proveedor consultado — cotizar antes de asumir el precio exacto. Mismo formato `.pfx`/PKCS#12, mismo lugar de carga en la plataforma.
 
 ### Implicación para el negocio (no técnica, pero importante)
 
-Si el objetivo es lanzar con el Cliente Piloto usando facturación electrónica **real** (no homologación), ese tenant específico necesita comprar su certificado antes. Si el lanzamiento puede arrancar con otros módulos (POS/inventario/checkout) mientras el piloto sigue en homologación un tiempo más, la plataforma no bloquea — es una decisión de negocio, no técnica.
+Si el objetivo es lanzar con el Cliente Piloto usando facturación electrónica **real** (no homologación), ese tenant específico necesita tramitar su CDT (gratis, unos minutos en SOL si califica) antes. Si el lanzamiento puede arrancar con otros módulos (POS/inventario/checkout) mientras el piloto sigue en homologación un tiempo más, la plataforma no bloquea — es una decisión de negocio, no técnica.
 
 ## Resumen: ¿qué bloquea el lanzamiento y qué no?
 
@@ -69,4 +71,4 @@ Si el objetivo es lanzar con el Cliente Piloto usando facturación electrónica 
 |---|---|---|
 | Hosting | Sí — no hay dónde correr nada | — |
 | Dominio de envío en Resend | No (el registro funciona igual) | — |
-| Certificado SUNAT acreditado | No (es por tenant) | Sí, para ese tenant específico |
+| Certificado SUNAT (CDT gratis o pago) | No (es por tenant) | Sí, para ese tenant específico |
