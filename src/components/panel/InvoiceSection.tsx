@@ -19,7 +19,6 @@ export interface OrderInvoiceSummary {
   documentType: string;
   documentNumber: string;
   businessName: string | null;
-  pdfUrl: string | null;
   totalAmount: number;
   notes: NoteSummary[];
 }
@@ -47,8 +46,13 @@ export function InvoiceSection({ orderId, invoice }: { orderId: string; invoice:
             {invoice.documentType} {invoice.documentNumber}
             {invoice.businessName ? ` · ${invoice.businessName}` : ""}
           </p>
-          {invoice.pdfUrl && (
-            <a href={invoice.pdfUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm text-yellow-400 hover:underline">
+          {(invoice.type === "BOLETA" || invoice.type === "FACTURA") && invoice.status === "ISSUED" && (
+            <a
+              href={`/api/invoices/${invoice.id}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block text-sm text-yellow-400 hover:underline"
+            >
               Ver PDF
             </a>
           )}

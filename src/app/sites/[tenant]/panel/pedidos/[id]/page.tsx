@@ -44,7 +44,6 @@ export default async function OrderDetailPage({ params }: { params: { id: string
         documentType: order.invoice.documentType,
         documentNumber: order.invoice.documentNumber,
         businessName: order.invoice.businessName,
-        pdfUrl: order.invoice.pdfUrl,
         totalAmount: Number(order.invoice.totalAmount),
         notes: order.invoice.corrections.map((note) => ({
           id: note.id,
