@@ -65,10 +65,21 @@ Requisitos típicos: ficha RUC con QR (<30 días), poder del representante legal
 
 Si el objetivo es lanzar con el Cliente Piloto usando facturación electrónica **real** (no homologación), ese tenant específico necesita tramitar su CDT (gratis, unos minutos en SOL si califica) antes. Si el lanzamiento puede arrancar con otros módulos (POS/inventario/checkout) mientras el piloto sigue en homologación un tiempo más, la plataforma no bloquea — es una decisión de negocio, no técnica.
 
+## 4. Cuenta comercio Izipay — por cada tenant que quiera pago en línea real
+
+Mismo criterio que el certificado SUNAT: **por negocio, no por plataforma**. El código (`src/domain/payments/`, ver Fase 6 del roadmap) ya está construido y verificado en todo lo que no depende de la red de Izipay — falta que cada tenant que quiera cobrar tarjetas/Yape/Plin desde el checkout cree su propia cuenta comercio.
+
+Pasos:
+1. Solicitar una cuenta comercio en Izipay ([developers.izipay.pe](https://developers.izipay.pe/)) — el Back Office Vendedor entrega credenciales de **Test** (sandbox) sin costo para empezar a integrar, y credenciales de **Producción** recién al activar la cuenta comercial real (proceso comercial propio de Izipay, con sus propios requisitos de KYC/afiliación).
+2. Del Back Office Vendedor: `USERNAME` (identificador de tienda), `PASSWORD`, `PUBLIC_KEY`, llave `HMAC-SHA-256` — las cuatro van en `/panel/configuracion` → "Pago en línea (Izipay)".
+3. Con credenciales de **Test** cargadas, hacer una compra de prueba real en el checkout del tenant y confirmar que: el formulario embebido carga (Krypton), el pago de prueba se completa, y la orden pasa a `PAID` automáticamente (sin que el staff la confirme a mano) — esto es lo único que quedó sin poder verificarse en este entorno, exactamente por no tener una cuenta real.
+4. Recién ahí, repetir con credenciales de **Producción** para cobros reales.
+
 ## Resumen: ¿qué bloquea el lanzamiento y qué no?
 
-| Ítem | Bloquea lanzar la plataforma | Bloquea facturación SUNAT real de UN tenant |
+| Ítem | Bloquea lanzar la plataforma | Bloquea la funcionalidad para UN tenant |
 |---|---|---|
 | Hosting | Sí — no hay dónde correr nada | — |
 | Dominio de envío en Resend | No (el registro funciona igual) | — |
-| Certificado SUNAT (CDT gratis o pago) | No (es por tenant) | Sí, para ese tenant específico |
+| Certificado SUNAT (CDT gratis o pago) | No (es por tenant) | Sí, factura electrónica real de ese tenant |
+| Cuenta comercio Izipay | No (es por tenant, y el checkout sigue funcionando con confirmación manual sin ella) | Sí, pago en línea real (tarjetas/Yape/Plin) de ese tenant |
