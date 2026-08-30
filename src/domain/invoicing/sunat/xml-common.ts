@@ -71,6 +71,15 @@ export function buildSignatureBlock(emisorRuc: string, emisorBusinessName: strin
   </cac:Signature>`;
 }
 
+/**
+ * `cbc:AddressTypeCode` ("0000" = domicilio fiscal, el código de establecimiento anexo por
+ * default cuando el negocio no tiene sucursales registradas ante SUNAT aparte) — encontrado como
+ * bug real portando este módulo a flashkings-backend y probando FACTURA en vivo contra
+ * `e-beta.sunat.gob.pe`: BOLETA lo acepta sin este tag, FACTURA lo rechaza con "INFO: 3030 ...
+ * no existe información del código de local anexo del emisor". Solo se había confirmado Boleta en
+ * vivo acá — nunca Factura con un comprador RUC real. Siempre presente ahora (Boleta lo sigue
+ * aceptando igual con el tag de más).
+ */
 export function buildSupplierPartyBlock(emisor: SunatPartyInfo): string {
   return `<cac:AccountingSupplierParty>
     <cac:Party>
@@ -79,11 +88,10 @@ export function buildSupplierPartyBlock(emisor: SunatPartyInfo): string {
       </cac:PartyIdentification>
       <cac:PartyLegalEntity>
         <cbc:RegistrationName>${cdata(emisor.businessName)}</cbc:RegistrationName>
-        ${
-          emisor.address
-            ? `<cac:RegistrationAddress><cac:AddressLine><cbc:Line>${cdata(emisor.address)}</cbc:Line></cac:AddressLine></cac:RegistrationAddress>`
-            : ""
-        }
+        <cac:RegistrationAddress>
+          <cbc:AddressTypeCode>0000</cbc:AddressTypeCode>
+          ${emisor.address ? `<cac:AddressLine><cbc:Line>${cdata(emisor.address)}</cbc:Line></cac:AddressLine>` : ""}
+        </cac:RegistrationAddress>
       </cac:PartyLegalEntity>
     </cac:Party>
   </cac:AccountingSupplierParty>`;

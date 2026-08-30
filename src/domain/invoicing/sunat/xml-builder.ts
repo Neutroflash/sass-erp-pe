@@ -27,6 +27,15 @@ import type { SunatInvoicePayload } from "./types";
  * usó texto sin tildes; el fix real de encoding (declarar UTF-8, que es lo que de verdad se
  * envía — ver el comentario en note-xml-builder.ts) se aplicó después, al encontrarlo con texto
  * acentuado en una nota, y también se verificó en vivo con una Nota de Crédito con tildes reales.
+ *
+ * ✅ **FACTURA confirmada en vivo también** (`ResponseCode "0"`, "La Factura numero F001-5, ha
+ * sido aceptada") — pero recién al portar este módulo a flashkings-backend, no acá: hasta
+ * entonces solo se había probado Boleta en este proyecto. Reveló dos bugs reales que Boleta no
+ * dispara (SUNAT valida Factura más estricto): faltaba `cbc:AddressTypeCode` en
+ * `AccountingSupplierParty` (fix en `buildSupplierPartyBlock`, xml-common.ts) y faltaba
+ * `cac:PaymentTerms`/forma de pago (agregado acá abajo, fijo en "Contado" — coherente con este
+ * proyecto, el pago ya se confirmó antes de poder emitir el comprobante). Ambos fixes portados de
+ * vuelta a este archivo tras confirmarlos en el otro proyecto.
  */
 export function generateInvoiceXML(payload: SunatInvoicePayload): string {
   const { emisor, cliente, lineas, tipoDocumento, serie, numero, fechaEmision } = payload;
@@ -71,6 +80,10 @@ export function generateInvoiceXML(payload: SunatInvoicePayload): string {
   ${buildSignatureBlock(emisor.ruc, emisor.businessName)}
   ${buildSupplierPartyBlock(emisor)}
   ${buildCustomerPartyBlock(cliente)}
+  <cac:PaymentTerms>
+    <cbc:ID>FormaPago</cbc:ID>
+    <cbc:PaymentMeansID>Contado</cbc:PaymentMeansID>
+  </cac:PaymentTerms>
   ${buildTaxTotalBlock(totals)}
   <cac:LegalMonetaryTotal>
     <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(totals.totalGravada)}</cbc:LineExtensionAmount>
