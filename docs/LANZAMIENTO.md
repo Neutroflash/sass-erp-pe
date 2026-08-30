@@ -75,6 +75,15 @@ Pasos:
 3. Con credenciales de **Test** cargadas, hacer una compra de prueba real en el checkout del tenant y confirmar que: el formulario embebido carga (Krypton), el pago de prueba se completa, y la orden pasa a `PAID` automáticamente (sin que el staff la confirme a mano) — esto es lo único que quedó sin poder verificarse en este entorno, exactamente por no tener una cuenta real.
 4. Recién ahí, repetir con credenciales de **Producción** para cobros reales.
 
+## 5. Credenciales OAuth2 de la API GRE — por cada tenant que quiera guías de remisión reales
+
+Distinto de todo lo anterior: no es una cuenta con un proveedor externo, es un trámite dentro del propio SOL del tenant, pero en un menú separado del usuario/clave SOL que ya usa para facturar. El código (`src/domain/dispatch-guides/`, ver Fase 6 del roadmap) está construido y verificado en todo lo que no depende de tener esas credenciales reales — no existe, a diferencia de boletas/facturas, una cuenta pública de pruebas para esta API.
+
+Pasos:
+1. En SOL (`sunat.gob.pe`, con RUC + Clave SOL del tenant): `Empresas` → generar un `client_id`/`client_secret` para la **API GRE** (el mismo RUC que ya usa para facturar, no una cuenta aparte). El manual técnico oficial de SUNAT lo detalla: [Manual_Servicios_GRE.pdf](https://cpe.sunat.gob.pe/sites/default/files/inline-files/Manual_Servicios_GRE.pdf).
+2. Cargar `client_id`/`client_secret` en `/panel/configuracion` → sección "Guías de remisión (opcional)", dentro del mismo formulario de credenciales SUNAT (hay que volver a subir el certificado y el usuario/clave SOL al guardarlo, el form siempre exige el set completo).
+3. Emitir una guía de remisión de prueba real desde el detalle de un pedido y confirmar que: SUNAT recibe el envío (`numTicket`), el worker consulta el ticket y la guía pasa a `ISSUED` — esto es lo único que quedó sin poder verificarse en este entorno, exactamente por no tener credenciales reales.
+
 ## Resumen: ¿qué bloquea el lanzamiento y qué no?
 
 | Ítem | Bloquea lanzar la plataforma | Bloquea la funcionalidad para UN tenant |
@@ -83,3 +92,4 @@ Pasos:
 | Dominio de envío en Resend | No (el registro funciona igual) | — |
 | Certificado SUNAT (CDT gratis o pago) | No (es por tenant) | Sí, factura electrónica real de ese tenant |
 | Cuenta comercio Izipay | No (es por tenant, y el checkout sigue funcionando con confirmación manual sin ella) | Sí, pago en línea real (tarjetas/Yape/Plin) de ese tenant |
+| Credenciales OAuth2 API GRE | No (es por tenant) | Sí, guías de remisión reales de ese tenant |
