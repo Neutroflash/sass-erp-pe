@@ -3,6 +3,7 @@ import { resolveSunatCredentials } from "@/lib/sunat-credentials";
 import { sunatRetryScheduler } from "@/lib/sunat-retry-queue";
 import { sendToSunat } from "./soap-client";
 import { SUNAT_DOCUMENT_TYPE_CODE } from "./types";
+import { notifyInvoiceIssued } from "../notify-invoice-issued";
 
 /**
  * Reintenta un envío que quedó en PENDING_SUNAT — reenvía el `signedXml` ya persistido tal cual
@@ -40,4 +41,8 @@ export async function retryPendingSunatInvoice(prisma: PrismaClient, invoiceId: 
       providerResponse: { responseCode: result.responseCode, description: result.description } as unknown as Prisma.InputJsonValue,
     },
   });
+
+  if (result.accepted) {
+    await notifyInvoiceIssued(prisma, invoice.id);
+  }
 }

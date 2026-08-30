@@ -16,6 +16,7 @@ const FEATURE_LABELS: Record<keyof TenantFeatures, { label: string; hint: string
   orderValidation: { label: "Validación de pedidos", hint: "Confirmar/rechazar pagos manuales (Yape/Plin)." },
   posWeb: { label: "Punto de venta", hint: "Venta presencial desde /panel/pos." },
   sunatInvoicing: { label: "Facturación SUNAT", hint: "Emitir boletas/facturas. Necesita un proveedor (PSE) real conectado — ver docs/ROADMAP.md." },
+  autoSendInvoiceEmail: { label: "Envío automático del comprobante", hint: "Mandar el PDF de la boleta/factura al correo del cliente apenas SUNAT la acepta." },
 };
 
 export interface TenantSettingsData {

@@ -22,6 +22,7 @@ const settingsSchema = z.object({
       profitMargins: z.boolean(),
       orderValidation: z.boolean(),
       posWeb: z.boolean(),
+      autoSendInvoiceEmail: z.boolean(),
     })
     .partial()
     .optional(),

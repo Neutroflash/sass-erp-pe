@@ -39,6 +39,32 @@ export async function sendPasswordResetEmail(params: { to: string; recipientName
   }
 }
 
+export async function sendInvoiceEmail(params: {
+  to: string;
+  recipientName: string;
+  businessName: string;
+  invoiceLabel: string;
+  pdfBuffer: Buffer;
+}): Promise<void> {
+  const resend = getResendClient();
+  const { error } = await resend.emails.send({
+    from: FROM,
+    to: params.to,
+    subject: `Tu comprobante ${params.invoiceLabel} — ${params.businessName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 18px;">Hola, ${params.recipientName}</h1>
+        <p>Gracias por tu compra en <strong>${params.businessName}</strong>. Adjuntamos el comprobante <strong>${params.invoiceLabel}</strong> de tu pedido.</p>
+      </div>
+    `,
+    attachments: [{ filename: `${params.invoiceLabel}.pdf`, content: params.pdfBuffer }],
+  });
+
+  if (error) {
+    throw new Error(`No se pudo enviar el correo: ${error.message}`);
+  }
+}
+
 export async function sendVerificationEmail(params: { to: string; recipientName: string; verifyUrl: string }): Promise<void> {
   const resend = getResendClient();
   const { error } = await resend.emails.send({

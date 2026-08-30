@@ -18,6 +18,11 @@ export interface TenantFeatures {
   orderValidation: boolean;
   /** Punto de venta presencial (Fase 3 del roadmap). */
   posWeb: boolean;
+  /** Enviar automáticamente el PDF del comprobante al correo del cliente apenas SUNAT lo acepta
+   * (BOLETA/FACTURA únicamente — mismo límite que /api/invoices/[id]/pdf, notas de crédito/débito
+   * no tienen plantilla de PDF todavía). No requiere `sunatInvoicing` como precondición explícita
+   * en código porque nunca dispara sin un comprobante ISSUED de por medio. */
+  autoSendInvoiceEmail: boolean;
 }
 
 /**
@@ -34,6 +39,7 @@ export const DEFAULT_TENANT_FEATURES: TenantFeatures = {
   profitMargins: true,
   orderValidation: true,
   posWeb: false,
+  autoSendInvoiceEmail: true,
 };
 
 /**

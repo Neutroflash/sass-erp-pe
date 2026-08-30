@@ -12,6 +12,7 @@ const PILOT_FEATURES: TenantFeatures = {
   profitMargins: true,
   orderValidation: true,
   posWeb: true,
+  autoSendInvoiceEmail: true,
 };
 
 async function main() {

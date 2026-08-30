@@ -5,6 +5,7 @@ import { calculateTaxBreakdown } from "./tax";
 import { OrderNotPaidError, InvoiceAlreadyIssuedError } from "./errors";
 import { reserveInvoiceNumber } from "./counter";
 import { getTenantForInvoicing } from "./tenant-invoicing-info";
+import { notifyInvoiceIssued } from "./notify-invoice-issued";
 
 const SERIES: Record<"BOLETA" | "FACTURA", string> = { BOLETA: "B001", FACTURA: "F001" };
 
@@ -116,6 +117,8 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
   // reintentar la conexión. Nunca se vuelve a firmar ni a reservar un número nuevo en el retry.
   if (result.status === "PENDING_SUNAT") {
     await sunatRetryScheduler.schedule(invoice.id);
+  } else if (result.status === "ISSUED") {
+    await notifyInvoiceIssued(prisma, invoice.id);
   }
 
   return invoice;
