@@ -43,9 +43,40 @@ const platformBillingWorker = new Worker(
 );
 void ensurePlatformBillingRepeatingJob();
 
+// Sin esto, un job que agota sus reintentos (o una excepción no esperada dentro del handler) no
+// deja ningún rastro — con removeOnFail:true en las 3 colas, el job simplemente desaparece. Estos
+// listeners son la única visibilidad real que tiene un operador para notar que algo se rompió.
+for (const [name, worker] of [
+  ["stock-hold", stockHoldWorker],
+  ["sunat-retry", sunatRetryWorker],
+  ["platform-billing", platformBillingWorker],
+] as const) {
+  worker.on("failed", (job, err) => {
+    console.error(`[${name}] job ${job?.id ?? "?"} falló tras ${job?.attemptsMade ?? "?"} intento(s):`, err);
+  });
+  worker.on("error", (err) => {
+    console.error(`[${name}] error de conexión/infraestructura del worker:`, err);
+  });
+}
+
 console.log("Worker escuchando las colas 'stock-hold', 'sunat-retry' y 'platform-billing'...");
 
-process.on("SIGTERM", async () => {
+// Deja que el proceso termine con una traza en logs en vez de morir en silencio — la política de
+// reinicio la impone la plataforma de hosting (Render/systemd/Docker `restart: always`/PM2), acá
+// solo se garantiza que cuando reinicie, quede escrito por qué.
+process.on("unhandledRejection", (reason) => {
+  console.error("[worker] unhandledRejection:", reason);
+  process.exit(1);
+});
+process.on("uncaughtException", (err) => {
+  console.error("[worker] uncaughtException:", err);
+  process.exit(1);
+});
+
+async function shutdown(signal: string) {
+  console.log(`[worker] ${signal} recibido, cerrando workers...`);
   await Promise.all([stockHoldWorker.close(), sunatRetryWorker.close(), platformBillingWorker.close()]);
   process.exit(0);
-});
+}
+process.on("SIGTERM", () => void shutdown("SIGTERM"));
+process.on("SIGINT", () => void shutdown("SIGINT"));

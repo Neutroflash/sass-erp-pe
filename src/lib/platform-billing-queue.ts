@@ -15,7 +15,17 @@ export async function ensurePlatformBillingRepeatingJob(): Promise<void> {
   await platformBillingQueue.add(
     "run-due-cycles",
     {},
-    { jobId: "platform-billing-daily", repeat: { pattern: "0 3 * * *" }, removeOnComplete: true, removeOnFail: true },
+    {
+      jobId: "platform-billing-daily",
+      repeat: { pattern: "0 3 * * *" },
+      removeOnComplete: true,
+      // Cada corrida es idempotente por tenant (ver runBillingCycleForTenant) — un reintento no
+      // duplica cobros, así que si algo transitorio tira la corrida completa, mejor reintentar en
+      // minutos que dejar suscripciones vencidas sin cobrar hasta la corrida del día siguiente.
+      attempts: 3,
+      backoff: { type: "exponential", delay: 60_000 },
+      removeOnFail: true,
+    },
   );
 }
 

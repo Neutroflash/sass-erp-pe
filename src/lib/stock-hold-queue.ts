@@ -19,7 +19,17 @@ export const stockHoldScheduler = {
     await stockHoldQueue.add(
       "expire",
       { orderId },
-      { jobId: orderId, delay: STOCK_HOLD_MINUTES * 60 * 1000, removeOnComplete: true, removeOnFail: true },
+      {
+        jobId: orderId,
+        delay: STOCK_HOLD_MINUTES * 60 * 1000,
+        removeOnComplete: true,
+        // 3 intentos con backoff exponencial (5s, 25s, 125s) antes de darse por vencido — sin esto,
+        // un error transitorio (ej. la DB reinicia justo cuando expira el hold) borra el job para
+        // siempre y la orden queda PENDING_PAYMENT con stock reservado bloqueado sin fin.
+        attempts: 3,
+        backoff: { type: "exponential", delay: 5000 },
+        removeOnFail: true,
+      },
     );
   },
   async cancel(orderId: string): Promise<void> {
