@@ -11,6 +11,7 @@ export interface CurrentTenantUser {
   role: UserRole;
   name: string;
   email: string;
+  emailVerifiedAt: Date | null;
 }
 
 /** Server-only. Lee la cookie de sesión del usuario del tenant actual, si existe y es válida —
@@ -23,7 +24,7 @@ export async function getCurrentTenantUser(): Promise<CurrentTenantUser | null> 
     const claims = tenantUserJwt.verifyAccess(token);
     const user = await prisma.user.findUnique({ where: { id: claims.sub } });
     if (!user) return null;
-    return { id: user.id, tenantId: user.tenantId, role: user.role, name: user.name, email: user.email };
+    return { id: user.id, tenantId: user.tenantId, role: user.role, name: user.name, email: user.email, emailVerifiedAt: user.emailVerifiedAt };
   } catch {
     return null;
   }

@@ -181,6 +181,14 @@ model User {
   passwordResetTokenHash      String?   @map("password_reset_token_hash")
   passwordResetTokenExpiresAt DateTime? @map("password_reset_token_expires_at")
 
+  // Verificación de email — no bloquea el acceso al panel a propósito (ver el comentario en
+  // POST /api/tenants sobre por qué), solo trackea si se confirmó o no. `emailVerifiedAt: null`
+  // en un User creado por invitación de un OWNER (no en el registro) simplemente nunca se llena;
+  // solo el registro inicial (POST /api/tenants) dispara el correo de verificación.
+  emailVerifiedAt                  DateTime? @map("email_verified_at")
+  emailVerificationTokenHash       String?   @map("email_verification_token_hash")
+  emailVerificationTokenExpiresAt  DateTime? @map("email_verification_token_expires_at")
+
   orders         Order[]
   stockMovements StockMovement[]
 

@@ -4,6 +4,10 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { PasswordHasher } from "@/lib/password";
 import { DEFAULT_TENANT_FEATURES } from "@/domain/tenant-features";
+import { generateEmailVerificationToken, hashEmailVerificationToken, emailVerificationTokenExpiresAt } from "@/domain/email-verification";
+import { sendVerificationEmail } from "@/lib/email";
+
+const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "tusaas.pe";
 
 // Solo accesible desde el dominio raíz (tusaas.pe/registro) — nunca desde el subdominio de un
 // tenant, no tendría sentido "registrar un negocio nuevo" desde dentro de uno ya existente.
@@ -39,6 +43,8 @@ export async function POST(req: NextRequest) {
   // cuándo es cliente de la plataforma.
   const now = new Date();
   const oneMonthFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const verificationToken = generateEmailVerificationToken();
+
   const tenant = await prisma.$transaction(async (tx) => {
     const newTenant = await tx.tenant.create({
       data: {
@@ -54,6 +60,8 @@ export async function POST(req: NextRequest) {
         passwordHash,
         name: ownerName,
         role: "OWNER",
+        emailVerificationTokenHash: hashEmailVerificationToken(verificationToken),
+        emailVerificationTokenExpiresAt: emailVerificationTokenExpiresAt(),
       },
     });
     await tx.platformSubscription.create({
@@ -61,6 +69,15 @@ export async function POST(req: NextRequest) {
     });
     return newTenant;
   });
+
+  // Best-effort: si el correo falla (proveedor caído, etc.) el registro ya se completó igual — no
+  // bloquea el acceso al panel, ver el comentario en User.emailVerifiedAt (schema.prisma).
+  try {
+    const verifyUrl = `https://${slug}.${ROOT_DOMAIN}/verificar-email?token=${verificationToken}`;
+    await sendVerificationEmail({ to: email, recipientName: ownerName, verifyUrl });
+  } catch (err) {
+    console.error("[registro] no se pudo enviar el correo de verificación:", err);
+  }
 
   return NextResponse.json({ tenant: { id: tenant.id, slug: tenant.slug } }, { status: 201 });
 }
