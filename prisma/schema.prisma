@@ -67,6 +67,13 @@ model Tenant {
   planTier          PlanTier @default(FREE)
   planProductLimit  Int?     @map("plan_product_limit")
   planInvoiceLimit  Int?     @map("plan_invoice_limit")
+  // Umbral de "stock disponible" (stock - reservedStock) bajo el cual una variante entra en el
+  // resumen diario de stock bajo (ver src/domain/inventory/low-stock.ts) — un solo número global
+  // por negocio, no por SKU, a propósito (YAGNI: si algún tenant necesita umbrales distintos por
+  // producto es una extensión futura, no algo que se necesite desde el día uno). `null` = alertas
+  // desactivadas para este negocio; el default `5` en negocios nuevos es "actívalo salvo que lo
+  // apagues", igual que `autoSendInvoiceEmail`.
+  lowStockThreshold Int?     @default(5) @map("low_stock_threshold")
 
   // Credenciales SUNAT propias del negocio (integración directa, sin PSE/OSE) — ver
   // src/domain/invoicing/sunat/. Todo lo que termina en "Enc" está cifrado con AES-256-GCM

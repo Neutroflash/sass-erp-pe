@@ -3,6 +3,8 @@
 // Flashkings, acá no hay backend en otro dominio, así que no hace falta ninguna URL base ni
 // credentials:include explícito (mismo origen ya envía cookies).
 
+import type { TenantFeatures } from "@/domain/tenant-features";
+
 export interface CreateProductVariantInput {
   sku: string;
   name: string;
@@ -119,13 +121,8 @@ export interface UpdateTenantSettingsInput {
   fiscalAddress?: string;
   logoUrl?: string;
   primaryColor?: string;
-  features?: Partial<{
-    sunatInvoicing: boolean;
-    inventoryManagement: boolean;
-    profitMargins: boolean;
-    orderValidation: boolean;
-    posWeb: boolean;
-  }>;
+  lowStockThreshold?: number | null;
+  features?: Partial<TenantFeatures>;
 }
 
 export function updateTenantSettings(data: UpdateTenantSettingsInput) {

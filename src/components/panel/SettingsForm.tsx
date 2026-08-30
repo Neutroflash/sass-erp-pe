@@ -25,6 +25,7 @@ export interface TenantSettingsData {
   fiscalAddress: string | null;
   logoUrl: string | null;
   primaryColor: string | null;
+  lowStockThreshold: number | null;
   features: TenantFeatures;
 }
 
@@ -35,6 +36,8 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
   const [fiscalAddress, setFiscalAddress] = useState(initial.fiscalAddress ?? "");
   const [logoUrl, setLogoUrl] = useState(initial.logoUrl ?? "");
   const [primaryColor, setPrimaryColor] = useState(initial.primaryColor ?? "#eab308");
+  const [lowStockEnabled, setLowStockEnabled] = useState(initial.lowStockThreshold !== null);
+  const [lowStockThreshold, setLowStockThreshold] = useState(String(initial.lowStockThreshold ?? 5));
   const [features, setFeatures] = useState<TenantFeatures>(initial.features);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +49,15 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
     setError(null);
     setSaved(false);
     try {
-      await updateTenantSettings({ businessName, ruc, fiscalAddress, logoUrl, primaryColor, features });
+      await updateTenantSettings({
+        businessName,
+        ruc,
+        fiscalAddress,
+        logoUrl,
+        primaryColor,
+        lowStockThreshold: lowStockEnabled ? Number(lowStockThreshold) : null,
+        features,
+      });
       setSaved(true);
       router.refresh();
     } catch (err) {
@@ -95,6 +106,32 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
             </div>
           </label>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-yellow-400/80">Aviso de stock bajo</h2>
+        <p className="mb-4 text-xs text-zinc-500">Un correo diario con las variantes cuyo stock disponible cae al umbral o por debajo.</p>
+        <label className="mb-3 flex cursor-pointer items-center gap-3 rounded-lg p-2 hover:bg-white/[0.03]">
+          <input
+            type="checkbox"
+            checked={lowStockEnabled}
+            onChange={(e) => setLowStockEnabled(e.target.checked)}
+            className="h-4 w-4 accent-yellow-400"
+          />
+          <span className="text-sm font-medium text-zinc-100">Activar aviso de stock bajo</span>
+        </label>
+        {lowStockEnabled && (
+          <label className="flex max-w-[200px] flex-col gap-1.5 text-sm text-zinc-300">
+            Umbral (unidades disponibles)
+            <input
+              type="number"
+              min={0}
+              value={lowStockThreshold}
+              onChange={(e) => setLowStockThreshold(e.target.value)}
+              className={inputClass}
+            />
+          </label>
+        )}
       </div>
 
       <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">

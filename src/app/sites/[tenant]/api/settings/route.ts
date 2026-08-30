@@ -15,6 +15,8 @@ const settingsSchema = z.object({
   fiscalAddress: z.preprocess(emptyToUndefined, z.string().optional()),
   logoUrl: z.preprocess(emptyToUndefined, z.string().url().optional()),
   primaryColor: z.preprocess(emptyToUndefined, z.string().regex(/^#[0-9a-fA-F]{6}$/).optional()),
+  // null = desactivar el resumen de stock bajo para este negocio (ver src/domain/inventory/low-stock.ts).
+  lowStockThreshold: z.number().int().min(0).max(100000).nullable().optional(),
   features: z
     .object({
       sunatInvoicing: z.boolean(),
@@ -58,6 +60,7 @@ export async function PATCH(req: NextRequest) {
       fiscalAddress: tenant.fiscalAddress,
       logoUrl: tenant.logoUrl,
       primaryColor: tenant.primaryColor,
+      lowStockThreshold: tenant.lowStockThreshold,
       features: mergedFeatures,
     },
   });

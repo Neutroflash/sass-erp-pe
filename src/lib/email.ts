@@ -65,6 +65,41 @@ export async function sendInvoiceEmail(params: {
   }
 }
 
+export async function sendLowStockDigestEmail(params: {
+  to: string;
+  recipientName: string;
+  businessName: string;
+  items: { sku: string; name: string; available: number; threshold: number }[];
+}): Promise<void> {
+  const resend = getResendClient();
+  const rows = params.items
+    .map(
+      (i) =>
+        `<tr><td style="padding:4px 8px;border-bottom:1px solid #eee;">${i.sku}</td><td style="padding:4px 8px;border-bottom:1px solid #eee;">${i.name}</td><td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:right;">${i.available}</td></tr>`,
+    )
+    .join("");
+  const { error } = await resend.emails.send({
+    from: FROM,
+    to: params.to,
+    subject: `Stock bajo en ${params.businessName} (${params.items.length} producto${params.items.length === 1 ? "" : "s"})`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 18px;">Hola, ${params.recipientName}</h1>
+        <p>Estos productos de <strong>${params.businessName}</strong> están en o por debajo del umbral configurado:</p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <thead><tr><th style="text-align:left;padding:4px 8px;">SKU</th><th style="text-align:left;padding:4px 8px;">Producto</th><th style="text-align:right;padding:4px 8px;">Disponible</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <p style="color: #666; font-size: 12px; margin-top: 16px;">Cambia el umbral o desactiva este aviso desde /panel/configuracion.</p>
+      </div>
+    `,
+  });
+
+  if (error) {
+    throw new Error(`No se pudo enviar el correo: ${error.message}`);
+  }
+}
+
 export async function sendVerificationEmail(params: { to: string; recipientName: string; verifyUrl: string }): Promise<void> {
   const resend = getResendClient();
   const { error } = await resend.emails.send({

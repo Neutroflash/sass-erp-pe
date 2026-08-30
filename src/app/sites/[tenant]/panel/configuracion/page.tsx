@@ -52,6 +52,7 @@ export default async function ConfiguracionPage() {
       fiscalAddress: true,
       logoUrl: true,
       primaryColor: true,
+      lowStockThreshold: true,
       features: true,
       planTier: true,
       planProductLimit: true,
@@ -111,6 +112,7 @@ export default async function ConfiguracionPage() {
           fiscalAddress: row.fiscalAddress,
           logoUrl: row.logoUrl,
           primaryColor: row.primaryColor,
+          lowStockThreshold: row.lowStockThreshold,
           features: parseTenantFeatures(row.features),
         }}
       />
