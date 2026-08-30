@@ -103,6 +103,23 @@ export function issueInvoice(orderId: string, data: IssueInvoiceInput) {
   return request(`/api/orders/${orderId}/invoice`, { method: "POST", body: JSON.stringify(data) });
 }
 
+export interface IssueDispatchGuideInput {
+  destinatario: { documentTypeCode: string; documentNumber: string; name: string };
+  fechaTraslado: string;
+  pesoTotalKg: number;
+  origen: { ubigeo: string; address: string };
+  destino: { ubigeo: string; address: string };
+  vehiculoPlaca: string;
+  chofer: { documentNumber: string; firstName: string; lastName: string; license: string };
+}
+
+export function issueDispatchGuide(orderId: string, data: IssueDispatchGuideInput) {
+  return request<{ dispatchGuide: { id: string; series: string; number: number; numTicket: string } }>(
+    `/api/orders/${orderId}/dispatch-guide`,
+    { method: "POST", body: JSON.stringify(data) },
+  );
+}
+
 export interface IssueCreditDebitNoteInput {
   type: "NOTA_CREDITO" | "NOTA_DEBITO";
   reasonCode: string;
@@ -135,6 +152,8 @@ export interface SunatConfigInput {
   solPassword: string;
   certificateBase64: string;
   certificatePassword: string;
+  greClientId?: string;
+  greClientSecret?: string;
 }
 
 export function saveSunatConfig(data: SunatConfigInput) {

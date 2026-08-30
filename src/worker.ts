@@ -9,6 +9,8 @@ import { PLATFORM_BILLING_QUEUE_NAME, ensurePlatformBillingRepeatingJob } from "
 import { runDueBillingCycles } from "./domain/platform-billing/billing-cycle";
 import { LOW_STOCK_QUEUE_NAME, ensureLowStockRepeatingJob } from "./lib/low-stock-queue";
 import { runLowStockDigest } from "./domain/inventory/low-stock";
+import { GRE_TICKET_QUEUE_NAME, GreTicketJobData } from "./lib/gre-ticket-queue";
+import { resolveDispatchGuideTicket } from "./domain/dispatch-guides/resolve-ticket";
 
 // Proceso separado, siempre corriendo — no comparte proceso con el servidor Next.js. Un solo
 // worker sirve a TODOS los tenants a la vez (cada job ya carga su propio orderId/invoiceId con su
@@ -55,6 +57,15 @@ const lowStockWorker = new Worker(
 );
 void ensureLowStockRepeatingJob();
 
+const greTicketWorker = new Worker<GreTicketJobData>(
+  GRE_TICKET_QUEUE_NAME,
+  async (job) => {
+    await resolveDispatchGuideTicket(prisma, job.data.dispatchGuideId, job.data.attempt);
+    console.log(`[gre-ticket] guía ${job.data.dispatchGuideId}: intento ${job.data.attempt} procesado`);
+  },
+  { connection: redisConnection },
+);
+
 // Sin esto, un job que agota sus reintentos (o una excepción no esperada dentro del handler) no
 // deja ningún rastro — con removeOnFail:true en las 3 colas, el job simplemente desaparece. Estos
 // listeners son la única visibilidad real que tiene un operador para notar que algo se rompió.
@@ -63,6 +74,7 @@ for (const [name, worker] of [
   ["sunat-retry", sunatRetryWorker],
   ["platform-billing", platformBillingWorker],
   ["low-stock", lowStockWorker],
+  ["gre-ticket", greTicketWorker],
 ] as const) {
   worker.on("failed", (job, err) => {
     console.error(`[${name}] job ${job?.id ?? "?"} falló tras ${job?.attemptsMade ?? "?"} intento(s):`, err);
@@ -72,7 +84,7 @@ for (const [name, worker] of [
   });
 }
 
-console.log("Worker escuchando las colas 'stock-hold', 'sunat-retry', 'platform-billing' y 'low-stock'...");
+console.log("Worker escuchando las colas 'stock-hold', 'sunat-retry', 'platform-billing', 'low-stock' y 'gre-ticket'...");
 
 // Deja que el proceso termine con una traza en logs en vez de morir en silencio — la política de
 // reinicio la impone la plataforma de hosting (Render/systemd/Docker `restart: always`/PM2), acá
@@ -88,7 +100,13 @@ process.on("uncaughtException", (err) => {
 
 async function shutdown(signal: string) {
   console.log(`[worker] ${signal} recibido, cerrando workers...`);
-  await Promise.all([stockHoldWorker.close(), sunatRetryWorker.close(), platformBillingWorker.close(), lowStockWorker.close()]);
+  await Promise.all([
+    stockHoldWorker.close(),
+    sunatRetryWorker.close(),
+    platformBillingWorker.close(),
+    lowStockWorker.close(),
+    greTicketWorker.close(),
+  ]);
   process.exit(0);
 }
 process.on("SIGTERM", () => void shutdown("SIGTERM"));

@@ -7,6 +7,7 @@ import { getTenantFeatures } from "@/lib/features";
 import { formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { InvoiceSection, type OrderInvoiceSummary } from "@/components/panel/InvoiceSection";
+import { DispatchGuideSection, type OrderDispatchGuideSummary } from "@/components/panel/DispatchGuideSection";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
       include: {
         items: { include: { variant: { select: { sku: true, name: true } } } },
         invoice: { include: { corrections: true } },
+        dispatchGuide: true,
       },
     }),
     getTenantFeatures(tenant.id),
@@ -37,7 +39,8 @@ export default async function OrderDetailPage({ params }: { params: { id: string
   const invoiceSummary: OrderInvoiceSummary | null = order.invoice
     ? {
         id: order.invoice.id,
-        type: order.invoice.type,
+        // Invoice.type nunca es GUIA_REMISION en la práctica — ver el comentario en retry.ts.
+        type: order.invoice.type as OrderInvoiceSummary["type"],
         status: order.invoice.status,
         series: order.invoice.series,
         number: order.invoice.number,
@@ -53,6 +56,15 @@ export default async function OrderDetailPage({ params }: { params: { id: string
           number: note.number,
           totalAmount: Number(note.totalAmount),
         })),
+      }
+    : null;
+
+  const dispatchGuideSummary: OrderDispatchGuideSummary | null = order.dispatchGuide
+    ? {
+        id: order.dispatchGuide.id,
+        series: order.dispatchGuide.series,
+        number: order.dispatchGuide.number,
+        status: order.dispatchGuide.status,
       }
     : null;
 
@@ -100,6 +112,9 @@ export default async function OrderDetailPage({ params }: { params: { id: string
       </div>
 
       {features.sunatInvoicing && order.status === "PAID" && <InvoiceSection orderId={order.id} invoice={invoiceSummary} />}
+      {features.sunatInvoicing && order.status === "PAID" && (
+        <DispatchGuideSection orderId={order.id} dispatchGuide={dispatchGuideSummary} />
+      )}
     </div>
   );
 }

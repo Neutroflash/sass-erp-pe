@@ -88,6 +88,14 @@ model Tenant {
   sunatCertificateEnc          Bytes?           @map("sunat_certificate_enc") // .pfx/.p12 completo, cifrado
   sunatCertificatePasswordEnc  Bytes?           @map("sunat_certificate_password_enc")
 
+  // Credenciales OAuth2 de la API GRE (guías de remisión electrónica) — API REST separada de la
+  // SOAP de boletas/facturas/notas, con su propio par client_id/client_secret generado en un menú
+  // aparte de SOL (no reemplaza sunatSolUser/sunatSolPasswordEnc: el login OAuth2 sigue pidiendo
+  // usuario+clave SOL, esto es una capa extra de credenciales encima). El certificado digital para
+  // firmar el XML es el mismo (sunatCertificateEnc) — la firma XAdES-BES no depende del transporte.
+  sunatGreClientId        String? @map("sunat_gre_client_id")
+  sunatGreClientSecretEnc Bytes?  @map("sunat_gre_client_secret_enc")
+
   // Credenciales de Izipay (pasarela de pago real — tarjetas + Yape + Plin), propias de cada
   // negocio, mismo criterio que SUNAT: cada tenant tiene su propia cuenta comercio, no una cuenta
   // compartida de la plataforma. `izipayUsername`/`izipayPublicKey` no son secretos (viajan al
@@ -117,6 +125,7 @@ model Tenant {
   orders         Order[]
   invoices       Invoice[]
   invoiceCounters InvoiceCounter[]
+  dispatchGuides DispatchGuide[]
   stockMovements StockMovement[]
   platformSubscription PlatformSubscription?
 
@@ -275,9 +284,10 @@ model ProductVariant {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  stockMovements StockMovement[]
-  orderItems     OrderItem[]
-  invoiceItems   InvoiceItem[]
+  stockMovements     StockMovement[]
+  orderItems         OrderItem[]
+  invoiceItems       InvoiceItem[]
+  dispatchGuideItems DispatchGuideItem[]
 
   @@unique([tenantId, sku]) // el SKU es único DENTRO de un negocio, no entre negocios distintos
   @@index([tenantId])
@@ -358,8 +368,9 @@ model Order {
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
 
-  items   OrderItem[]
-  invoice Invoice?
+  items         OrderItem[]
+  invoice       Invoice?
+  dispatchGuide DispatchGuide?
 
   @@index([tenantId])
   @@index([tenantId, status])
@@ -386,6 +397,16 @@ enum InvoiceType {
   FACTURA
   NOTA_CREDITO
   NOTA_DEBITO
+  // Reutiliza InvoiceCounter (misma clave compuesta tenantId+type+series) para la guía de
+  // remisión aunque NO es un Invoice — el correlativo es igual de "reservar antes de enviar, nunca
+  // reutilizar si falla" en los dos casos, no había motivo para reinventar ese mecanismo.
+  GUIA_REMISION
+}
+
+enum DispatchGuideStatus {
+  PENDING_SUNAT // ticket enviado a la API GRE, esperando resultado (envío asíncrono, no síncrono como boletas/facturas)
+  ISSUED
+  FAILED
 }
 
 enum InvoiceStatus {
@@ -475,4 +496,66 @@ model InvoiceItem {
 
   @@index([invoiceId])
   @@map("invoice_items")
+}
+
+// Guía de Remisión Remitente — v1 solo "transporte privado" (el propio remitente traslada con su
+// vehículo, sin transportista contratado) y motivo "01" (venta), que es el caso que corresponde a
+// un Order ya pagado que hay que despachar. Transporte público (transportista contratado con RUC
+// propio + registro MTC) y otros motivos de traslado quedan fuera de este alcance a propósito —
+// ver domain/dispatch-guides/xml-builder.ts.
+model DispatchGuide {
+  id       String              @id @default(uuid())
+  tenantId String              @map("tenant_id")
+  tenant   Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderId  String?             @unique @map("order_id")
+  order    Order?              @relation(fields: [orderId], references: [id])
+  series   String // ej. "T001" — prefijo distinto de boletas/facturas (B.../F...) por convención SUNAT
+  number   Int
+  status   DispatchGuideStatus @default(PENDING_SUNAT)
+
+  transferReasonCode String   @map("transfer_reason_code") // catálogo 20 — "01" (venta) en v1
+  transferDate        DateTime @map("transfer_date")
+  grossWeightKg        Decimal  @map("gross_weight_kg") @db.Decimal(10, 3)
+
+  originUbigeo        String @map("origin_ubigeo") // código INEI de 6 dígitos
+  originAddress        String @map("origin_address")
+  destinationUbigeo   String @map("destination_ubigeo")
+  destinationAddress  String @map("destination_address")
+
+  recipientDocType   String @map("recipient_doc_type") // catálogo 06
+  recipientDocNumber String @map("recipient_doc_number")
+  recipientName      String @map("recipient_name")
+
+  vehiclePlate    String @map("vehicle_plate")
+  driverDocNumber String @map("driver_doc_number")
+  driverFirstName String @map("driver_first_name")
+  driverLastName  String @map("driver_last_name")
+  driverLicense   String @map("driver_license")
+
+  // Envío asíncrono (a diferencia de boletas/facturas): SUNAT devuelve un ticket, no una
+  // aceptación/rechazo inmediata — se consulta después (ver lib/gre-ticket-queue.ts).
+  numTicket         String?   @map("num_ticket")
+  sunatResponseCode String?   @map("sunat_response_code")
+  sunatDescription  String?   @map("sunat_description")
+  signedXml         String?   @db.Text @map("signed_xml")
+  issuedAt          DateTime? @map("issued_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  items DispatchGuideItem[]
+
+  @@index([tenantId])
+  @@map("dispatch_guides")
+}
+
+model DispatchGuideItem {
+  id              String          @id @default(uuid())
+  dispatchGuideId String          @map("dispatch_guide_id")
+  dispatchGuide   DispatchGuide   @relation(fields: [dispatchGuideId], references: [id], onDelete: Cascade)
+  variantId       String?         @map("variant_id")
+  variant         ProductVariant? @relation(fields: [variantId], references: [id])
+  description     String
+  quantity        Int
+  unitCode        String          @default("NIU") @map("unit_code") // catálogo 03 (unidades de medida) — NIU = unidad
+
+  @@map("dispatch_guide_items")
 }

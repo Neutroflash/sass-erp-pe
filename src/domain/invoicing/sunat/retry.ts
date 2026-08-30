@@ -18,7 +18,10 @@ export async function retryPendingSunatInvoice(prisma: PrismaClient, invoiceId: 
   const credentials = await resolveSunatCredentials(prisma, invoice.tenantId);
   if (!credentials) return; // el tenant borró sus credenciales entre medio — nada que reintentar
 
-  const fileName = `${credentials.ruc}-${SUNAT_DOCUMENT_TYPE_CODE[invoice.type]}-${invoice.series}-${invoice.number}`;
+  // invoice.type nunca es GUIA_REMISION acá — ese valor de InvoiceType solo existe para
+  // reutilizar la clave del InvoiceCounter (ver el comentario en schema.prisma), nunca se crea
+  // una fila Invoice con ese type (las guías son su propio modelo, DispatchGuide).
+  const fileName = `${credentials.ruc}-${SUNAT_DOCUMENT_TYPE_CODE[invoice.type as "BOLETA" | "FACTURA" | "NOTA_CREDITO" | "NOTA_DEBITO"]}-${invoice.series}-${invoice.number}`;
   const result = await sendToSunat(invoice.signedXml, credentials, fileName);
 
   if (result.transient) {

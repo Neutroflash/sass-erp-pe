@@ -61,6 +61,8 @@ export default async function ConfiguracionPage() {
       sunatEnvironment: true,
       sunatSolUser: true,
       sunatCertificateEnc: true,
+      sunatGreClientId: true,
+      sunatGreClientSecretEnc: true,
       izipayUsername: true,
       izipayPasswordEnc: true,
       izipayPublicKey: true,
@@ -127,6 +129,7 @@ export default async function ConfiguracionPage() {
           configured: Boolean(row.sunatSolUser && row.sunatCertificateEnc),
           environment: row.sunatEnvironment,
           solUser: row.sunatSolUser,
+          greConfigured: Boolean(row.sunatGreClientId && row.sunatGreClientSecretEnc),
         }}
       />
 

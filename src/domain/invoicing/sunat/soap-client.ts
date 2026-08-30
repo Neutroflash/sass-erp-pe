@@ -9,7 +9,9 @@ export const SUNAT_ENDPOINTS = {
   PRODUCCION: "https://e-factura.sunat.gob.pe/ol-ti-itcpe/billService",
 } as const;
 
-async function zipXml(fileName: string, xmlContent: string): Promise<Buffer> {
+// Exportado: también lo usa gre-client.ts (guías de remisión) — mismo empaquetado ZIP que exige
+// SUNAT tanto en el envío SOAP de comprobantes como en el REST de la API GRE.
+export async function zipXml(fileName: string, xmlContent: string): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const archive = archiver("zip", { zlib: { level: 9 } });
     const chunks: Buffer[] = [];

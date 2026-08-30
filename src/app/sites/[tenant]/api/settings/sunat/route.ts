@@ -11,6 +11,10 @@ const configSchema = z.object({
   solPassword: z.string().min(1),
   certificateBase64: z.string().min(1),
   certificatePassword: z.string().min(1),
+  // Opcional: solo hace falta si el negocio también va a emitir guías de remisión (API GRE,
+  // OAuth2 — credenciales separadas del usuario/clave SOL, generadas en un menú aparte de SOL).
+  greClientId: z.string().trim().min(1).optional(),
+  greClientSecret: z.string().min(1).optional(),
 });
 
 // OWNER-only: RUC, clave SOL y certificado digital son la identidad tributaria del negocio ante
@@ -21,7 +25,7 @@ export async function GET() {
 
   const tenant = await prisma.tenant.findUniqueOrThrow({
     where: { id: auth.tenantId },
-    select: { sunatEnvironment: true, sunatSolUser: true, sunatCertificateEnc: true },
+    select: { sunatEnvironment: true, sunatSolUser: true, sunatCertificateEnc: true, sunatGreClientId: true, sunatGreClientSecretEnc: true },
   });
 
   return NextResponse.json({
@@ -30,6 +34,7 @@ export async function GET() {
     configured: Boolean(tenant.sunatSolUser && tenant.sunatCertificateEnc),
     environment: tenant.sunatEnvironment,
     solUser: tenant.sunatSolUser,
+    greConfigured: Boolean(tenant.sunatGreClientId && tenant.sunatGreClientSecretEnc),
   });
 }
 
@@ -41,7 +46,7 @@ export async function PUT(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Datos de entrada inválidos", details: parsed.error.flatten() }, { status: 400 });
   }
-  const { environment, solUser, solPassword, certificateBase64, certificatePassword } = parsed.data;
+  const { environment, solUser, solPassword, certificateBase64, certificatePassword, greClientId, greClientSecret } = parsed.data;
 
   let pfxBuffer: Buffer;
   try {
@@ -67,6 +72,9 @@ export async function PUT(req: NextRequest) {
       sunatSolPasswordEnc: encryptSecretString(solPassword),
       sunatCertificateEnc: encryptSecret(pfxBuffer),
       sunatCertificatePasswordEnc: encryptSecretString(certificatePassword),
+      ...(greClientId && greClientSecret
+        ? { sunatGreClientId: greClientId, sunatGreClientSecretEnc: encryptSecretString(greClientSecret) }
+        : {}),
     },
   });
 
@@ -84,6 +92,8 @@ export async function DELETE() {
       sunatSolPasswordEnc: null,
       sunatCertificateEnc: null,
       sunatCertificatePasswordEnc: null,
+      sunatGreClientId: null,
+      sunatGreClientSecretEnc: null,
     },
   });
 

@@ -28,6 +28,7 @@ export interface SunatConfigStatus {
   configured: boolean;
   environment: "BETA" | "PRODUCCION";
   solUser: string | null;
+  greConfigured: boolean;
 }
 
 // Integración directa con SUNAT (sin PSE/OSE) — ver domain/invoicing/sunat/. El certificado y las
@@ -41,6 +42,8 @@ export function SunatCredentialsForm({ initial }: { initial: SunatConfigStatus }
   const [solPassword, setSolPassword] = useState("");
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [certificatePassword, setCertificatePassword] = useState("");
+  const [greClientId, setGreClientId] = useState("");
+  const [greClientSecret, setGreClientSecret] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -56,11 +59,20 @@ export function SunatCredentialsForm({ initial }: { initial: SunatConfigStatus }
     setSaved(false);
     try {
       const certificateBase64 = await fileToBase64(certificateFile);
-      await saveSunatConfig({ environment, solUser, solPassword, certificateBase64, certificatePassword });
+      await saveSunatConfig({
+        environment,
+        solUser,
+        solPassword,
+        certificateBase64,
+        certificatePassword,
+        greClientId: greClientId || undefined,
+        greClientSecret: greClientSecret || undefined,
+      });
       setSaved(true);
       setSolPassword("");
       setCertificatePassword("");
       setCertificateFile(null);
+      setGreClientSecret("");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo guardar la configuración");
@@ -135,6 +147,28 @@ export function SunatCredentialsForm({ initial }: { initial: SunatConfigStatus }
             Contraseña del certificado
             <input required type="password" value={certificatePassword} onChange={(e) => setCertificatePassword(e.target.value)} className={inputClass} />
           </label>
+        </div>
+
+        <div className="mt-2 border-t border-zinc-800/60 pt-3">
+          <div className="mb-1 flex items-center gap-2">
+            <label className="text-xs uppercase tracking-wide text-zinc-500">Guías de remisión (opcional)</label>
+            {initial.greConfigured && <Badge variant="success">Configurado</Badge>}
+          </div>
+          <p className="mb-3 text-xs text-zinc-500">
+            Solo si vas a emitir guías de remisión — necesita un <strong className="text-zinc-400">client_id</strong>/
+            <strong className="text-zinc-400">client_secret</strong> generados en un menú aparte de SOL (Empresas → API GRE). Al
+            guardar esto, también hay que re-ingresar el usuario/clave SOL y volver a subir el certificado de arriba.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+              Client ID
+              <input value={greClientId} onChange={(e) => setGreClientId(e.target.value)} className={inputClass} />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+              Client Secret
+              <input type="password" value={greClientSecret} onChange={(e) => setGreClientSecret(e.target.value)} className={inputClass} />
+            </label>
+          </div>
         </div>
 
         {error && <span className="text-sm text-destructive">{error}</span>}
