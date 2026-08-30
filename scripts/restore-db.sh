@@ -29,5 +29,15 @@ if [ "$confirm" != "restaurar" ]; then
   exit 1
 fi
 
-gunzip -c "$FILE" | psql "$DATABASE_URL"
+# Mismo fallback que backup-db.sh: en dev local no siempre hay psql en el host.
+if command -v psql >/dev/null 2>&1; then
+  gunzip -c "$FILE" | psql "$DATABASE_URL"
+elif docker ps --format '{{.Names}}' | grep -q '^flashkings-postgres$'; then
+  DB_NAME="$(echo "$DATABASE_URL" | sed -E 's#.*/([^?]+).*#\1#')"
+  gunzip -c "$FILE" | docker exec -i -e PGPASSWORD=postgres flashkings-postgres psql -U postgres -d "$DB_NAME"
+else
+  echo "No se encontró psql (ni local ni el contenedor flashkings-postgres)" >&2
+  exit 1
+fi
+
 echo "Restauración completa desde $FILE"
