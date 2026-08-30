@@ -3,12 +3,16 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { generateResetToken, hashResetToken, resetTokenExpiresAt } from "@/domain/password-reset";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({ email: z.string().email() });
 
 // Mismo criterio que el de tenant: siempre 200 con el mismo mensaje, nunca revela si el correo
 // pertenece a un PlatformAdmin real.
 export async function POST(req: NextRequest) {
+  const limited = await enforceRateLimit(req, { scope: "admin-forgot-password", limit: 5, windowSeconds: 600 });
+  if (limited) return limited;
+
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success) {
     return NextResponse.json({ error: "Datos de entrada inválidos" }, { status: 400 });

@@ -6,6 +6,7 @@ import { PasswordHasher } from "@/lib/password";
 import { DEFAULT_TENANT_FEATURES } from "@/domain/tenant-features";
 import { generateEmailVerificationToken, hashEmailVerificationToken, emailVerificationTokenExpiresAt } from "@/domain/email-verification";
 import { sendVerificationEmail } from "@/lib/email";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "tusaas.pe";
 
@@ -24,6 +25,9 @@ const registerSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const limited = await enforceRateLimit(req, { scope: "registro", limit: 5, windowSeconds: 3600 });
+  if (limited) return limited;
+
   const parsed = registerSchema.safeParse(await req.json());
   if (!parsed.success) {
     return NextResponse.json({ error: "Datos de entrada inválidos", details: parsed.error.flatten() }, { status: 400 });

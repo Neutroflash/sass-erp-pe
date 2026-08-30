@@ -4,12 +4,16 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { generateResetToken, hashResetToken, resetTokenExpiresAt } from "@/domain/password-reset";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({ email: z.string().email() });
 
 // Siempre responde 200 con el mismo mensaje exista o no ese correo en este tenant — nunca revelar
 // si un email está registrado es lo que evita que este endpoint sirva para enumerar usuarios.
 export async function POST(req: NextRequest) {
+  const limited = await enforceRateLimit(req, { scope: "forgot-password", limit: 5, windowSeconds: 600 });
+  if (limited) return limited;
+
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success) {
     return NextResponse.json({ error: "Datos de entrada inválidos" }, { status: 400 });

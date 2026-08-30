@@ -6,6 +6,7 @@ import { getCurrentTenantUser } from "@/lib/auth";
 import { createOrderWithStockReservation } from "@/domain/orders/reserve-stock";
 import { InsufficientStockError } from "@/domain/orders/errors";
 import { stockHoldScheduler } from "@/lib/stock-hold-queue";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 const cartItemSchema = z.object({ variantId: z.string().uuid(), quantity: z.number().int().positive() });
 
@@ -20,6 +21,9 @@ const createOrderSchema = z.object({
 // Público — checkout de invitado o autenticado (getCurrentTenantUser() nunca lanza, así que un
 // visitante sin sesión simplemente crea la orden con userId: null).
 export async function POST(req: NextRequest) {
+  const limited = await enforceRateLimit(req, { scope: "checkout", limit: 20, windowSeconds: 600 });
+  if (limited) return limited;
+
   const tenant = await getCurrentTenant();
   const parsed = createOrderSchema.safeParse(await req.json());
   if (!parsed.success) {

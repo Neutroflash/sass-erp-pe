@@ -3,6 +3,7 @@ import { z } from "zod";
 import { authenticatePlatformAdmin } from "@/lib/auth";
 import { platformAdminJwt } from "@/lib/jwt";
 import { setPlatformAdminSessionCookies } from "@/lib/session-cookies";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -13,6 +14,9 @@ const loginSchema = z.object({
 // un usuario de tenant (ver session-cookies.ts / jwt.ts): un PlatformAdmin nunca debería poder
 // "colarse" como usuario de un negocio ni viceversa.
 export async function POST(req: NextRequest) {
+  const limited = await enforceRateLimit(req, { scope: "admin-login", limit: 8, windowSeconds: 600 });
+  if (limited) return limited;
+
   const parsed = loginSchema.safeParse(await req.json());
   if (!parsed.success) {
     return NextResponse.json({ error: "Datos de entrada inválidos" }, { status: 400 });

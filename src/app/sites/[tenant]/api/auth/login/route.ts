@@ -4,6 +4,7 @@ import { authenticateTenantUser } from "@/lib/auth";
 import { tenantUserJwt } from "@/lib/jwt";
 import { setTenantSessionCookies } from "@/lib/session-cookies";
 import { getCurrentTenant } from "@/lib/tenant-context";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -14,6 +15,9 @@ const loginSchema = z.object({
 // (ver src/middleware.ts), así que getCurrentTenant() resuelve el tenant correcto desde el
 // header que dejó, sin que el body del request necesite mandar ningún tenantId.
 export async function POST(req: NextRequest) {
+  const limited = await enforceRateLimit(req, { scope: "tenant-login", limit: 8, windowSeconds: 600 });
+  if (limited) return limited;
+
   const parsed = loginSchema.safeParse(await req.json());
   if (!parsed.success) {
     return NextResponse.json({ error: "Datos de entrada inválidos" }, { status: 400 });
