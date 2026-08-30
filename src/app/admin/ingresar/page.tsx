@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 const inputClass =
@@ -55,6 +56,9 @@ export default function AdminLoginPage() {
           {loading ? "Ingresando..." : "Ingresar"}
         </Button>
       </form>
+      <Link href="/olvide-password" className="mt-4 text-sm text-zinc-500 hover:text-zinc-300">
+        ¿Olvidaste tu contraseña?
+      </Link>
     </div>
   );
 }

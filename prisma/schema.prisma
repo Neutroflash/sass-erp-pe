@@ -33,6 +33,11 @@ model PlatformAdmin {
   name         String
   createdAt    DateTime @default(now()) @map("created_at")
 
+  // Recuperación de contraseña — se guarda el HASH del token (nunca el token en texto plano, ver
+  // src/domain/password-reset.ts), con expiración corta. Mismo patrón en User más abajo.
+  passwordResetTokenHash      String?   @map("password_reset_token_hash")
+  passwordResetTokenExpiresAt DateTime? @map("password_reset_token_expires_at")
+
   @@map("platform_admins")
 }
 
@@ -172,6 +177,9 @@ model User {
   role         UserRole @default(CUSTOMER)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
+
+  passwordResetTokenHash      String?   @map("password_reset_token_hash")
+  passwordResetTokenExpiresAt DateTime? @map("password_reset_token_expires_at")
 
   orders         Order[]
   stockMovements StockMovement[]
