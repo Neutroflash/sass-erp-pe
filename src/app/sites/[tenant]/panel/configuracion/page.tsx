@@ -55,6 +55,8 @@ export default async function ConfiguracionPage() {
       coverImageUrl: true,
       whatsappNumber: true,
       primaryColor: true,
+      termsAndConditions: true,
+      privacyPolicy: true,
       lowStockThreshold: true,
       features: true,
       planTier: true,
@@ -123,6 +125,8 @@ export default async function ConfiguracionPage() {
           coverImageUrl: row.coverImageUrl,
           whatsappNumber: row.whatsappNumber,
           primaryColor: row.primaryColor,
+          termsAndConditions: row.termsAndConditions,
+          privacyPolicy: row.privacyPolicy,
           lowStockThreshold: row.lowStockThreshold,
           features: parseTenantFeatures(row.features),
         }}

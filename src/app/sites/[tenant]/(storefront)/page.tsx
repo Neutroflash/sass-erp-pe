@@ -1,7 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
-import { requirePublicStorefront } from "@/lib/feature-guards";
 import { toPublicProduct } from "@/domain/inventory/product";
 import { HeroSection } from "@/components/storefront/HeroSection";
 import { CatalogGrid } from "@/components/storefront/CatalogGrid";
@@ -19,11 +18,10 @@ const productInclude = { variants: true, images: true } satisfies Prisma.Product
 // "qué tenant es este" es siempre getCurrentTenant() (header inyectado por el middleware), nunca
 // el segmento de URL crudo — así un dominio propio (sin slug real en la URL) funciona igual.
 //
-// El Navbar/Footer viven en (storefront)/layout.tsx, no acá — esta página solo aporta el Hero y
-// los destacados.
+// El Navbar/Footer y el guard de publicStorefront viven en (storefront)/layout.tsx, no acá — esta
+// página solo aporta el Hero y los destacados.
 export default async function TenantStorefrontPage() {
   const tenant = await getCurrentTenant();
-  await requirePublicStorefront(tenant.id);
 
   const featured = await prisma.product.findMany({
     where: { tenantId: tenant.id, isFeatured: true },

@@ -60,6 +60,21 @@ export async function Footer({ tenantId, businessName, izipayEnabled, fiscalAddr
                 Catálogo completo
               </Link>
             </li>
+            <li>
+              <Link href="/libro-de-reclamaciones" className="hover:text-primary">
+                Libro de Reclamaciones
+              </Link>
+            </li>
+            <li>
+              <Link href="/terminos-y-condiciones" className="hover:text-primary">
+                Términos y Condiciones
+              </Link>
+            </li>
+            <li>
+              <Link href="/politica-de-privacidad" className="hover:text-primary">
+                Política de Privacidad
+              </Link>
+            </li>
             {whatsappNumber && (
               <li>
                 <a

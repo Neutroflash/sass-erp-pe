@@ -140,6 +140,8 @@ export interface UpdateTenantSettingsInput {
   coverImageUrl?: string;
   whatsappNumber?: string;
   primaryColor?: string;
+  termsAndConditions?: string;
+  privacyPolicy?: string;
   lowStockThreshold?: number | null;
   features?: Partial<TenantFeatures>;
 }

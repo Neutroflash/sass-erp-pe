@@ -100,6 +100,63 @@ export async function sendLowStockDigestEmail(params: {
   }
 }
 
+/** Constancia de recepción del reclamo/queja — el consumidor debe poder demostrar que lo presentó. */
+export async function sendComplaintReceiptEmail(params: {
+  to: string;
+  recipientName: string;
+  businessName: string;
+  folio: number;
+  type: "RECLAMO" | "QUEJA";
+}): Promise<void> {
+  const resend = getResendClient();
+  const label = params.type === "RECLAMO" ? "Reclamo" : "Queja";
+  const { error } = await resend.emails.send({
+    from: FROM,
+    to: params.to,
+    subject: `Constancia de ${label.toLowerCase()} N° ${params.folio} — ${params.businessName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 18px;">Hola, ${params.recipientName}</h1>
+        <p>Recibimos tu <strong>${label.toLowerCase()} N° ${params.folio}</strong> en el Libro de Reclamaciones de <strong>${params.businessName}</strong>.</p>
+        <p>Tienes derecho a una respuesta dentro de los plazos que establece el Código de Protección y Defensa del Consumidor. Conserva este correo como constancia de tu presentación.</p>
+      </div>
+    `,
+  });
+  if (error) {
+    throw new Error(`No se pudo enviar el correo: ${error.message}`);
+  }
+}
+
+/** Aviso al negocio de que llegó un reclamo/queja nuevo — para que puedan responder a tiempo. */
+export async function sendComplaintNotificationEmail(params: {
+  to: string;
+  recipientName: string;
+  businessName: string;
+  folio: number;
+  type: "RECLAMO" | "QUEJA";
+  consumerName: string;
+  detail: string;
+}): Promise<void> {
+  const resend = getResendClient();
+  const label = params.type === "RECLAMO" ? "Reclamo" : "Queja";
+  const { error } = await resend.emails.send({
+    from: FROM,
+    to: params.to,
+    subject: `Nuevo ${label.toLowerCase()} N° ${params.folio} en ${params.businessName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 18px;">Hola, ${params.recipientName}</h1>
+        <p><strong>${params.consumerName}</strong> presentó un ${label.toLowerCase()} (N° ${params.folio}):</p>
+        <p style="background:#f4f4f5;border-radius:8px;padding:12px;color:#333;">${params.detail}</p>
+        <p style="color: #666; font-size: 12px;">Respóndelo desde /panel/reclamos.</p>
+      </div>
+    `,
+  });
+  if (error) {
+    throw new Error(`No se pudo enviar el correo: ${error.message}`);
+  }
+}
+
 export async function sendVerificationEmail(params: { to: string; recipientName: string; verifyUrl: string }): Promise<void> {
   const resend = getResendClient();
   const { error } = await resend.emails.send({

@@ -6,6 +6,10 @@ import type { TenantFeatures } from "@/domain/tenant-features";
 import { updateTenantSettings } from "@/lib/panel-mutations";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { defaultTermsAndConditions, defaultPrivacyPolicy } from "@/domain/legal/templates";
+
+const textareaClass =
+  "rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50 resize-y";
 
 const inputClass =
   "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
@@ -31,6 +35,8 @@ export interface TenantSettingsData {
   coverImageUrl: string | null;
   whatsappNumber: string | null;
   primaryColor: string | null;
+  termsAndConditions: string | null;
+  privacyPolicy: string | null;
   lowStockThreshold: number | null;
   features: TenantFeatures;
 }
@@ -44,6 +50,8 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
   const [coverImageUrl, setCoverImageUrl] = useState(initial.coverImageUrl ?? "");
   const [whatsappNumber, setWhatsappNumber] = useState(initial.whatsappNumber ?? "");
   const [primaryColor, setPrimaryColor] = useState(initial.primaryColor ?? "#eab308");
+  const [termsAndConditions, setTermsAndConditions] = useState(initial.termsAndConditions ?? "");
+  const [privacyPolicy, setPrivacyPolicy] = useState(initial.privacyPolicy ?? "");
   const [lowStockEnabled, setLowStockEnabled] = useState(initial.lowStockThreshold !== null);
   const [lowStockThreshold, setLowStockThreshold] = useState(String(initial.lowStockThreshold ?? 5));
   const [features, setFeatures] = useState<TenantFeatures>(initial.features);
@@ -65,6 +73,8 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
         coverImageUrl,
         whatsappNumber,
         primaryColor,
+        termsAndConditions,
+        privacyPolicy,
         lowStockThreshold: lowStockEnabled ? Number(lowStockThreshold) : null,
         features,
       });
@@ -181,6 +191,36 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
               </span>
             </label>
           ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-primary/80">Legal</h2>
+        <p className="mb-4 text-xs text-zinc-500">
+          Si dejas esto vacío, tu tienda muestra una plantilla genérica con tu razón social/RUC — te recomendamos
+          revisarla o reemplazarla con tu propio abogado antes de operar con clientes reales.
+        </p>
+        <div className="flex flex-col gap-4">
+          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+            Términos y Condiciones
+            <textarea
+              rows={6}
+              value={termsAndConditions}
+              onChange={(e) => setTermsAndConditions(e.target.value)}
+              placeholder={defaultTermsAndConditions({ businessName: businessName || "Tu negocio", ruc: ruc || null, fiscalAddress: fiscalAddress || null })}
+              className={textareaClass}
+            />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+            Política de Privacidad
+            <textarea
+              rows={6}
+              value={privacyPolicy}
+              onChange={(e) => setPrivacyPolicy(e.target.value)}
+              placeholder={defaultPrivacyPolicy({ businessName: businessName || "Tu negocio", ruc: ruc || null, fiscalAddress: fiscalAddress || null })}
+              className={textareaClass}
+            />
+          </label>
         </div>
       </div>
 

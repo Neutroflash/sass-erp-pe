@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
-import { requirePublicStorefront } from "@/lib/feature-guards";
 import { toPublicProduct } from "@/domain/inventory/product";
 import { formatPrice } from "@/lib/utils";
 import { AddToCartButton } from "@/components/storefront/AddToCartButton";
@@ -32,7 +31,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 export default async function ProductDetailPage({ params }: { params: { slug: string } }) {
   const tenant = await getCurrentTenant();
-  await requirePublicStorefront(tenant.id);
   const row = await prisma.product.findUnique({
     where: { tenantId_slug: { tenantId: tenant.id, slug: params.slug } },
     include: productInclude,

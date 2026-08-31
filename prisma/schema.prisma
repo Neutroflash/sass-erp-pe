@@ -69,6 +69,15 @@ model Tenant {
   // Formato E.164 sin "+" (ej. "51987654321", como lo pide la URL wa.me) — habilita el botón
   // flotante de WhatsApp y el contacto del Footer. `null` = ninguno de los dos se muestra.
   whatsappNumber    String?  @map("whatsapp_number")
+  // Texto libre, editable desde /panel/configuracion (ver SettingsForm). `null` = la página
+  // pública usa la plantilla genérica de src/domain/legal/templates.ts, interpolando
+  // businessName/ruc/fiscalAddress — nunca un 404, incluso si el negocio no los personalizó.
+  termsAndConditions String? @map("terms_and_conditions") @db.Text
+  privacyPolicy      String? @map("privacy_policy") @db.Text
+  // Correlativo de folio del Libro de Reclamaciones — un solo contador para RECLAMO y QUEJA (la
+  // norma no exige series separadas, a diferencia de los comprobantes SUNAT). Incrementado
+  // atómicamente en la misma transacción que crea el Complaint, ver submit-complaint.ts.
+  complaintCounter  Int      @default(0) @map("complaint_counter")
   primaryColor      String?  @map("primary_color")
   planTier          PlanTier @default(FREE)
   planProductLimit  Int?     @map("plan_product_limit")
@@ -133,9 +142,62 @@ model Tenant {
   invoiceCounters InvoiceCounter[]
   dispatchGuides DispatchGuide[]
   stockMovements StockMovement[]
+  complaints     Complaint[]
   platformSubscription PlatformSubscription?
 
   @@map("tenants")
+}
+
+// ── Libro de Reclamaciones Virtual ──────────────────────────────────────────────────────────
+// Obligatorio para cualquier negocio que vende en línea en Perú (Código de Protección al
+// Consumidor, Ley N° 29571 + D.S. 101-2022-PCM) — vive fuera del route group (storefront), así
+// que sigue accesible aunque el tenant tenga publicStorefront desactivado (un negocio "solo POS"
+// igual vende a consumidores, la obligación no depende de tener catálogo online).
+
+enum ComplaintType {
+  RECLAMO // disconformidad relacionada con el producto/servicio en sí
+  QUEJA   // disconformidad con la atención al cliente, no vinculada al producto/servicio
+}
+
+enum ComplaintStatus {
+  PENDING
+  RESOLVED
+}
+
+model Complaint {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  folio    Int // correlativo por tenant — ver Tenant.complaintCounter
+
+  type ComplaintType
+
+  // Identificación del consumidor reclamante — campos exigidos por el formato oficial de hoja de
+  // reclamación (D.S. 011-2011-PCM, Anexo).
+  consumerName      String  @map("consumer_name")
+  consumerDocType   String  @map("consumer_doc_type") // DNI | CE | PASAPORTE
+  consumerDocNumber String  @map("consumer_doc_number")
+  consumerAddress   String  @map("consumer_address")
+  consumerPhone     String? @map("consumer_phone")
+  consumerEmail     String  @map("consumer_email")
+
+  // Identificación del bien contratado
+  productDescription String   @map("product_description")
+  claimedAmount      Decimal? @map("claimed_amount") @db.Decimal(10, 2)
+  purchaseDate       DateTime? @map("purchase_date")
+
+  detail  String // detalle de la reclamación/queja
+  request String // "pedido concreto" del consumidor
+
+  status      ComplaintStatus @default(PENDING)
+  response    String?
+  respondedAt DateTime?       @map("responded_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([tenantId, folio])
+  @@index([tenantId])
+  @@map("complaints")
 }
 
 // ── Cobro del SaaS a sus propios tenants (no confundir con Order/Invoice, que son las VENTAS de

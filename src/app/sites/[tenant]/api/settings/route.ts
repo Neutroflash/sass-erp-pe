@@ -17,6 +17,8 @@ const settingsSchema = z.object({
   coverImageUrl: z.preprocess(emptyToUndefined, z.string().url().optional()),
   whatsappNumber: z.preprocess(emptyToUndefined, z.string().regex(/^\d{9,15}$/).optional()),
   primaryColor: z.preprocess(emptyToUndefined, z.string().regex(/^#[0-9a-fA-F]{6}$/).optional()),
+  termsAndConditions: z.preprocess(emptyToUndefined, z.string().max(20000).optional()),
+  privacyPolicy: z.preprocess(emptyToUndefined, z.string().max(20000).optional()),
   // null = desactivar el resumen de stock bajo para este negocio (ver src/domain/inventory/low-stock.ts).
   lowStockThreshold: z.number().int().min(0).max(100000).nullable().optional(),
   features: z
@@ -65,6 +67,8 @@ export async function PATCH(req: NextRequest) {
       coverImageUrl: tenant.coverImageUrl,
       whatsappNumber: tenant.whatsappNumber,
       primaryColor: tenant.primaryColor,
+      termsAndConditions: tenant.termsAndConditions,
+      privacyPolicy: tenant.privacyPolicy,
       lowStockThreshold: tenant.lowStockThreshold,
       features: mergedFeatures,
     },
