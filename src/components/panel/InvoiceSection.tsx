@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { issueInvoice, type IssueInvoiceInput } from "@/lib/panel-mutations";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -47,14 +48,19 @@ export function InvoiceSection({ orderId, invoice }: { orderId: string; invoice:
             {invoice.businessName ? ` · ${invoice.businessName}` : ""}
           </p>
           {(invoice.type === "BOLETA" || invoice.type === "FACTURA") && invoice.status === "ISSUED" && (
-            <a
-              href={`/api/invoices/${invoice.id}/pdf`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 inline-block text-sm text-yellow-400 hover:underline"
-            >
-              Ver PDF
-            </a>
+            <div className="mt-2 flex flex-wrap gap-3 text-sm">
+              <Link href={`/panel/pedidos/${orderId}/ticket`} className="text-yellow-400 hover:underline">
+                Ver ticket
+              </Link>
+              <a
+                href={`/api/invoices/${invoice.id}/pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-yellow-400 hover:underline"
+              >
+                Descargar PDF
+              </a>
+            </div>
           )}
         </div>
 

@@ -22,10 +22,16 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const features = await getTenantFeatures(tenant.id);
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 md:grid-cols-[220px_1fr]">
-      <Sidebar features={features} role={user.role} />
-      <div className="min-w-0">
-        {!user.emailVerifiedAt && <EmailVerificationBanner email={user.email} />}
+    <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 md:grid-cols-[220px_1fr] print:block print:max-w-none print:gap-0 print:px-0 print:py-0">
+      <div className="print:hidden">
+        <Sidebar features={features} role={user.role} />
+      </div>
+      <div className="min-w-0 print:w-full">
+        {!user.emailVerifiedAt && (
+          <div className="print:hidden">
+            <EmailVerificationBanner email={user.email} />
+          </div>
+        )}
         {children}
       </div>
     </div>
