@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireTenantStaff } from "@/lib/api-guards";
 import { generatePDFComprobante } from "@/domain/invoicing/sunat/pdf";
 import { buildInvoicePdfPayload } from "@/domain/invoicing/sunat/build-payload";
+import { extractDocumentDigestValue } from "@/domain/invoicing/sunat/extract-digest";
 
 /**
  * Genera el PDF bajo demanda (nunca se almacena — ver el comentario en sunat/gateway.ts sobre por
@@ -32,7 +33,11 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   });
 
   const payload = buildInvoicePdfPayload(invoice, tenant);
-  const pdfBuffer = await generatePDFComprobante(payload);
+  // invoice.signedXml siempre está presente para BOLETA/FACTURA emitidas vía SunatInvoicingGateway
+  // (se firma antes de enviar) — solo faltaría en un comprobante emitido por el gateway fake, que
+  // en la práctica no llega a este punto en un negocio con SUNAT real configurado.
+  const documentDigest = invoice.signedXml ? extractDocumentDigestValue(invoice.signedXml) : "";
+  const pdfBuffer = await generatePDFComprobante(payload, documentDigest);
 
   return new NextResponse(new Uint8Array(pdfBuffer), {
     headers: {

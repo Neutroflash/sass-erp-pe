@@ -2,6 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import { parseTenantFeatures } from "@/domain/tenant-features";
 import { generatePDFComprobante } from "./sunat/pdf";
 import { buildInvoicePdfPayload } from "./sunat/build-payload";
+import { extractDocumentDigestValue } from "./sunat/extract-digest";
 import { sendInvoiceEmail } from "@/lib/email";
 
 /**
@@ -28,7 +29,8 @@ export async function notifyInvoiceIssued(prisma: PrismaClient, invoiceId: strin
     if (!parseTenantFeatures(invoice.tenant.features).autoSendInvoiceEmail) return;
 
     const payload = buildInvoicePdfPayload(invoice, invoice.tenant);
-    const pdfBuffer = await generatePDFComprobante(payload);
+    const documentDigest = invoice.signedXml ? extractDocumentDigestValue(invoice.signedXml) : "";
+    const pdfBuffer = await generatePDFComprobante(payload, documentDigest);
 
     await sendInvoiceEmail({
       to: invoice.order.customerEmail,
