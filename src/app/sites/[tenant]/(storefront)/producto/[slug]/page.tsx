@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
+import type { Metadata } from "next";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
@@ -7,10 +7,21 @@ import { requirePublicStorefront } from "@/lib/feature-guards";
 import { toPublicProduct } from "@/domain/inventory/product";
 import { formatPrice } from "@/lib/utils";
 import { AddToCartButton } from "@/components/storefront/AddToCartButton";
+import { ProductGallery } from "@/components/storefront/ProductGallery";
 
 export const dynamic = "force-dynamic";
 
 const productInclude = { variants: true, images: true } satisfies Prisma.ProductInclude;
+
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const tenant = await getCurrentTenant();
+  const product = await prisma.product.findUnique({
+    where: { tenantId_slug: { tenantId: tenant.id, slug: params.slug } },
+    select: { name: true, description: true },
+  });
+  if (!product) return {};
+  return { title: product.name, description: product.description ?? undefined };
+}
 
 export default async function ProductDetailPage({ params }: { params: { slug: string } }) {
   const tenant = await getCurrentTenant();
@@ -22,17 +33,10 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
   if (!row) notFound();
 
   const product = toPublicProduct(row);
-  const primaryImage = product.images.find((img) => img.isPrimary) ?? product.images[0];
 
   return (
     <div className="mx-auto grid max-w-5xl gap-8 px-4 py-8 md:grid-cols-2">
-      <div className="relative aspect-square overflow-hidden rounded-2xl border border-zinc-800/80 bg-black/30">
-        {primaryImage ? (
-          <Image src={primaryImage.url} alt={primaryImage.altText ?? product.name} fill unoptimized className="object-cover" />
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm text-zinc-600">Sin imagen</div>
-        )}
-      </div>
+      <ProductGallery images={product.images} productName={product.name} />
 
       <div className="flex flex-col gap-4">
         {product.brand && <span className="text-sm text-zinc-500">{product.brand}</span>}
