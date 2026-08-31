@@ -33,7 +33,23 @@ export function Navbar({ businessName, logoUrl }: Props) {
           <span className="truncate text-sm font-bold text-foreground">{businessName}</span>
         </Link>
 
-        <nav className="hidden flex-1 items-center justify-center gap-6 text-sm font-medium sm:flex">
+        <form
+          method="GET"
+          action="/catalogo"
+          className="hidden flex-1 items-center justify-center px-2 lg:flex"
+        >
+          <div className="relative w-full max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="search"
+              name="search"
+              placeholder="Buscar productos..."
+              className="h-10 w-full rounded-full border border-border bg-accent pl-9 pr-3 text-sm text-foreground outline-none transition-colors focus:border-primary"
+            />
+          </div>
+        </form>
+
+        <nav className="hidden items-center gap-6 text-sm font-medium sm:flex lg:hidden">
           <Link href="/catalogo" className="text-muted-foreground transition-colors hover:text-primary">
             Catálogo
           </Link>
@@ -44,7 +60,7 @@ export function Navbar({ businessName, logoUrl }: Props) {
           <Link
             href="/catalogo"
             aria-label="Buscar productos"
-            className="hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-accent text-foreground/90 transition-colors hover:border-primary/50 hover:text-primary sm:flex"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-accent text-foreground/90 transition-colors hover:border-primary/50 hover:text-primary lg:hidden"
           >
             <Search className="h-4 w-4" />
           </Link>

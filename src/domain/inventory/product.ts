@@ -22,6 +22,7 @@ export interface PublicProduct {
   description: string | null;
   brand: string | null;
   isFeatured: boolean;
+  createdAt: Date;
   images: ProductImage[];
   variants: PublicVariant[];
   inStock: boolean;
@@ -52,6 +53,7 @@ export function toPublicProduct(product: ProductWithRelations): PublicProduct {
     description: product.description,
     brand: product.brand,
     isFeatured: product.isFeatured,
+    createdAt: product.createdAt,
     images: product.images,
     variants,
     inStock: variants.some((v) => v.inStock),

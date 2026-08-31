@@ -3,11 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Check, Plus } from "lucide-react";
+import { Check, ShoppingBag } from "lucide-react";
 import type { PublicProduct } from "@/domain/inventory/product";
 import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/store/cart-store";
 import { ProductImage } from "./ProductImage";
+
+const NUEVO_WINDOW_DAYS = 30;
 
 // Hasta 3 valores del JSON libre de atributos de la variante principal (ej. { talla: "M", color:
 // "Negro" }) para el overlay de specs al hacer hover — mismo patrón que Flashkings.
@@ -16,6 +18,10 @@ function getSpecHighlights(product: PublicProduct): string[] {
   return Object.values(attributes)
     .map((value) => String(value))
     .slice(0, 3);
+}
+
+function isNew(product: PublicProduct): boolean {
+  return Date.now() - new Date(product.createdAt).getTime() < NUEVO_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 }
 
 export function ProductCard({ product }: { product: PublicProduct }) {
@@ -46,10 +52,10 @@ export function ProductCard({ product }: { product: PublicProduct }) {
   }
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card/60 backdrop-blur-md transition-all duration-300 hover:border-primary/50 hover:shadow-glow">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card/60 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-primary/50 hover:shadow-glow">
       <Link href={`/producto/${product.slug}`} className="absolute inset-0 z-10" aria-label={product.name} />
 
-      <div className="relative aspect-square w-full overflow-hidden bg-input">
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-input">
         <ProductImage
           src={image?.url}
           alt={image?.altText ?? product.name}
@@ -57,11 +63,16 @@ export function ProductCard({ product }: { product: PublicProduct }) {
           className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
         />
 
-        {!product.inStock && (
-          <span className="absolute left-2 top-2 z-20 rounded bg-neutral-800 px-2 py-1 text-[10px] font-bold uppercase text-zinc-300">
-            Agotado
-          </span>
-        )}
+        {/* Insignias fijas (gris/blanco oscuro), no tokens de tema: siempre se apoyan sobre una
+            foto de producto, sin importar el modo claro/oscuro de la app ni de qué foto se trate. */}
+        <div className="absolute left-2 top-2 z-20 flex flex-col items-start gap-1">
+          {!product.inStock && (
+            <span className="rounded bg-neutral-800 px-2 py-1 text-[10px] font-bold uppercase text-zinc-300">Agotado</span>
+          )}
+          {isNew(product) && (
+            <span className="rounded bg-primary px-2 py-1 text-[10px] font-bold uppercase text-primary-foreground">Nuevo</span>
+          )}
+        </div>
 
         {specs.length > 0 && (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-wrap gap-1.5 bg-gradient-to-t from-black/80 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -79,10 +90,12 @@ export function ProductCard({ product }: { product: PublicProduct }) {
         {quickAddVariant && (
           // Gris neutro a propósito, no --primary: el acento de marca se reserva para el precio y
           // los CTAs principales (Ver catálogo, carrito) — este es un botón secundario/rápido.
+          // Siempre visible en mobile (no hay hover en touch); en desktop se revela con el hover
+          // de la card, igual que antes.
           <motion.button
             onClick={handleQuickAdd}
             whileTap={{ scale: 0.94 }}
-            className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 translate-y-2 items-center gap-1.5 rounded-full bg-neutral-800/90 px-4 py-2 text-xs font-bold text-white opacity-0 backdrop-blur-sm transition-all duration-300 ease-out hover:bg-neutral-700 group-hover:translate-y-0 group-hover:opacity-100"
+            className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-neutral-800/90 px-4 py-2 text-xs font-bold text-white backdrop-blur-sm transition-all duration-300 ease-out hover:bg-neutral-700 lg:translate-y-2 lg:opacity-0 lg:group-hover:translate-y-0 lg:group-hover:opacity-100"
             aria-label={`Agregar ${product.name} al carrito`}
           >
             {added ? (
@@ -91,7 +104,7 @@ export function ProductCard({ product }: { product: PublicProduct }) {
               </>
             ) : (
               <>
-                <Plus className="h-3.5 w-3.5" /> Agregar
+                <ShoppingBag className="h-3.5 w-3.5" /> Agregar
               </>
             )}
           </motion.button>
