@@ -42,7 +42,12 @@ export default async function StorefrontLayout({ children }: { children: React.R
   await requirePublicStorefront(tenant.id);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="relative flex min-h-screen flex-col">
+      {/* Grilla de fondo de toda la tienda (no solo del Hero) — fixed a la ventana, no al
+          documento, para que el mismo "punto de luz" en la esquina siga ahí sin importar cuánto
+          se scrollee. Donde el contenido tiene su propio fondo opaco (cards, footer) simplemente
+          la tapa; se nota en los huecos entre secciones y detrás del Hero (bg-card/40). */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-grid-lines" />
       <Navbar businessName={tenant.businessName} logoUrl={tenant.logoUrl} />
       <CartDrawer />
       <main className="flex-1">{children}</main>

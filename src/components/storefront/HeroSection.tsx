@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, Variants } from "framer-motion";
 import { ArrowRight, ShoppingBag } from "lucide-react";
+import { HeroBackground } from "./HeroBackground";
 
 const container: Variants = {
   hidden: {},
@@ -26,13 +27,8 @@ interface Props {
 // foto de portada del tenant, o —si no configuró una— un panel abstracto de vitrina/promo.
 export function HeroSection({ businessName, coverImageUrl }: Props) {
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-border bg-card/40">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -left-24 top-0 -z-10 h-[420px] w-[420px] rounded-full bg-primary/20 blur-[120px]"
-      />
-
-      <div className="relative grid gap-10 px-6 py-14 sm:px-10 sm:py-16 lg:grid-cols-2 lg:items-center lg:py-20">
+    <HeroBackground glow="left" className="rounded-3xl border border-border bg-card/40">
+      <div className="grid gap-10 px-6 py-14 sm:px-10 sm:py-16 lg:grid-cols-2 lg:items-center lg:py-20">
         <motion.div variants={container} initial="hidden" animate="show" className="flex flex-col items-start gap-6 text-left">
           <motion.span
             variants={item}
@@ -86,6 +82,6 @@ export function HeroSection({ businessName, coverImageUrl }: Props) {
           )}
         </motion.div>
       </div>
-    </section>
+    </HeroBackground>
   );
 }

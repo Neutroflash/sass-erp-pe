@@ -38,7 +38,7 @@ export default async function TenantStorefrontPage() {
       <HeroSection businessName={tenant.businessName} coverImageUrl={tenant.coverImageUrl} />
 
       {featured.length > 0 && (
-        <section className="pb-16">
+        <section className="pb-16 pt-16 sm:pt-20">
           <h2 className="mb-6 text-2xl font-bold text-foreground">Destacados</h2>
           <CatalogGrid products={featured.map(toPublicProduct)} />
         </section>

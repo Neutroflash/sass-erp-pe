@@ -19,6 +19,12 @@ const listQuerySchema = z.object({
     .optional()
     .transform((v) => (v === undefined ? undefined : v === "true")),
   search: z.string().optional(),
+  // Opcional, para el dropdown de búsqueda en vivo del Navbar — sin esto devolvía el catálogo
+  // entero en cada tecleo. Tope duro de 20 para que nadie lo use para paginar de a miles.
+  limit: z
+    .string()
+    .optional()
+    .transform((v) => (v === undefined ? undefined : Math.min(Math.max(parseInt(v, 10) || 0, 1), 20))),
 });
 
 // Público — la tienda de este tenant lo consume sin sesión. Solo si quien pregunta es el OWNER de
@@ -40,7 +46,7 @@ export async function GET(req: NextRequest) {
   };
 
   const products = await withTenantRLS(prisma, tenant.id, (tx) =>
-    tx.product.findMany({ where, include: productInclude, orderBy: { createdAt: "desc" } }),
+    tx.product.findMany({ where, include: productInclude, orderBy: { createdAt: "desc" }, take: query.limit }),
   );
 
   const user = await getCurrentTenantUser(tenant.id);

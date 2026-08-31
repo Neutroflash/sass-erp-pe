@@ -59,6 +59,19 @@
     background-size: 16px 16px;
   }
 
+  /* Grilla de líneas (a diferencia de .bg-grid-pattern, que es de puntos) para fondos tipo "hero" —
+     usa --border como color base, así que el contraste correcto en cada tema sale gratis del mismo
+     token, sin variantes dark:/light: separadas. El mask-image la desvanece hacia los bordes para
+     que no compita con el contenido ni corte en seco contra el borde de la sección. */
+  .bg-grid-lines {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.6) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.6) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 90% 70% at 20% 20%, black 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 20% 20%, black 40%, transparent 100%);
+  }
+
   /* Degradado de texto atado a --primary (el color del tenant) — reemplaza el "text-gradient-gold"
      fijo de Flashkings, que no puede reutilizarse tal cual acá. */
   .text-gradient-primary {
