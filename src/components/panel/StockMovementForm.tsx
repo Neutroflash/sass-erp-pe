@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
+  "h-9 rounded-lg border border-border bg-input px-2 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 interface VariantOption extends AdminProductVariant {
   productName: string;
@@ -43,16 +43,16 @@ export function StockMovementForm({ variants }: { variants: VariantOption[] }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <select value={variantId} onChange={(e) => setVariantId(e.target.value)} className={cn(inputClass, "text-zinc-100")}>
+        <select value={variantId} onChange={(e) => setVariantId(e.target.value)} className={cn(inputClass, "text-foreground")}>
           {variants.map((v) => (
             <option key={v.id} value={v.id}>
               {v.productName} — {v.name} ({v.sku})
             </option>
           ))}
         </select>
-        <select value={type} onChange={(e) => setType(e.target.value as StockMovementInput["type"])} className={cn(inputClass, "text-zinc-100")}>
+        <select value={type} onChange={(e) => setType(e.target.value as StockMovementInput["type"])} className={cn(inputClass, "text-foreground")}>
           <option value="IN">Entrada (compra a proveedor)</option>
           <option value="OUT">Salida (merma, robo)</option>
           <option value="ADJUSTMENT">Ajuste por conteo físico</option>

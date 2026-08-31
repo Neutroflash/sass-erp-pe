@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 const inputClass =
-  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
+  "h-10 rounded-lg border border-border bg-input px-3 text-sm text-foreground outline-none transition-colors focus:border-yellow-500/50";
 
 function AdminResetPasswordForm() {
   const router = useRouter();
@@ -43,7 +43,7 @@ function AdminResetPasswordForm() {
   if (!token) {
     return (
       <div className="text-center">
-        <h1 className="mb-2 text-xl font-bold text-zinc-100">Enlace inválido</h1>
+        <h1 className="mb-2 text-xl font-bold text-foreground">Enlace inválido</h1>
         <Link href="/olvide-password" className="mt-4 inline-block text-sm text-yellow-400 hover:underline">
           Solicitar uno nuevo
         </Link>
@@ -54,7 +54,7 @@ function AdminResetPasswordForm() {
   return (
     <>
       <span className="mb-1 text-xs uppercase tracking-widest text-yellow-400/80">Plataforma SaaS</span>
-      <h1 className="mb-6 text-2xl font-bold text-zinc-100">Nueva contraseña</h1>
+      <h1 className="mb-6 text-2xl font-bold text-foreground">Nueva contraseña</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
           required

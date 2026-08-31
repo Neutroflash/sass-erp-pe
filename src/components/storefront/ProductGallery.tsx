@@ -22,7 +22,7 @@ export function ProductGallery({ images, productName }: Props) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative aspect-square overflow-hidden rounded-2xl border border-white/10 bg-card/40">
+      <div className="relative aspect-square overflow-hidden rounded-2xl border border-border bg-card/40">
         <ProductImage src={active?.url} alt={active?.altText ?? productName} priority className="object-cover" />
       </div>
 
@@ -35,7 +35,7 @@ export function ProductGallery({ images, productName }: Props) {
               onClick={() => setActive(img)}
               className={cn(
                 "relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border transition-colors",
-                img.url === active?.url ? "border-primary" : "border-white/10 hover:border-white/30",
+                img.url === active?.url ? "border-primary" : "border-border hover:border-border",
               )}
               aria-label={`Ver imagen ${img.altText ?? productName}`}
             >

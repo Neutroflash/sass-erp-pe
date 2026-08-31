@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { IzipayCheckoutWidget } from "@/components/checkout/IzipayCheckoutWidget";
 
 const inputClass =
-  "rounded-lg border border-white/10 bg-neutral-900 px-4 py-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary";
+  "rounded-lg border border-border bg-input px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary";
 
 // Si el tenant tiene Izipay configurado, el pedido se crea igual (PENDING_PAYMENT + stock
 // reservado) y luego se muestra el widget de pago en línea en vez de navegar directo a la
@@ -57,30 +57,30 @@ export function CheckoutClient() {
   if (izipayWidget) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <h1 className="mb-6 text-2xl font-bold text-zinc-100">Completa tu pago</h1>
+        <h1 className="mb-6 text-2xl font-bold text-foreground">Completa tu pago</h1>
         <IzipayCheckoutWidget {...izipayWidget} />
       </div>
     );
   }
 
   if (items.length === 0) {
-    return <p className="mx-auto max-w-2xl px-4 py-16 text-center text-zinc-500">Tu carrito está vacío.</p>;
+    return <p className="mx-auto max-w-2xl px-4 py-16 text-center text-muted-foreground">Tu carrito está vacío.</p>;
   }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold text-zinc-100">Checkout</h1>
+      <h1 className="mb-6 text-2xl font-bold text-foreground">Checkout</h1>
 
-      <div className="mb-6 flex flex-col gap-2 rounded-2xl border border-white/10 bg-card/60 p-4">
+      <div className="mb-6 flex flex-col gap-2 rounded-2xl border border-border bg-card/60 p-4">
         {items.map((item) => (
-          <div key={item.variantId} className="flex justify-between text-sm text-zinc-300">
+          <div key={item.variantId} className="flex justify-between text-sm text-foreground/90">
             <span>
               {item.productName} — {item.variantName} x{item.quantity}
             </span>
             <span>{formatPrice(item.price * item.quantity)}</span>
           </div>
         ))}
-        <div className="mt-2 flex justify-between border-t border-white/10 pt-2 font-bold text-zinc-100">
+        <div className="mt-2 flex justify-between border-t border-border pt-2 font-bold text-foreground">
           <span>Total</span>
           <span className="text-primary">{formatPrice(totalPrice())}</span>
         </div>

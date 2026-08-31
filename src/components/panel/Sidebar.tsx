@@ -7,6 +7,7 @@ import type { TenantFeatures } from "@/domain/tenant-features";
 import type { UserRole } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "./LogoutButton";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 interface NavLink {
   href: string;
@@ -43,10 +44,11 @@ export function Sidebar({ features, role }: { features: TenantFeatures; role: Us
   const visibleLinks = LINKS.filter((link) => (!link.feature || features[link.feature]) && (!link.ownerOnly || role === "OWNER"));
 
   return (
-    <nav className="flex h-fit flex-col gap-1 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-4 backdrop-blur-md">
-      <span className="mb-2 px-3 text-xs font-semibold uppercase tracking-widest text-primary/80">
-        Panel de gestión
-      </span>
+    <nav className="flex h-fit flex-col gap-1 rounded-2xl border border-border/80 bg-card/60 p-4 backdrop-blur-md">
+      <div className="mb-2 flex items-center justify-between px-3">
+        <span className="text-xs font-semibold uppercase tracking-widest text-primary/80">Panel de gestión</span>
+        <ThemeToggle className="h-7 w-7" />
+      </div>
       {visibleLinks.map(({ href, label, icon: Icon }) => {
         const active = pathname === href || (href !== "/panel" && pathname?.startsWith(href));
         return (
@@ -55,7 +57,7 @@ export function Sidebar({ features, role }: { features: TenantFeatures; role: Us
             href={href}
             className={cn(
               "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              active ? "bg-primary/10 text-primary" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-100",
+              active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
           >
             <Icon className="h-4 w-4" />
@@ -63,7 +65,7 @@ export function Sidebar({ features, role }: { features: TenantFeatures; role: Us
           </Link>
         );
       })}
-      <hr className="my-2 border-zinc-800/80" />
+      <hr className="my-2 border-border/80" />
       <LogoutButton />
     </nav>
   );

@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "rounded-lg border border-white/10 bg-neutral-900 px-4 py-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary";
-const labelClass = "flex flex-col gap-1.5 text-sm text-zinc-300";
+  "rounded-lg border border-border bg-input px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary";
+const labelClass = "flex flex-col gap-1.5 text-sm text-foreground/90";
 
 const initialForm = {
   type: "RECLAMO" as "RECLAMO" | "QUEJA",
@@ -59,24 +59,24 @@ export function ComplaintForm({ businessName }: { businessName: string }) {
 
   if (folio !== null) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-card/60 p-6 text-center">
-        <h2 className="mb-2 text-xl font-bold text-zinc-100">Reclamo registrado</h2>
-        <p className="mb-1 text-zinc-400">
+      <div className="rounded-2xl border border-border bg-card/60 p-6 text-center">
+        <h2 className="mb-2 text-xl font-bold text-foreground">Reclamo registrado</h2>
+        <p className="mb-1 text-muted-foreground">
           Tu {form.type === "RECLAMO" ? "reclamo" : "queja"} quedó registrado con el folio{" "}
           <span className="font-bold text-primary">N° {folio}</span>.
         </p>
-        <p className="text-sm text-zinc-500">Te enviamos una constancia a {form.consumerEmail}. Guárdala como comprobante.</p>
+        <p className="text-sm text-muted-foreground">Te enviamos una constancia a {form.consumerEmail}. Guárdala como comprobante.</p>
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <div className="rounded-2xl border border-white/10 bg-card/60 p-5">
+      <div className="rounded-2xl border border-border bg-card/60 p-5">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary/80">Tipo</h2>
         <div className="flex gap-4">
           {(["RECLAMO", "QUEJA"] as const).map((t) => (
-            <label key={t} className="flex items-center gap-2 text-sm text-zinc-300">
+            <label key={t} className="flex items-center gap-2 text-sm text-foreground/90">
               <input type="radio" name="type" checked={form.type === t} onChange={() => set("type", t)} className="accent-primary" />
               {t === "RECLAMO" ? "Reclamo (disconformidad con el producto)" : "Queja (disconformidad con la atención)"}
             </label>
@@ -84,7 +84,7 @@ export function ComplaintForm({ businessName }: { businessName: string }) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-card/60 p-5">
+      <div className="rounded-2xl border border-border bg-card/60 p-5">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary/80">Tus datos</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className={cn(labelClass, "sm:col-span-2")}>
@@ -133,7 +133,7 @@ export function ComplaintForm({ businessName }: { businessName: string }) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-card/60 p-5">
+      <div className="rounded-2xl border border-border bg-card/60 p-5">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary/80">Bien contratado</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className={cn(labelClass, "sm:col-span-2")}>
@@ -163,7 +163,7 @@ export function ComplaintForm({ businessName }: { businessName: string }) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-card/60 p-5">
+      <div className="rounded-2xl border border-border bg-card/60 p-5">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary/80">Detalle</h2>
         <div className="flex flex-col gap-4">
           <label className={labelClass}>

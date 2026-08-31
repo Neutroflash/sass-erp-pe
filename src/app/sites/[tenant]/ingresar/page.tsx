@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 const inputClass =
-  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
+  "h-10 rounded-lg border border-border bg-input px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 // Fuera de /panel a propósito — ver el comentario en panel/layout.tsx sobre por qué esta página
 // no puede vivir dentro del árbol que ese layout protege.
@@ -42,7 +42,7 @@ export default function TenantLoginPage() {
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
       <span className="mb-1 text-xs uppercase tracking-widest text-primary/80">Panel de gestión</span>
-      <h1 className="mb-6 text-2xl font-bold text-zinc-100">Ingresar</h1>
+      <h1 className="mb-6 text-2xl font-bold text-foreground">Ingresar</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
           required
@@ -65,7 +65,7 @@ export default function TenantLoginPage() {
           {loading ? "Ingresando..." : "Ingresar"}
         </Button>
       </form>
-      <Link href="/olvide-password" className="mt-4 text-sm text-zinc-500 hover:text-zinc-300">
+      <Link href="/olvide-password" className="mt-4 text-sm text-muted-foreground hover:text-foreground/90">
         ¿Olvidaste tu contraseña?
       </Link>
     </div>

@@ -8,7 +8,7 @@ import { cn, formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const inputClass =
-  "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
+  "h-9 rounded-lg border border-border bg-input px-2 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 function VariantRow({ variant, canSeeCost }: { variant: AdminProductVariant; canSeeCost: boolean }) {
   const router = useRouter();
@@ -34,8 +34,8 @@ function VariantRow({ variant, canSeeCost }: { variant: AdminProductVariant; can
   const marginPct = Number(price) > 0 ? (margin / Number(price)) * 100 : 0;
 
   return (
-    <tr className="border-b border-zinc-800/60 transition-colors hover:bg-white/[0.03]">
-      <td className="p-3 pl-8 text-sm text-zinc-400">{variant.sku}</td>
+    <tr className="border-b border-border/60 transition-colors hover:bg-accent">
+      <td className="p-3 pl-8 text-sm text-muted-foreground">{variant.sku}</td>
       <td className="p-3">
         <input type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} className={cn(inputClass, "w-24")} />
       </td>
@@ -52,14 +52,14 @@ function VariantRow({ variant, canSeeCost }: { variant: AdminProductVariant; can
           </td>
           <td className="p-3 text-sm">
             <span className={margin >= 0 ? "text-emerald-400" : "text-red-400"}>{formatPrice(margin)}</span>{" "}
-            <span className="text-zinc-500">({marginPct.toFixed(0)}%)</span>
+            <span className="text-muted-foreground">({marginPct.toFixed(0)}%)</span>
           </td>
         </>
       )}
       <td className="p-3">
         <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} className={cn(inputClass, "w-20")} />
       </td>
-      <td className="p-3 text-sm text-zinc-500">{variant.reservedStock}</td>
+      <td className="p-3 text-sm text-muted-foreground">{variant.reservedStock}</td>
       <td className="p-3">
         <Button size="sm" disabled={saving} onClick={handleSave}>
           {saving ? "Guardando..." : "Guardar"}
@@ -72,14 +72,14 @@ function VariantRow({ variant, canSeeCost }: { variant: AdminProductVariant; can
 function ProductGroup({ product, canSeeCost, columnCount }: { product: AdminProduct; canSeeCost: boolean; columnCount: number }) {
   return (
     <>
-      <tr className="border-b border-zinc-800/60 bg-white/[0.02]">
+      <tr className="border-b border-border/60 bg-accent">
         <td colSpan={columnCount} className="p-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <span className="font-semibold text-zinc-100">{product.name}</span>
-              {product.brand && <span className="ml-2 text-xs text-zinc-500">{product.brand}</span>}
+              <span className="font-semibold text-foreground">{product.name}</span>
+              {product.brand && <span className="ml-2 text-xs text-muted-foreground">{product.brand}</span>}
             </div>
-            <span className="text-xs text-zinc-500">{product.category?.name ?? "Sin categoría"}</span>
+            <span className="text-xs text-muted-foreground">{product.category?.name ?? "Sin categoría"}</span>
           </div>
         </td>
       </tr>
@@ -94,15 +94,15 @@ function ProductGroup({ product, canSeeCost, columnCount }: { product: AdminProd
 // en la GET de /api/products sobre por qué un SELLER nunca los ve, ni siquiera de solo lectura.
 export function InventoryTable({ products, canSeeCost }: { products: AdminProduct[]; canSeeCost: boolean }) {
   if (products.length === 0) {
-    return <p className="py-8 text-center text-zinc-500">Todavía no hay productos — creá el primero.</p>;
+    return <p className="py-8 text-center text-muted-foreground">Todavía no hay productos — creá el primero.</p>;
   }
 
   const columnCount = canSeeCost ? 7 : 5;
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md">
+    <div className="overflow-x-auto rounded-2xl border border-border/80 bg-card/60 backdrop-blur-md">
       <table className="w-full text-left">
-        <thead className="bg-white/[0.03] text-xs uppercase tracking-wide text-zinc-400">
+        <thead className="bg-accent text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
             <th className="p-3">SKU</th>
             <th className="p-3">Precio</th>

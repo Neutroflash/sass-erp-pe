@@ -46,10 +46,10 @@ export function ProductCard({ product }: { product: PublicProduct }) {
   }
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-card/60 backdrop-blur-md transition-all duration-300 hover:border-primary/50 hover:shadow-glow">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card/60 backdrop-blur-md transition-all duration-300 hover:border-primary/50 hover:shadow-glow">
       <Link href={`/producto/${product.slug}`} className="absolute inset-0 z-10" aria-label={product.name} />
 
-      <div className="relative aspect-square w-full overflow-hidden bg-black/30">
+      <div className="relative aspect-square w-full overflow-hidden bg-input">
         <ProductImage
           src={image?.url}
           alt={image?.altText ?? product.name}
@@ -68,7 +68,7 @@ export function ProductCard({ product }: { product: PublicProduct }) {
             {specs.map((spec) => (
               <span
                 key={spec}
-                className="rounded-full border border-white/10 bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm"
+                className="rounded-full border border-border bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm"
               >
                 {spec}
               </span>
@@ -99,8 +99,8 @@ export function ProductCard({ product }: { product: PublicProduct }) {
       </div>
 
       <div className="flex flex-1 flex-col gap-1 p-4">
-        {product.brand && <span className="text-xs uppercase tracking-wide text-neutral-400">{product.brand}</span>}
-        <h3 className="line-clamp-2 font-semibold text-zinc-100">{product.name}</h3>
+        {product.brand && <span className="text-xs uppercase tracking-wide text-muted-foreground">{product.brand}</span>}
+        <h3 className="line-clamp-2 font-semibold text-foreground">{product.name}</h3>
         <div className="mt-auto pt-2 text-lg font-bold text-primary">{formatPrice(cheapestVariant.price)}</div>
       </div>
     </div>

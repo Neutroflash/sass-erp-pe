@@ -16,7 +16,7 @@ const item: Variants = {
 
 export function CatalogGrid({ products }: { products: PublicProduct[] }) {
   if (products.length === 0) {
-    return <p className="py-16 text-center text-zinc-500">No se encontraron productos.</p>;
+    return <p className="py-16 text-center text-muted-foreground">No se encontraron productos.</p>;
   }
 
   return (

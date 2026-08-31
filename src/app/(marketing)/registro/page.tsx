@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "flashstock.pe";
 
 const inputClass =
-  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
+  "h-10 rounded-lg border border-border bg-input px-3 text-sm text-foreground outline-none transition-colors focus:border-yellow-500/50";
 
 export default function RegistroPage() {
   const [slug, setSlug] = useState("");
@@ -44,8 +44,8 @@ export default function RegistroPage() {
   if (registeredSlug) {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 text-center">
-        <h1 className="mb-2 text-2xl font-bold text-zinc-100">¡Listo!</h1>
-        <p className="mb-6 text-sm text-zinc-400">
+        <h1 className="mb-2 text-2xl font-bold text-foreground">¡Listo!</h1>
+        <p className="mb-6 text-sm text-muted-foreground">
           Tu negocio quedó registrado en <span className="text-yellow-400">{registeredSlug}.{ROOT_DOMAIN}</span>.
         </p>
         <a href={`https://${registeredSlug}.${ROOT_DOMAIN}/ingresar`} className="inline-block">
@@ -58,10 +58,10 @@ export default function RegistroPage() {
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-16">
       <span className="mb-1 text-xs uppercase tracking-widest text-yellow-400/80">Nuevo negocio</span>
-      <h1 className="mb-6 text-2xl font-bold text-zinc-100">Crea tu tienda</h1>
+      <h1 className="mb-6 text-2xl font-bold text-foreground">Crea tu tienda</h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+        <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
           Subdominio
           <div className="flex items-center gap-2">
             <input
@@ -71,27 +71,27 @@ export default function RegistroPage() {
               placeholder="mi-negocio"
               className={cn(inputClass, "flex-1")}
             />
-            <span className="whitespace-nowrap text-sm text-zinc-500">.{ROOT_DOMAIN}</span>
+            <span className="whitespace-nowrap text-sm text-muted-foreground">.{ROOT_DOMAIN}</span>
           </div>
-          {normalizedSlug && <span className="text-xs text-zinc-500">{normalizedSlug}.{ROOT_DOMAIN}</span>}
+          {normalizedSlug && <span className="text-xs text-muted-foreground">{normalizedSlug}.{ROOT_DOMAIN}</span>}
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+        <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
           Nombre del negocio
           <input required value={businessName} onChange={(e) => setBusinessName(e.target.value)} className={inputClass} />
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+        <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
           Tu nombre
           <input required value={ownerName} onChange={(e) => setOwnerName(e.target.value)} className={inputClass} />
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+        <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
           Correo electrónico
           <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+        <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
           Contraseña
           <input
             required

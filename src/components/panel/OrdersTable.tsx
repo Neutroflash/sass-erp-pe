@@ -57,13 +57,13 @@ export function OrdersTable({ orders }: { orders: AdminOrderRow[] }) {
   }
 
   if (orders.length === 0) {
-    return <p className="text-sm text-zinc-500">Todavía no hay pedidos.</p>;
+    return <p className="text-sm text-muted-foreground">Todavía no hay pedidos.</p>;
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md">
+    <div className="overflow-x-auto rounded-2xl border border-border/80 bg-card/60 backdrop-blur-md">
       <table className="w-full text-left">
-        <thead className="bg-white/[0.03] text-xs uppercase tracking-wide text-zinc-400">
+        <thead className="bg-accent text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
             <th className="p-3">Fecha</th>
             <th className="p-3">Cliente</th>
@@ -76,14 +76,14 @@ export function OrdersTable({ orders }: { orders: AdminOrderRow[] }) {
         </thead>
         <tbody>
           {orders.map((order) => (
-            <tr key={order.id} className="border-b border-zinc-800/60">
-              <td className="p-3 text-sm text-zinc-500">{new Date(order.createdAt).toLocaleString("es-PE")}</td>
-              <td className="p-3 text-sm text-zinc-300">
+            <tr key={order.id} className="border-b border-border/60">
+              <td className="p-3 text-sm text-muted-foreground">{new Date(order.createdAt).toLocaleString("es-PE")}</td>
+              <td className="p-3 text-sm text-foreground/90">
                 {order.customerName}
-                {order.customerPhone && <span className="ml-1 text-zinc-500">({order.customerPhone})</span>}
+                {order.customerPhone && <span className="ml-1 text-muted-foreground">({order.customerPhone})</span>}
               </td>
-              <td className="p-3 text-sm text-zinc-400">{order.channel === "ONLINE" ? "Tienda online" : "POS"}</td>
-              <td className="p-3 text-sm text-zinc-100">{order.itemCount}</td>
+              <td className="p-3 text-sm text-muted-foreground">{order.channel === "ONLINE" ? "Tienda online" : "POS"}</td>
+              <td className="p-3 text-sm text-foreground">{order.itemCount}</td>
               <td className="p-3 text-sm font-medium text-primary">{formatPrice(order.totalAmount)}</td>
               <td className="p-3">
                 <Badge variant={STATUS_VARIANT[order.status]}>{STATUS_LABEL[order.status]}</Badge>

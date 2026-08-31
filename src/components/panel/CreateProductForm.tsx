@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
+  "h-9 rounded-lg border border-border bg-input px-2 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 interface VariantDraft extends CreateProductVariantInput {
   attributesList: { key: string; value: string }[];
@@ -142,22 +142,22 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <div className="grid gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md sm:grid-cols-2">
+      <div className="grid gap-4 rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md sm:grid-cols-2">
         <div className="flex flex-col gap-1 sm:col-span-2">
-          <label className="text-sm font-medium text-zinc-300">Nombre</label>
+          <label className="text-sm font-medium text-foreground/90">Nombre</label>
           <input required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
         </div>
         <div className="flex flex-col gap-1 sm:col-span-2">
-          <label className="text-sm font-medium text-zinc-300">Descripción</label>
+          <label className="text-sm font-medium text-foreground/90">Descripción</label>
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className={cn(inputClass, "h-auto py-2")} />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-zinc-300">Marca</label>
+          <label className="text-sm font-medium text-foreground/90">Marca</label>
           <input value={brand} onChange={(e) => setBrand(e.target.value)} className={inputClass} />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-zinc-300">Categoría</label>
+          <label className="text-sm font-medium text-foreground/90">Categoría</label>
           {!newCategoryMode ? (
             <div className="flex flex-col gap-2 sm:flex-row">
               <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={cn(inputClass, "flex-1")}>
@@ -196,17 +196,17 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
           )}
         </div>
 
-        <label className="flex items-center gap-2 self-end text-sm text-zinc-300">
+        <label className="flex items-center gap-2 self-end text-sm text-foreground/90">
           <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} />
           Producto destacado
         </label>
       </div>
 
-      <div className="flex flex-col gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-100">Imágenes</h2>
-            <p className="text-xs text-zinc-500">Pega la URL de cada imagen (no hay subida de archivos todavía) y marca cuál es la principal.</p>
+            <h2 className="text-lg font-semibold text-foreground">Imágenes</h2>
+            <p className="text-xs text-muted-foreground">Pega la URL de cada imagen (no hay subida de archivos todavía) y marca cuál es la principal.</p>
           </div>
           <Button type="button" size="sm" variant="outline" onClick={addImage}>
             <Plus className="h-3.5 w-3.5" />
@@ -215,12 +215,12 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
         </div>
 
         {images.map((image, index) => (
-          <div key={index} className="flex flex-col gap-2 rounded-xl border border-zinc-800/80 bg-black/20 p-3 sm:flex-row sm:items-center">
+          <div key={index} className="flex flex-col gap-2 rounded-xl border border-border/80 bg-muted/40 p-3 sm:flex-row sm:items-center">
             {image.url.trim() ? (
               // eslint-disable-next-line @next/next/no-img-element -- vista previa de una URL arbitraria, no un asset propio del proyecto
               <img src={image.url} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
             ) : (
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-white/5 text-[10px] text-zinc-600">Sin URL</div>
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-accent text-[10px] text-muted-foreground/70">Sin URL</div>
             )}
             <div className="flex flex-1 flex-col gap-2 sm:flex-row">
               <input
@@ -236,7 +236,7 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
                 className={cn(inputClass, "flex-1")}
               />
             </div>
-            <label className="flex shrink-0 items-center gap-1.5 text-xs text-zinc-400">
+            <label className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
               <input
                 type="radio"
                 name="primaryImage"
@@ -250,7 +250,7 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
               <button
                 type="button"
                 onClick={() => removeImage(index)}
-                className="shrink-0 text-zinc-500 hover:text-red-400"
+                className="shrink-0 text-muted-foreground hover:text-red-400"
                 aria-label="Quitar imagen"
               >
                 <Trash2 className="h-4 w-4" />
@@ -262,7 +262,7 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
 
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-100">Variantes</h2>
+          <h2 className="text-lg font-semibold text-foreground">Variantes</h2>
           <Button type="button" size="sm" variant="outline" onClick={addVariant}>
             <Plus className="h-3.5 w-3.5" />
             Agregar variante
@@ -270,7 +270,7 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
         </div>
 
         {variants.map((variant, vIndex) => (
-          <div key={vIndex} className="flex flex-col gap-3 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-4">
+          <div key={vIndex} className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/60 p-4">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <input required placeholder="SKU" value={variant.sku} onChange={(e) => updateVariant(vIndex, { sku: e.target.value })} className={inputClass} />
               <input
@@ -310,7 +310,7 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
 
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <label className="text-xs uppercase tracking-wide text-zinc-500">Atributos (switch, color, talla...)</label>
+                <label className="text-xs uppercase tracking-wide text-muted-foreground">Atributos (switch, color, talla...)</label>
                 <button type="button" onClick={() => addAttribute(vIndex)} className="text-xs text-primary hover:text-yellow-300">
                   + agregar atributo
                 </button>
@@ -335,7 +335,7 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
                     <button
                       type="button"
                       onClick={() => removeAttribute(vIndex, aIndex)}
-                      className="shrink-0 pt-2 text-zinc-500 hover:text-red-400"
+                      className="shrink-0 pt-2 text-muted-foreground hover:text-red-400"
                       aria-label="Quitar atributo"
                     >
                       <Trash2 className="h-4 w-4" />

@@ -13,10 +13,10 @@ const LOW_STOCK_THRESHOLD = 5;
 
 function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
-      <span className="text-xs uppercase tracking-wide text-zinc-500">{label}</span>
-      <p className="mt-1 text-2xl font-bold text-zinc-100">{value}</p>
-      {hint && <p className="mt-1 text-xs text-zinc-500">{hint}</p>}
+    <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
+      <span className="text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
+      <p className="mt-1 text-2xl font-bold text-foreground">{value}</p>
+      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -57,7 +57,7 @@ export default async function TenantDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-zinc-100">{tenant.businessName}</h1>
+      <h1 className="text-2xl font-bold text-foreground">{tenant.businessName}</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {salesToday !== null && <StatCard label="Ventas del día" value={String(salesToday)} hint="pedidos creados hoy" />}

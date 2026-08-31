@@ -26,7 +26,7 @@ interface SaleLine {
 }
 
 const inputClass =
-  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
+  "h-10 rounded-lg border border-border bg-input px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 // El check de `available` acá es solo UX (evita que el vendedor arme una venta que va a fallar) —
 // la verdad final sigue siendo el lock de fila en createPosSale(), igual que en el checkout online.
@@ -103,7 +103,7 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
             className={cn(inputClass, "w-full")}
           />
           {results.length > 0 && (
-            <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-zinc-800/80 bg-zinc-900 shadow-xl">
+            <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-border/80 bg-card shadow-xl">
               {results.map((v) => {
                 const available = v.stock - v.reservedStock;
                 return (
@@ -112,10 +112,10 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
                     type="button"
                     disabled={available <= 0}
                     onClick={() => addToCart(v)}
-                    className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-zinc-200 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <span>
-                      {v.productName} — {v.name} <span className="text-zinc-500">({v.sku})</span>
+                      {v.productName} — {v.name} <span className="text-muted-foreground">({v.sku})</span>
                     </span>
                     <span className="text-primary">{formatPrice(v.price)}</span>
                   </button>
@@ -125,9 +125,9 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
           )}
         </div>
 
-        <div className="overflow-x-auto rounded-2xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md">
+        <div className="overflow-x-auto rounded-2xl border border-border/80 bg-card/60 backdrop-blur-md">
           <table className="w-full text-left">
-            <thead className="bg-white/[0.03] text-xs uppercase tracking-wide text-zinc-400">
+            <thead className="bg-accent text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="p-3">Producto</th>
                 <th className="p-3">Precio</th>
@@ -139,27 +139,27 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
             <tbody>
               {cart.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-6 text-center text-sm text-zinc-500">
+                  <td colSpan={5} className="p-6 text-center text-sm text-muted-foreground">
                     Busca un producto para agregarlo a la venta.
                   </td>
                 </tr>
               ) : (
                 cart.map((line) => (
-                  <tr key={line.variantId} className="border-b border-zinc-800/60">
-                    <td className="p-3 text-sm text-zinc-200">{line.label}</td>
-                    <td className="p-3 text-sm text-zinc-400">{formatPrice(line.price)}</td>
+                  <tr key={line.variantId} className="border-b border-border/60">
+                    <td className="p-3 text-sm text-foreground">{line.label}</td>
+                    <td className="p-3 text-sm text-muted-foreground">{formatPrice(line.price)}</td>
                     <td className="p-3">
                       <div className="flex items-center gap-2">
                         <Button size="icon" variant="outline" onClick={() => changeQuantity(line.variantId, -1)}>
                           <Minus className="h-3 w-3" />
                         </Button>
-                        <span className="w-6 text-center text-sm text-zinc-100">{line.quantity}</span>
+                        <span className="w-6 text-center text-sm text-foreground">{line.quantity}</span>
                         <Button size="icon" variant="outline" onClick={() => changeQuantity(line.variantId, 1)}>
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
                     </td>
-                    <td className="p-3 text-sm font-medium text-zinc-100">{formatPrice(line.price * line.quantity)}</td>
+                    <td className="p-3 text-sm font-medium text-foreground">{formatPrice(line.price * line.quantity)}</td>
                     <td className="p-3">
                       <Button size="icon" variant="ghost" onClick={() => removeLine(line.variantId)}>
                         <Trash2 className="h-4 w-4 text-red-400" />
@@ -173,7 +173,7 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
         </div>
       </div>
 
-      <div className="flex h-fit flex-col gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-4 backdrop-blur-md">
+      <div className="flex h-fit flex-col gap-4 rounded-2xl border border-border/80 bg-card/60 p-4 backdrop-blur-md">
         <div className="flex items-center gap-2 text-primary">
           <ShoppingCart className="h-4 w-4" />
           <span className="text-sm font-semibold">Cobro</span>
@@ -186,7 +186,7 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
           className={inputClass}
         />
 
-        <div className="flex justify-between border-t border-zinc-800/60 pt-3 text-lg font-bold text-zinc-100">
+        <div className="flex justify-between border-t border-border/60 pt-3 text-lg font-bold text-foreground">
           <span>Total</span>
           <span className="text-primary">{formatPrice(total)}</span>
         </div>

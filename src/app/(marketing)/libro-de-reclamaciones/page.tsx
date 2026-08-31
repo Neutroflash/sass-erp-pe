@@ -18,16 +18,16 @@ const REQUIRED_FIELDS = [
 export default function LibroDeReclamacionesPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-16">
-      <h1 className="mb-6 text-2xl font-bold text-zinc-100">Libro de Reclamaciones</h1>
-      <div className="flex flex-col gap-5 text-sm leading-relaxed text-zinc-400">
+      <h1 className="mb-6 text-2xl font-bold text-foreground">Libro de Reclamaciones</h1>
+      <div className="flex flex-col gap-5 text-sm leading-relaxed text-muted-foreground">
         <p>
-          Conforme al Código de Protección y Defensa del Consumidor (Ley N° 29571), <strong className="text-zinc-200">FlashStock</strong>{" "}
+          Conforme al Código de Protección y Defensa del Consumidor (Ley N° 29571), <strong className="text-foreground">FlashStock</strong>{" "}
           pone a tu disposición este canal para presentar un reclamo (disconformidad con el servicio) o una queja (disconformidad
           con la atención).
         </p>
 
         <div>
-          <h2 className="mb-2 font-semibold text-zinc-200">Cómo presentar tu reclamo</h2>
+          <h2 className="mb-2 font-semibold text-foreground">Cómo presentar tu reclamo</h2>
           <p className="mb-3">
             Escríbenos a{" "}
             <a
@@ -46,16 +46,16 @@ export default function LibroDeReclamacionesPage() {
         </div>
 
         <div>
-          <h2 className="mb-1 font-semibold text-zinc-200">Plazo de respuesta</h2>
+          <h2 className="mb-1 font-semibold text-foreground">Plazo de respuesta</h2>
           <p>Te responderemos dentro de los 30 días calendario que establece la norma, conservando tu correo como constancia de presentación.</p>
         </div>
 
         <div>
-          <h2 className="mb-1 font-semibold text-zinc-200">¿Buscas reclamar sobre una compra en una tienda de FlashStock?</h2>
+          <h2 className="mb-1 font-semibold text-foreground">¿Buscas reclamar sobre una compra en una tienda de FlashStock?</h2>
           <p>
             Si tu reclamo es sobre un producto o servicio comprado en la tienda de un negocio que usa FlashStock (no sobre
             FlashStock como plataforma), contacta directamente a ese negocio — cada tienda tiene su propio Libro de
-            Reclamaciones en <code className="rounded bg-black/30 px-1 py-0.5 text-xs">/libro-de-reclamaciones</code>.
+            Reclamaciones en <code className="rounded bg-input px-1 py-0.5 text-xs">/libro-de-reclamaciones</code>.
           </p>
         </div>
       </div>

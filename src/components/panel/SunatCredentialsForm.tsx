@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
+  "h-10 rounded-lg border border-border bg-input px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -95,7 +95,7 @@ export function SunatCredentialsForm({ initial }: { initial: SunatConfigStatus }
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+    <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
       <div className="mb-1 flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-primary/80">Facturación SUNAT (directa)</h2>
         {initial.configured ? (
@@ -106,15 +106,15 @@ export function SunatCredentialsForm({ initial }: { initial: SunatConfigStatus }
           <Badge variant="secondary">Sin configurar</Badge>
         )}
       </div>
-      <p className="mb-4 text-xs text-zinc-500">
+      <p className="mb-4 text-xs text-muted-foreground">
         Integración directa (sin PSE/OSE de pago) — necesitas tu propio certificado digital (.pfx/.p12) y un usuario
         secundario SOL con permiso de "Envío de información de comprobantes de pago". Empieza siempre en{" "}
-        <strong className="text-zinc-400">Beta</strong> y valida ahí antes de pasar a Producción.
+        <strong className="text-muted-foreground">Beta</strong> y valida ahí antes de pasar a Producción.
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div>
-          <label className="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Ambiente</label>
+          <label className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">Ambiente</label>
           <select value={environment} onChange={(e) => setEnvironment(e.target.value as "BETA" | "PRODUCCION")} className={cn(inputClass, "w-full")}>
             <option value="BETA">Beta / homologación</option>
             <option value="PRODUCCION">Producción</option>
@@ -122,18 +122,18 @@ export function SunatCredentialsForm({ initial }: { initial: SunatConfigStatus }
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Usuario SOL (secundario)
             <input required value={solUser} onChange={(e) => setSolUser(e.target.value)} className={inputClass} placeholder={initial.solUser ?? "MODDATOS"} />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Clave SOL
             <input required type="password" value={solPassword} onChange={(e) => setSolPassword(e.target.value)} className={inputClass} />
           </label>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Certificado digital (.pfx/.p12)
             <input
               required
@@ -143,28 +143,28 @@ export function SunatCredentialsForm({ initial }: { initial: SunatConfigStatus }
               className={cn(inputClass, "py-1.5")}
             />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Contraseña del certificado
             <input required type="password" value={certificatePassword} onChange={(e) => setCertificatePassword(e.target.value)} className={inputClass} />
           </label>
         </div>
 
-        <div className="mt-2 border-t border-zinc-800/60 pt-3">
+        <div className="mt-2 border-t border-border/60 pt-3">
           <div className="mb-1 flex items-center gap-2">
-            <label className="text-xs uppercase tracking-wide text-zinc-500">Guías de remisión (opcional)</label>
+            <label className="text-xs uppercase tracking-wide text-muted-foreground">Guías de remisión (opcional)</label>
             {initial.greConfigured && <Badge variant="success">Configurado</Badge>}
           </div>
-          <p className="mb-3 text-xs text-zinc-500">
-            Solo si vas a emitir guías de remisión — necesita un <strong className="text-zinc-400">client_id</strong>/
-            <strong className="text-zinc-400">client_secret</strong> generados en un menú aparte de SOL (Empresas → API GRE). Al
+          <p className="mb-3 text-xs text-muted-foreground">
+            Solo si vas a emitir guías de remisión — necesita un <strong className="text-muted-foreground">client_id</strong>/
+            <strong className="text-muted-foreground">client_secret</strong> generados en un menú aparte de SOL (Empresas → API GRE). Al
             guardar esto, también hay que re-ingresar el usuario/clave SOL y volver a subir el certificado de arriba.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+            <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
               Client ID
               <input value={greClientId} onChange={(e) => setGreClientId(e.target.value)} className={inputClass} />
             </label>
-            <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+            <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
               Client Secret
               <input type="password" value={greClientSecret} onChange={(e) => setGreClientSecret(e.target.value)} className={inputClass} />
             </label>

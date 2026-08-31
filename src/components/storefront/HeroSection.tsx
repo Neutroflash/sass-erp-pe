@@ -25,7 +25,7 @@ export function HeroSection({ businessName, coverImageUrl }: Props) {
   return (
     <section
       className={cn(
-        "relative isolate flex flex-col items-center gap-6 overflow-hidden rounded-3xl border border-white/10 py-20 text-center sm:py-28",
+        "relative isolate flex flex-col items-center gap-6 overflow-hidden rounded-3xl border border-border py-20 text-center sm:py-28",
         // Sin cover configurado: wash púrpura/magenta fijo (independiente de --primary) para dar
         // la misma profundidad "premium" que pide el spec — el glow de --primary sigue siendo el
         // acento de marca del tenant, esto es solo textura de fondo.

@@ -33,7 +33,7 @@ export function RunBillingButton() {
       <Button size="sm" variant="outline" disabled={loading} onClick={handleRun}>
         {loading ? "Procesando..." : "Cobrar suscripciones vencidas ahora"}
       </Button>
-      {result && <span className="text-xs text-zinc-400">{result}</span>}
+      {result && <span className="text-xs text-muted-foreground">{result}</span>}
     </div>
   );
 }

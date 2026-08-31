@@ -22,7 +22,7 @@ export function ProductImage({ src, alt, sizes, priority, className }: Props) {
 
   if (!src) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-white/5 text-zinc-700">
+      <div className="flex h-full w-full items-center justify-center bg-accent text-muted-foreground/50">
         <ImageOff className="h-8 w-8" strokeWidth={1.5} />
       </div>
     );
@@ -30,7 +30,7 @@ export function ProductImage({ src, alt, sizes, priority, className }: Props) {
 
   return (
     <>
-      {!loaded && <div aria-hidden className="absolute inset-0 animate-pulse bg-white/5" />}
+      {!loaded && <div aria-hidden className="absolute inset-0 animate-pulse bg-accent" />}
       <Image
         src={src}
         alt={alt}

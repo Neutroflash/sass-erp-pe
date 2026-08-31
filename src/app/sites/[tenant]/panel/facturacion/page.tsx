@@ -42,8 +42,8 @@ export default async function FacturacionPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-zinc-100">Facturación SUNAT</h1>
-      <p className="text-sm text-zinc-400">
+      <h1 className="text-2xl font-bold text-foreground">Facturación SUNAT</h1>
+      <p className="text-sm text-muted-foreground">
         Los comprobantes se emiten desde el detalle de cada pedido pagado, en{" "}
         <Link href="/panel/pedidos" className="text-primary hover:underline">
           Pedidos
@@ -56,11 +56,11 @@ export default async function FacturacionPage() {
       </p>
 
       {invoices.length === 0 ? (
-        <p className="text-sm text-zinc-500">Todavía no se ha emitido ningún comprobante.</p>
+        <p className="text-sm text-muted-foreground">Todavía no se ha emitido ningún comprobante.</p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md">
+        <div className="overflow-x-auto rounded-2xl border border-border/80 bg-card/60 backdrop-blur-md">
           <table className="w-full text-left">
-            <thead className="bg-white/[0.03] text-xs uppercase tracking-wide text-zinc-400">
+            <thead className="bg-accent text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="p-3">Fecha</th>
                 <th className="p-3">Comprobante</th>
@@ -72,17 +72,17 @@ export default async function FacturacionPage() {
             </thead>
             <tbody>
               {invoices.map((inv) => (
-                <tr key={inv.id} className="border-b border-zinc-800/60">
-                  <td className="p-3 text-sm text-zinc-500">{new Date(inv.createdAt).toLocaleString("es-PE")}</td>
-                  <td className="p-3 text-sm text-zinc-200">
+                <tr key={inv.id} className="border-b border-border/60">
+                  <td className="p-3 text-sm text-muted-foreground">{new Date(inv.createdAt).toLocaleString("es-PE")}</td>
+                  <td className="p-3 text-sm text-foreground">
                     {TYPE_LABEL[inv.type] ?? inv.type} {inv.series}-{inv.number}
                     {inv.relatedInvoice && (
-                      <span className="ml-1 text-xs text-zinc-500">
+                      <span className="ml-1 text-xs text-muted-foreground">
                         (corrige {TYPE_LABEL[inv.relatedInvoice.type]} {inv.relatedInvoice.series}-{inv.relatedInvoice.number})
                       </span>
                     )}
                   </td>
-                  <td className="p-3 text-sm text-zinc-400">
+                  <td className="p-3 text-sm text-muted-foreground">
                     {inv.documentType} {inv.documentNumber}
                     {inv.businessName ? ` · ${inv.businessName}` : ""}
                   </td>
@@ -107,10 +107,10 @@ export default async function FacturacionPage() {
         </div>
       )}
 
-      <p className="text-xs text-zinc-600">
+      <p className="text-xs text-muted-foreground/70">
         Sin credenciales SUNAT configuradas, los comprobantes emitidos usan un proveedor simulado (ver
         docs/ROADMAP.md). Con credenciales configuradas, la emisión es directa contra SUNAT — sin PSE/OSE de por
-        medio — vía <code className="text-zinc-500">domain/invoicing/sunat/</code>.
+        medio — vía <code className="text-muted-foreground">domain/invoicing/sunat/</code>.
       </p>
     </div>
   );

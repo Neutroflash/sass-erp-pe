@@ -76,17 +76,17 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
         </FadeIn>
 
         <FadeIn delay={0.1} className="flex flex-col gap-4">
-          {product.brand && <span className="text-sm text-zinc-500">{product.brand}</span>}
-          <h1 className="text-3xl font-bold text-zinc-100">{product.name}</h1>
-          {product.description && <p className="text-sm text-zinc-400">{product.description}</p>}
+          {product.brand && <span className="text-sm text-muted-foreground">{product.brand}</span>}
+          <h1 className="text-3xl font-bold text-foreground">{product.name}</h1>
+          {product.description && <p className="text-sm text-muted-foreground">{product.description}</p>}
 
           <div className="flex flex-col gap-2">
             {product.variants.map((variant) => (
               <div
                 key={variant.id}
-                className="flex items-center justify-between rounded-lg border border-white/10 bg-card/60 px-4 py-3"
+                className="flex items-center justify-between rounded-lg border border-border bg-card/60 px-4 py-3"
               >
-                <span className="text-sm text-zinc-200">{variant.name}</span>
+                <span className="text-sm text-foreground">{variant.name}</span>
                 <div className="flex items-center gap-3">
                   <span className="font-bold text-primary">{formatPrice(variant.price)}</span>
                   <AddToCartButton
@@ -106,7 +106,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
 
       {relatedRows.length > 0 && (
         <section className="mt-16">
-          <h2 className="mb-6 text-xl font-bold text-zinc-100">También te puede interesar</h2>
+          <h2 className="mb-6 text-xl font-bold text-foreground">También te puede interesar</h2>
           <CatalogGrid products={relatedRows.map(toPublicProduct)} />
         </section>
       )}

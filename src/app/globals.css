@@ -3,19 +3,46 @@
 @tailwind utilities;
 
 @layer base {
+  /* Modo claro — el default de :root (sin clase), pisado por .dark abajo. El toggle real vive en
+     ThemeProvider.tsx: agrega/quita la clase "dark" en <html> y persiste en localStorage, con un
+     script inline en el <head> (ver layout.tsx) que la aplica ANTES del primer paint para que no
+     haya flash del tema equivocado. El default de la app sigue siendo oscuro — el script agrega
+     "dark" salvo que el usuario ya haya elegido "light" explícitamente. */
   :root {
-    /* Mismo tema base que el panel admin de Flashkings (ver ADMIN_DESIGN_SYSTEM.md en ese repo) —
-       fondo oscuro, acento dorado. Reutilizado acá porque este proyecto explícitamente sigue ese
-       mismo patrón visual, no porque comparta código con Flashkings. */
+    --background: 220 20% 97%;
+    --foreground: 226 20% 12%;
+    /* Superficie de tarjetas/paneles — blanco puro contra un fondo de página gris muy claro, para
+       que las tarjetas se sientan "elevadas" en vez de fundirse con el fondo. */
+    --card: 0 0% 100%;
+    --card-foreground: 226 20% 12%;
+    --primary: 48 96% 53%;
+    --primary-foreground: 0 0% 9%;
+    --border: 220 15% 88%;
+    --muted: 220 15% 94%;
+    --muted-foreground: 220 9% 40%;
+    --input: 220 15% 95%;
+    --accent: 220 15% 92%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 98%;
+    --radius: 0.75rem;
+  }
+
+  /* Modo oscuro — el aspecto original del proyecto ("Dark Mode Premium"), sin cambios de valores
+     respecto a como estaba antes de este sistema de temas. */
+  .dark {
     --background: 228 24% 6%;
     --foreground: 0 0% 96%;
-    /* Superficie de tarjetas/paneles (Navbar, ProductCard, drawers, inputs) — un tono más claro
-       que --background pero de la misma familia azul-violeta oscura, no gris neutro plano. */
     --card: 226 25% 10%;
     --card-foreground: 0 0% 96%;
     --primary: 48 96% 53%;
     --primary-foreground: 0 0% 9%;
-    --radius: 0.75rem;
+    --border: 226 15% 18%;
+    --muted: 226 15% 14%;
+    --muted-foreground: 220 9% 65%;
+    --input: 226 20% 9%;
+    --accent: 226 15% 16%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
   }
 
   body {
@@ -25,18 +52,17 @@
 }
 
 @layer utilities {
-  /* Textura sutil de puntos, neutra (no depende de --primary) — misma idea que Flashkings pero sin
-     acoplarla a un color fijo. Aplicar sobre fondos oscuros; los componentes que se apoyan encima
-     deben usar fondos translúcidos (glass) para que la textura siga visible debajo. */
+  /* Textura sutil de puntos — el color del punto también responde al tema (gris oscuro en dark,
+     gris claro en light) para no quedar invisible o demasiado marcada en ninguno de los dos. */
   .bg-grid-pattern {
-    background-image: radial-gradient(#1e1e24 1px, transparent 1px);
+    background-image: radial-gradient(hsl(var(--border)) 1px, transparent 1px);
     background-size: 16px 16px;
   }
 
   /* Degradado de texto atado a --primary (el color del tenant) — reemplaza el "text-gradient-gold"
      fijo de Flashkings, que no puede reutilizarse tal cual acá. */
   .text-gradient-primary {
-    @apply bg-gradient-to-r from-white via-primary to-primary/70 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-foreground via-primary to-primary/70 bg-clip-text text-transparent;
   }
 
   /* Brillo metálico que barre un overlay al hacer hover — agnóstico de color, se puede portar tal

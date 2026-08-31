@@ -22,13 +22,13 @@ export function CatalogFilters({ categories, activeCategory, activeSearch }: Pro
       <form method="GET" action="/catalogo" className="flex max-w-sm items-center gap-2">
         {activeCategory && <input type="hidden" name="category" value={activeCategory} />}
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="search"
             name="search"
             defaultValue={activeSearch}
             placeholder="Buscar productos..."
-            className="h-11 w-full rounded-lg border border-white/10 bg-neutral-900 pl-9 pr-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary"
+            className="h-11 w-full rounded-lg border border-border bg-input pl-9 pr-3 text-sm text-foreground outline-none transition-colors focus:border-primary"
           />
         </div>
       </form>
@@ -41,7 +41,7 @@ export function CatalogFilters({ categories, activeCategory, activeSearch }: Pro
               "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
               !activeCategory
                 ? "border-primary bg-primary/10 text-primary"
-                : "border-white/10 text-zinc-400 hover:border-white/30 hover:text-zinc-100",
+                : "border-border text-muted-foreground hover:border-border hover:text-foreground",
             )}
           >
             Todas
@@ -59,7 +59,7 @@ export function CatalogFilters({ categories, activeCategory, activeSearch }: Pro
                   "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                   active
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-white/10 text-zinc-400 hover:border-white/30 hover:text-zinc-100",
+                    : "border-border text-muted-foreground hover:border-border hover:text-foreground",
                 )}
               >
                 {category.name}

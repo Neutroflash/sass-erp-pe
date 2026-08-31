@@ -21,7 +21,7 @@ export default async function NewProductPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-zinc-100">Nuevo producto</h1>
+      <h1 className="text-2xl font-bold text-foreground">Nuevo producto</h1>
       <CreateProductForm categories={categories} />
     </div>
   );

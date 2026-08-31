@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 const inputClass =
-  "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
+  "h-9 rounded-lg border border-border bg-input px-2 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 export interface OrderDispatchGuideSummary {
   id: string;
@@ -46,9 +46,9 @@ export function DispatchGuideSection({ orderId, dispatchGuide }: { orderId: stri
 
   if (dispatchGuide) {
     return (
-      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
-        <span className="text-xs uppercase tracking-wide text-zinc-500">Guía de remisión</span>
-        <p className="mt-1 text-zinc-100">
+      <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">Guía de remisión</span>
+        <p className="mt-1 text-foreground">
           {dispatchGuide.series}-{dispatchGuide.number}
         </p>
         <Badge
@@ -84,13 +84,13 @@ export function DispatchGuideSection({ orderId, dispatchGuide }: { orderId: stri
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+    <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
       <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-primary/80">Guía de remisión (transporte privado)</h3>
-      <p className="mb-4 text-xs text-zinc-500">Motivo: venta. El vehículo y el conductor son los propios del negocio, sin transportista contratado.</p>
+      <p className="mb-4 text-xs text-muted-foreground">Motivo: venta. El vehículo y el conductor son los propios del negocio, sin transportista contratado.</p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="grid gap-3 sm:grid-cols-3">
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Tipo doc. destinatario
             <select value={docType} onChange={(e) => setDocType(e.target.value)} className={inputClass}>
               <option value="1">DNI</option>
@@ -99,64 +99,64 @@ export function DispatchGuideSection({ orderId, dispatchGuide }: { orderId: stri
               <option value="7">Pasaporte</option>
             </select>
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             N° documento
             <input required value={docNumber} onChange={(e) => setDocNumber(e.target.value)} className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Nombre / razón social
             <input required value={recipientName} onChange={(e) => setRecipientName(e.target.value)} className={inputClass} />
           </label>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Fecha de traslado
             <input required type="date" value={transferDate} onChange={(e) => setTransferDate(e.target.value)} className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Peso total (kg)
             <input required type="number" min="0.001" step="0.001" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} className={inputClass} />
           </label>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Ubigeo origen (6 dígitos)
             <input required maxLength={6} value={originUbigeo} onChange={(e) => setOriginUbigeo(e.target.value)} className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Dirección origen
             <input required value={originAddress} onChange={(e) => setOriginAddress(e.target.value)} className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Ubigeo destino (6 dígitos)
             <input required maxLength={6} value={destinationUbigeo} onChange={(e) => setDestinationUbigeo(e.target.value)} className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Dirección destino
             <input required value={destinationAddress} onChange={(e) => setDestinationAddress(e.target.value)} className={inputClass} />
           </label>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Placa del vehículo
             <input required value={plate} onChange={(e) => setPlate(e.target.value)} className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             DNI del conductor
             <input required value={driverDoc} onChange={(e) => setDriverDoc(e.target.value)} className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Nombres del conductor
             <input required value={driverFirstName} onChange={(e) => setDriverFirstName(e.target.value)} className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Apellidos del conductor
             <input required value={driverLastName} onChange={(e) => setDriverLastName(e.target.value)} className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Licencia de conducir
             <input required value={driverLicense} onChange={(e) => setDriverLicense(e.target.value)} className={inputClass} />
           </label>

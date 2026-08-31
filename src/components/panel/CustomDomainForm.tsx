@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
+  "h-10 rounded-lg border border-border bg-input px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 export interface CustomDomainStatus {
   customDomain: string | null;
@@ -77,7 +77,7 @@ export function CustomDomainForm({ initial }: { initial: CustomDomainStatus }) {
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+    <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-primary/80">Dominio propio</h2>
         {initial.customDomain ? <Badge variant="success">Verificado</Badge> : pendingResult ? <Badge variant="secondary">Pendiente</Badge> : <Badge variant="outline">Sin configurar</Badge>}
@@ -85,7 +85,7 @@ export function CustomDomainForm({ initial }: { initial: CustomDomainStatus }) {
 
       {initial.customDomain && !pendingResult ? (
         <div className="flex flex-col gap-3">
-          <p className="text-sm text-zinc-300">
+          <p className="text-sm text-foreground/90">
             Tu tienda responde en <span className="text-primary">{initial.customDomain}</span>.
           </p>
           <Button size="sm" variant="outline" disabled={removing} onClick={handleRemove} className="w-fit">
@@ -94,15 +94,15 @@ export function CustomDomainForm({ initial }: { initial: CustomDomainStatus }) {
         </div>
       ) : pendingResult ? (
         <div className="flex flex-col gap-3">
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted-foreground">
             Agrega este registro TXT en el DNS de tu dominio, luego verifica. La propagación puede tardar unos minutos.
           </p>
-          <div className="rounded-lg border border-zinc-800/80 bg-black/30 p-3 font-mono text-xs text-zinc-300">
+          <div className="rounded-lg border border-border/80 bg-input p-3 font-mono text-xs text-foreground/90">
             <p>
-              <span className="text-zinc-500">Nombre:</span> {pendingResult.txtRecordName}
+              <span className="text-muted-foreground">Nombre:</span> {pendingResult.txtRecordName}
             </p>
             <p className="mt-1 break-all">
-              <span className="text-zinc-500">Valor:</span> {pendingResult.txtRecordValue}
+              <span className="text-muted-foreground">Valor:</span> {pendingResult.txtRecordValue}
             </p>
           </div>
           <div className="flex gap-2">
@@ -116,7 +116,7 @@ export function CustomDomainForm({ initial }: { initial: CustomDomainStatus }) {
         </div>
       ) : (
         <form onSubmit={handleClaim} className="flex flex-col gap-2 sm:flex-row sm:items-end">
-          <label className="flex flex-1 flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-1 flex-col gap-1.5 text-sm text-foreground/90">
             Dominio
             <input
               required

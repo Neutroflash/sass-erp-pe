@@ -12,14 +12,14 @@ export default async function PlatformTenantsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="text-2xl font-bold text-zinc-100">Negocios registrados</h2>
+      <h2 className="text-2xl font-bold text-foreground">Negocios registrados</h2>
 
       {tenants.length === 0 ? (
-        <p className="text-sm text-zinc-500">Todavía no hay negocios registrados.</p>
+        <p className="text-sm text-muted-foreground">Todavía no hay negocios registrados.</p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md">
+        <div className="overflow-x-auto rounded-2xl border border-border/80 bg-card/60 backdrop-blur-md">
           <table className="w-full text-left">
-            <thead className="bg-white/[0.03] text-xs uppercase tracking-wide text-zinc-400">
+            <thead className="bg-accent text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="p-3">Negocio</th>
                 <th className="p-3">Subdominio</th>
@@ -29,8 +29,8 @@ export default async function PlatformTenantsPage() {
             </thead>
             <tbody>
               {tenants.map((tenant) => (
-                <tr key={tenant.id} className="border-b border-zinc-800/60">
-                  <td className="p-3 text-sm text-zinc-100">{tenant.businessName}</td>
+                <tr key={tenant.id} className="border-b border-border/60">
+                  <td className="p-3 text-sm text-foreground">{tenant.businessName}</td>
                   <td className="p-3 text-sm">
                     <Link
                       href={`https://${tenant.slug}.flashstock.pe`}
@@ -44,7 +44,7 @@ export default async function PlatformTenantsPage() {
                   <td className="p-3">
                     <Badge variant="outline">{tenant.planTier}</Badge>
                   </td>
-                  <td className="p-3 text-sm text-zinc-500">{new Date(tenant.createdAt).toLocaleDateString("es-PE")}</td>
+                  <td className="p-3 text-sm text-muted-foreground">{new Date(tenant.createdAt).toLocaleDateString("es-PE")}</td>
                 </tr>
               ))}
             </tbody>

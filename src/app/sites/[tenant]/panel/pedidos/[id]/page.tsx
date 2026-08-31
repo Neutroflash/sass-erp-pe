@@ -73,15 +73,15 @@ export default async function OrderDetailPage({ params }: { params: { id: string
 
   return (
     <div className="flex flex-col gap-6">
-      <Link href="/panel/pedidos" className="inline-flex w-fit items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-100">
+      <Link href="/panel/pedidos" className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" />
         Volver a pedidos
       </Link>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-100">Pedido #{order.id.slice(0, 8)}</h1>
-          <p className="text-sm text-zinc-500">{new Date(order.createdAt).toLocaleString("es-PE")}</p>
+          <h1 className="text-2xl font-bold text-foreground">Pedido #{order.id.slice(0, 8)}</h1>
+          <p className="text-sm text-muted-foreground">{new Date(order.createdAt).toLocaleString("es-PE")}</p>
         </div>
         <Badge variant={order.status === "PAID" ? "success" : order.status === "CANCELLED" ? "destructive" : "outline"}>
           {STATUS_LABEL[order.status] ?? order.status}
@@ -89,25 +89,25 @@ export default async function OrderDetailPage({ params }: { params: { id: string
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
-          <span className="text-xs uppercase tracking-wide text-zinc-500">Cliente</span>
-          <p className="mt-1 text-zinc-100">{order.customerName}</p>
-          {order.customerPhone && <p className="text-sm text-zinc-400">{order.customerPhone}</p>}
-          {order.customerEmail && <p className="text-sm text-zinc-400">{order.customerEmail}</p>}
-          {order.shippingAddress && <p className="mt-2 text-sm text-zinc-500">{order.shippingAddress}</p>}
-          <p className="mt-2 text-xs text-zinc-600">Canal: {order.channel === "ONLINE" ? "Tienda online" : "POS (venta presencial)"}</p>
+        <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Cliente</span>
+          <p className="mt-1 text-foreground">{order.customerName}</p>
+          {order.customerPhone && <p className="text-sm text-muted-foreground">{order.customerPhone}</p>}
+          {order.customerEmail && <p className="text-sm text-muted-foreground">{order.customerEmail}</p>}
+          {order.shippingAddress && <p className="mt-2 text-sm text-muted-foreground">{order.shippingAddress}</p>}
+          <p className="mt-2 text-xs text-muted-foreground/70">Canal: {order.channel === "ONLINE" ? "Tienda online" : "POS (venta presencial)"}</p>
         </div>
 
-        <div className="flex flex-col gap-2 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+        <div className="flex flex-col gap-2 rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
           {order.items.map((item) => (
-            <div key={item.id} className="flex justify-between text-sm text-zinc-300">
+            <div key={item.id} className="flex justify-between text-sm text-foreground/90">
               <span>
-                {item.variant.name} <span className="text-zinc-500">({item.variant.sku})</span> x{item.quantity}
+                {item.variant.name} <span className="text-muted-foreground">({item.variant.sku})</span> x{item.quantity}
               </span>
               <span>{formatPrice(Number(item.price) * item.quantity)}</span>
             </div>
           ))}
-          <div className="mt-2 flex justify-between border-t border-zinc-800/60 pt-2 font-bold text-zinc-100">
+          <div className="mt-2 flex justify-between border-t border-border/60 pt-2 font-bold text-foreground">
             <span>Total</span>
             <span className="text-primary">{formatPrice(Number(order.totalAmount))}</span>
           </div>

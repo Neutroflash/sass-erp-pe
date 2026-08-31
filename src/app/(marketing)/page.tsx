@@ -18,10 +18,10 @@ export default function MarketingHomePage() {
         <span className="mb-4 inline-block text-xs uppercase tracking-widest text-yellow-400/80">
           Multi-tenant · e-commerce + ERP
         </span>
-        <h1 className="mb-4 text-4xl font-bold text-zinc-100 sm:text-5xl">
+        <h1 className="mb-4 text-4xl font-bold text-foreground sm:text-5xl">
           Vende, gestiona inventario y factura — todo en un panel
         </h1>
-        <p className="mx-auto mb-8 max-w-2xl text-zinc-400">
+        <p className="mx-auto mb-8 max-w-2xl text-muted-foreground">
           Una plataforma pensada para pymes en Perú: tienda en línea, punto de venta presencial, control de stock y
           facturación electrónica SUNAT. Activa solo los módulos que tu negocio necesita.
         </p>
@@ -38,10 +38,10 @@ export default function MarketingHomePage() {
       <section className="mx-auto max-w-6xl px-4 pb-24">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {MODULES.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+            <div key={title} className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
               <Icon className="mb-3 h-6 w-6 text-yellow-400" />
-              <h2 className="mb-1 font-semibold text-zinc-100">{title}</h2>
-              <p className="text-sm text-zinc-500">{desc}</p>
+              <h2 className="mb-1 font-semibold text-foreground">{title}</h2>
+              <p className="text-sm text-muted-foreground">{desc}</p>
             </div>
           ))}
         </div>

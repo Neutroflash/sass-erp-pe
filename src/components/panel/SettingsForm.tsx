@@ -9,10 +9,10 @@ import { cn } from "@/lib/utils";
 import { defaultTermsAndConditions, defaultPrivacyPolicy } from "@/domain/legal/templates";
 
 const textareaClass =
-  "rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50 resize-y";
+  "rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary/50 resize-y";
 
 const inputClass =
-  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
+  "h-10 rounded-lg border border-border bg-input px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 const FEATURE_LABELS: Record<keyof TenantFeatures, { label: string; hint: string }> = {
   inventoryManagement: { label: "Inventario", hint: "CRUD de productos/variantes/categorías + kardex." },
@@ -89,14 +89,14 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+      <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary/80">Datos del negocio</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Razón social / nombre comercial
             <input required value={businessName} onChange={(e) => setBusinessName(e.target.value)} className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             RUC
             <input
               value={ruc}
@@ -105,15 +105,15 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
               className={inputClass}
             />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300 sm:col-span-2">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90 sm:col-span-2">
             Dirección fiscal
             <input value={fiscalAddress} onChange={(e) => setFiscalAddress(e.target.value)} className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300 sm:col-span-2">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90 sm:col-span-2">
             URL del logo
             <input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://..." className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300 sm:col-span-2">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90 sm:col-span-2">
             URL de imagen de portada (Hero de la tienda)
             <input
               value={coverImageUrl}
@@ -122,7 +122,7 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
               className={inputClass}
             />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             WhatsApp de contacto
             <input
               value={whatsappNumber}
@@ -130,16 +130,16 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
               placeholder="51987654321"
               className={inputClass}
             />
-            <span className="text-xs text-zinc-500">Con código de país, sin "+" ni espacios. Habilita el botón flotante y el contacto del pie de página.</span>
+            <span className="text-xs text-muted-foreground">Con código de país, sin "+" ni espacios. Habilita el botón flotante y el contacto del pie de página.</span>
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Color primario
             <div className="flex items-center gap-2">
               <input
                 type="color"
                 value={/^#[0-9a-fA-F]{6}$/.test(primaryColor) ? primaryColor : "#eab308"}
                 onChange={(e) => setPrimaryColor(e.target.value)}
-                className="h-10 w-14 cursor-pointer rounded-lg border border-white/10 bg-black/30"
+                className="h-10 w-14 cursor-pointer rounded-lg border border-border bg-input"
               />
               <input value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className={cn(inputClass, "flex-1")} />
             </div>
@@ -147,20 +147,20 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+      <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
         <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-primary/80">Aviso de stock bajo</h2>
-        <p className="mb-4 text-xs text-zinc-500">Un correo diario con las variantes cuyo stock disponible cae al umbral o por debajo.</p>
-        <label className="mb-3 flex cursor-pointer items-center gap-3 rounded-lg p-2 hover:bg-white/[0.03]">
+        <p className="mb-4 text-xs text-muted-foreground">Un correo diario con las variantes cuyo stock disponible cae al umbral o por debajo.</p>
+        <label className="mb-3 flex cursor-pointer items-center gap-3 rounded-lg p-2 hover:bg-accent">
           <input
             type="checkbox"
             checked={lowStockEnabled}
             onChange={(e) => setLowStockEnabled(e.target.checked)}
             className="h-4 w-4 accent-primary"
           />
-          <span className="text-sm font-medium text-zinc-100">Activar aviso de stock bajo</span>
+          <span className="text-sm font-medium text-foreground">Activar aviso de stock bajo</span>
         </label>
         {lowStockEnabled && (
-          <label className="flex max-w-[200px] flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex max-w-[200px] flex-col gap-1.5 text-sm text-foreground/90">
             Umbral (unidades disponibles)
             <input
               type="number"
@@ -173,12 +173,12 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
         )}
       </div>
 
-      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+      <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
         <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-primary/80">Módulos activos</h2>
-        <p className="mb-4 text-xs text-zinc-500">Desactivar un módulo lo oculta del menú y bloquea sus rutas para todo el equipo.</p>
+        <p className="mb-4 text-xs text-muted-foreground">Desactivar un módulo lo oculta del menú y bloquea sus rutas para todo el equipo.</p>
         <div className="flex flex-col gap-3">
           {(Object.keys(FEATURE_LABELS) as (keyof TenantFeatures)[]).map((key) => (
-            <label key={key} className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-white/[0.03]">
+            <label key={key} className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-accent">
               <input
                 type="checkbox"
                 checked={features[key]}
@@ -186,22 +186,22 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
                 className="mt-1 h-4 w-4 accent-primary"
               />
               <span>
-                <span className="block text-sm font-medium text-zinc-100">{FEATURE_LABELS[key].label}</span>
-                <span className="block text-xs text-zinc-500">{FEATURE_LABELS[key].hint}</span>
+                <span className="block text-sm font-medium text-foreground">{FEATURE_LABELS[key].label}</span>
+                <span className="block text-xs text-muted-foreground">{FEATURE_LABELS[key].hint}</span>
               </span>
             </label>
           ))}
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+      <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
         <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-primary/80">Legal</h2>
-        <p className="mb-4 text-xs text-zinc-500">
+        <p className="mb-4 text-xs text-muted-foreground">
           Si dejas esto vacío, tu tienda muestra una plantilla genérica con tu razón social/RUC — te recomendamos
           revisarla o reemplazarla con tu propio abogado antes de operar con clientes reales.
         </p>
         <div className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Términos y Condiciones
             <textarea
               rows={6}
@@ -211,7 +211,7 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
               className={textareaClass}
             />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Política de Privacidad
             <textarea
               rows={6}

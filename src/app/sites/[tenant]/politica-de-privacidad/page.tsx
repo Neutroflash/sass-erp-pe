@@ -11,8 +11,8 @@ export default async function PoliticaPrivacidadPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
-      <h1 className="mb-6 text-2xl font-bold text-zinc-100">Política de Privacidad</h1>
-      <div className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-400">{text}</div>
+      <h1 className="mb-6 text-2xl font-bold text-foreground">Política de Privacidad</h1>
+      <div className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{text}</div>
     </div>
   );
 }

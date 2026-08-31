@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 const inputClass =
-  "rounded-lg border border-white/10 bg-neutral-900 px-4 py-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary";
+  "rounded-lg border border-border bg-input px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary";
 
 export function RespondComplaintForm({ complaintId }: { complaintId: string }) {
   const router = useRouter();

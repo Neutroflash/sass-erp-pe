@@ -50,7 +50,7 @@ export default async function InventoryPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-zinc-100">Inventario</h1>
+        <h1 className="text-2xl font-bold text-foreground">Inventario</h1>
         {/* Crear un producto fija su costo inicial — decisión de OWNER, ver POST /api/products. */}
         {canSeeCost && (
           <Link href="/panel/inventario/nuevo">

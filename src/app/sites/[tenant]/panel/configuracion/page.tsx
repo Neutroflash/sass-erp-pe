@@ -25,11 +25,11 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
   return (
     <div>
       <div className="mb-1 flex justify-between text-xs">
-        <span className="text-zinc-400">{label}</span>
-        <span className={nearLimit ? "text-red-400" : "text-zinc-500"}>{limit === null ? `${used} · ilimitado` : `${used} / ${limit}`}</span>
+        <span className="text-muted-foreground">{label}</span>
+        <span className={nearLimit ? "text-red-400" : "text-muted-foreground"}>{limit === null ? `${used} · ilimitado` : `${used} / ${limit}`}</span>
       </div>
       {limit !== null && (
-        <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
+        <div className="h-1.5 overflow-hidden rounded-full bg-accent">
           <div className={`h-full ${nearLimit ? "bg-red-500" : "bg-primary"}`} style={{ width: `${pct}%` }} />
         </div>
       )}
@@ -91,9 +91,9 @@ export default async function ConfiguracionPage() {
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <h1 className="text-2xl font-bold text-zinc-100">Configuración</h1>
+      <h1 className="text-2xl font-bold text-foreground">Configuración</h1>
 
-      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+      <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-primary/80">Plan y uso</h2>
           <div className="flex items-center gap-2">
@@ -110,13 +110,13 @@ export default async function ConfiguracionPage() {
           <UsageBar label="Comprobantes emitidos este mes" used={invoicesThisMonth} limit={limits.invoiceLimit} />
         </div>
         {subscription && (
-          <p className="mt-3 text-xs text-zinc-500">
+          <p className="mt-3 text-xs text-muted-foreground">
             {PLAN_PRICE_PEN[row.planTier] === 0
               ? "Plan gratuito, sin cobro."
               : `${formatPrice(PLAN_PRICE_PEN[row.planTier])}/mes · próximo cobro el ${new Date(subscription.currentPeriodEnd).toLocaleDateString("es-PE")}`}
           </p>
         )}
-        <div className="mt-4 border-t border-zinc-800/60 pt-4">
+        <div className="mt-4 border-t border-border/60 pt-4">
           <PlanSelector currentPlan={row.planTier} />
         </div>
       </div>

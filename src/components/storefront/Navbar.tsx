@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Search, ShoppingCart } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 interface Props {
   businessName: string;
@@ -20,7 +21,7 @@ export function Navbar({ businessName, logoUrl }: Props) {
 
   return (
     <header className="sticky top-4 z-50 mx-4 sm:mx-auto sm:max-w-7xl sm:px-4">
-      <div className="flex h-16 items-center gap-4 rounded-full border border-white/10 bg-card/80 px-4 shadow-lg shadow-black/30 backdrop-blur-xl">
+      <div className="flex h-16 items-center gap-4 rounded-full border border-border bg-card/80 px-4 shadow-lg shadow-black/30 backdrop-blur-xl">
         <Link href="/" className="flex min-w-0 shrink items-center gap-2.5">
           {logoUrl ? (
             <Image src={logoUrl} alt={businessName} width={32} height={32} unoptimized className="shrink-0 rounded-full" />
@@ -29,20 +30,21 @@ export function Navbar({ businessName, logoUrl }: Props) {
               {businessName.charAt(0).toUpperCase()}
             </span>
           )}
-          <span className="truncate text-sm font-bold text-zinc-100">{businessName}</span>
+          <span className="truncate text-sm font-bold text-foreground">{businessName}</span>
         </Link>
 
         <nav className="hidden flex-1 items-center justify-center gap-6 text-sm font-medium sm:flex">
-          <Link href="/catalogo" className="text-zinc-400 transition-colors hover:text-primary">
+          <Link href="/catalogo" className="text-muted-foreground transition-colors hover:text-primary">
             Catálogo
           </Link>
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <ThemeToggle className="hidden sm:flex" />
           <Link
             href="/catalogo"
             aria-label="Buscar productos"
-            className="hidden h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-300 transition-colors hover:border-primary/50 hover:text-primary sm:flex"
+            className="hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-accent text-foreground/90 transition-colors hover:border-primary/50 hover:text-primary sm:flex"
           >
             <Search className="h-4 w-4" />
           </Link>

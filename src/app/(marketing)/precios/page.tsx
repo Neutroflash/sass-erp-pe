@@ -31,8 +31,8 @@ export default function PricingPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-16">
       <div className="mb-12 text-center">
-        <h1 className="mb-2 text-3xl font-bold text-zinc-100">Planes</h1>
-        <p className="text-zinc-400">Empieza gratis. Sube de plan cuando tu negocio lo necesite.</p>
+        <h1 className="mb-2 text-3xl font-bold text-foreground">Planes</h1>
+        <p className="text-muted-foreground">Empieza gratis. Sube de plan cuando tu negocio lo necesite.</p>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-3">
@@ -41,7 +41,7 @@ export default function PricingPage() {
             key={plan.tier}
             className={cn(
               "flex flex-col rounded-2xl border p-6 backdrop-blur-md",
-              plan.highlight ? "border-yellow-500/50 bg-zinc-900/80" : "border-zinc-800/80 bg-zinc-900/60",
+              plan.highlight ? "border-yellow-500/50 bg-card/80" : "border-border/80 bg-card/60",
             )}
           >
             {plan.highlight && (
@@ -49,14 +49,14 @@ export default function PricingPage() {
                 Más popular
               </span>
             )}
-            <h2 className="text-lg font-bold text-zinc-100">{plan.label}</h2>
-            <p className="mt-1 text-2xl font-bold text-zinc-100">
+            <h2 className="text-lg font-bold text-foreground">{plan.label}</h2>
+            <p className="mt-1 text-2xl font-bold text-foreground">
               {plan.price === 0 ? "Gratis" : `S/ ${plan.price}`}
-              {plan.price > 0 && <span className="text-sm font-normal text-zinc-500">/mes</span>}
+              {plan.price > 0 && <span className="text-sm font-normal text-muted-foreground">/mes</span>}
             </p>
             <ul className="my-4 flex flex-1 flex-col gap-2">
               {plan.features.map((f) => (
-                <li key={f} className="flex items-start gap-2 text-sm text-zinc-400">
+                <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-yellow-400" />
                   {f}
                 </li>

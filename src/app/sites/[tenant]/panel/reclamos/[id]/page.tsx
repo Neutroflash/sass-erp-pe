@@ -16,8 +16,8 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   if (!value) return null;
   return (
     <div>
-      <span className="block text-xs uppercase tracking-wide text-zinc-500">{label}</span>
-      <span className="text-sm text-zinc-200">{value}</span>
+      <span className="block text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="text-sm text-foreground">{value}</span>
     </div>
   );
 }
@@ -37,7 +37,7 @@ export default async function ReclamoDetailPage({ params }: { params: { id: stri
   return (
     <div className="flex max-w-2xl flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-zinc-100">
+        <h1 className="text-2xl font-bold text-foreground">
           {TYPE_LABEL[complaint.type] ?? complaint.type} N° {complaint.folio}
         </h1>
         <Badge variant={complaint.status === "RESOLVED" ? "success" : "outline"}>
@@ -45,7 +45,7 @@ export default async function ReclamoDetailPage({ params }: { params: { id: stri
         </Badge>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-card/60 p-5">
+      <div className="rounded-2xl border border-border bg-card/60 p-5">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary/80">Consumidor</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Nombre" value={complaint.consumerName} />
@@ -56,7 +56,7 @@ export default async function ReclamoDetailPage({ params }: { params: { id: stri
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-card/60 p-5">
+      <div className="rounded-2xl border border-border bg-card/60 p-5">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary/80">Bien contratado</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Producto/servicio" value={complaint.productDescription} />
@@ -65,26 +65,26 @@ export default async function ReclamoDetailPage({ params }: { params: { id: stri
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-card/60 p-5">
+      <div className="rounded-2xl border border-border bg-card/60 p-5">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary/80">Detalle</h2>
         <div className="flex flex-col gap-4">
           <div>
-            <span className="block text-xs uppercase tracking-wide text-zinc-500">Reclamo/queja</span>
-            <p className="text-sm text-zinc-300">{complaint.detail}</p>
+            <span className="block text-xs uppercase tracking-wide text-muted-foreground">Reclamo/queja</span>
+            <p className="text-sm text-foreground/90">{complaint.detail}</p>
           </div>
           <div>
-            <span className="block text-xs uppercase tracking-wide text-zinc-500">Pedido concreto</span>
-            <p className="text-sm text-zinc-300">{complaint.request}</p>
+            <span className="block text-xs uppercase tracking-wide text-muted-foreground">Pedido concreto</span>
+            <p className="text-sm text-foreground/90">{complaint.request}</p>
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-card/60 p-5">
+      <div className="rounded-2xl border border-border bg-card/60 p-5">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary/80">Respuesta</h2>
         {complaint.status === "RESOLVED" ? (
           <div>
-            <p className="text-sm text-zinc-300">{complaint.response}</p>
-            <p className="mt-2 text-xs text-zinc-600">Respondido el {complaint.respondedAt?.toLocaleDateString("es-PE")}</p>
+            <p className="text-sm text-foreground/90">{complaint.response}</p>
+            <p className="mt-2 text-xs text-muted-foreground/70">Respondido el {complaint.respondedAt?.toLocaleDateString("es-PE")}</p>
           </div>
         ) : (
           <RespondComplaintForm complaintId={complaint.id} />

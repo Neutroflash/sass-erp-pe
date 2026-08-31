@@ -27,13 +27,13 @@ export default async function KardexPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-zinc-100">Kardex</h1>
+      <h1 className="text-2xl font-bold text-foreground">Kardex</h1>
 
       <StockMovementForm variants={variants.map((v) => ({ ...v, price: 0, costPrice: 0, productName: v.product.name }))} />
 
-      <div className="overflow-x-auto rounded-2xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md">
+      <div className="overflow-x-auto rounded-2xl border border-border/80 bg-card/60 backdrop-blur-md">
         <table className="w-full text-left">
-          <thead className="bg-white/[0.03] text-xs uppercase tracking-wide text-zinc-400">
+          <thead className="bg-accent text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="p-3">Fecha</th>
               <th className="p-3">Producto</th>
@@ -45,17 +45,17 @@ export default async function KardexPage() {
           </thead>
           <tbody>
             {movements.map((m) => (
-              <tr key={m.id} className="border-b border-zinc-800/60">
-                <td className="p-3 text-sm text-zinc-500">{new Date(m.createdAt).toLocaleString("es-PE")}</td>
-                <td className="p-3 text-sm text-zinc-300">
-                  {m.variant.name} <span className="text-zinc-500">({m.variant.sku})</span>
+              <tr key={m.id} className="border-b border-border/60">
+                <td className="p-3 text-sm text-muted-foreground">{new Date(m.createdAt).toLocaleString("es-PE")}</td>
+                <td className="p-3 text-sm text-foreground/90">
+                  {m.variant.name} <span className="text-muted-foreground">({m.variant.sku})</span>
                 </td>
                 <td className="p-3">
                   <Badge variant={m.type === "IN" ? "success" : m.type === "OUT" ? "destructive" : "outline"}>{TYPE_LABEL[m.type]}</Badge>
                 </td>
-                <td className="p-3 text-sm text-zinc-100">{m.quantity}</td>
-                <td className="p-3 text-sm text-zinc-500">{m.reason ?? "—"}</td>
-                <td className="p-3 text-sm text-zinc-500">{m.createdBy.name}</td>
+                <td className="p-3 text-sm text-foreground">{m.quantity}</td>
+                <td className="p-3 text-sm text-muted-foreground">{m.reason ?? "—"}</td>
+                <td className="p-3 text-sm text-muted-foreground">{m.createdBy.name}</td>
               </tr>
             ))}
           </tbody>

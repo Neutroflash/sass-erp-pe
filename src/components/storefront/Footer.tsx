@@ -27,16 +27,16 @@ export async function Footer({ tenantId, businessName, izipayEnabled, fiscalAddr
   );
 
   return (
-    <footer className="mt-24 border-t border-white/10 bg-black/40">
+    <footer className="mt-24 border-t border-border bg-muted/40">
       <div className={`mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 ${izipayEnabled ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
         <div className="flex flex-col gap-3">
-          <span className="text-lg font-bold text-zinc-100">{businessName}</span>
-          <p className="text-sm text-zinc-400">Tienda en línea — pedidos, catálogo y atención directa.</p>
+          <span className="text-lg font-bold text-foreground">{businessName}</span>
+          <p className="text-sm text-muted-foreground">Tienda en línea — pedidos, catálogo y atención directa.</p>
         </div>
 
         <div className="flex flex-col gap-3">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-primary/80">Categorías</h3>
-          <ul className="flex flex-col gap-2 text-sm text-zinc-400">
+          <ul className="flex flex-col gap-2 text-sm text-muted-foreground">
             {categories.length > 0 ? (
               categories.map((category) => (
                 <li key={category.id}>
@@ -57,7 +57,7 @@ export async function Footer({ tenantId, businessName, izipayEnabled, fiscalAddr
 
         <div className="flex flex-col gap-3">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-primary/80">Ayuda</h3>
-          <ul className="flex flex-col gap-2 text-sm text-zinc-400">
+          <ul className="flex flex-col gap-2 text-sm text-muted-foreground">
             <li>
               <Link href="/catalogo" className="hover:text-primary">
                 Catálogo completo
@@ -105,7 +105,7 @@ export async function Footer({ tenantId, businessName, izipayEnabled, fiscalAddr
               {["Tarjeta", "Yape", "Plin"].map((method) => (
                 <span
                   key={method}
-                  className="rounded-md border border-white/10 bg-card/60 px-2.5 py-1 text-xs font-medium text-zinc-300"
+                  className="rounded-md border border-border bg-card/60 px-2.5 py-1 text-xs font-medium text-foreground/90"
                 >
                   {method}
                 </span>
@@ -115,11 +115,11 @@ export async function Footer({ tenantId, businessName, izipayEnabled, fiscalAddr
         )}
       </div>
 
-      <div className="border-t border-white/10 py-4 text-center text-xs text-zinc-600">
+      <div className="border-t border-border py-4 text-center text-xs text-muted-foreground/70">
         <p>
           © {new Date().getFullYear()} {businessName}. Todos los derechos reservados.
         </p>
-        <p className="mt-1 text-zinc-700">Tienda impulsada por FlashStock</p>
+        <p className="mt-1 text-muted-foreground/50">Tienda impulsada por FlashStock</p>
       </div>
     </footer>
   );

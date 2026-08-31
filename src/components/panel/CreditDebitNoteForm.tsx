@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
+  "h-9 rounded-lg border border-border bg-input px-2 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 // Espeja los catálogos 09/10 de SUNAT (src/domain/invoicing/sunat/note-catalogs.ts) — duplicado a
 // propósito acá en el cliente (evita un round-trip solo para poblar un <select>); si el catálogo
@@ -86,9 +86,9 @@ export function CreditDebitNoteForm({ invoiceId, invoiceTotal, notes }: { invoic
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+    <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-xs uppercase tracking-wide text-zinc-500">Notas de crédito/débito</span>
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">Notas de crédito/débito</span>
         {!open && (
           <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
             Emitir nota
@@ -97,16 +97,16 @@ export function CreditDebitNoteForm({ invoiceId, invoiceTotal, notes }: { invoic
       </div>
 
       {notes.length === 0 ? (
-        <p className="text-sm text-zinc-500">Sin notas emitidas contra este comprobante.</p>
+        <p className="text-sm text-muted-foreground">Sin notas emitidas contra este comprobante.</p>
       ) : (
         <div className="mb-3 flex flex-col gap-1.5">
           {notes.map((note) => (
             <div key={note.id} className="flex items-center justify-between text-sm">
-              <span className="text-zinc-300">
+              <span className="text-foreground/90">
                 {note.type === "NOTA_CREDITO" ? "N. Crédito" : "N. Débito"} {note.series}-{note.number}
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-zinc-500">S/ {note.totalAmount.toFixed(2)}</span>
+                <span className="text-muted-foreground">S/ {note.totalAmount.toFixed(2)}</span>
                 <Badge variant={STATUS_VARIANT[note.status]}>{note.status}</Badge>
               </div>
             </div>
@@ -115,10 +115,10 @@ export function CreditDebitNoteForm({ invoiceId, invoiceTotal, notes }: { invoic
       )}
 
       {open && (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3 border-t border-zinc-800/60 pt-3">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3 border-t border-border/60 pt-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Tipo</label>
+              <label className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">Tipo</label>
               <select
                 value={type}
                 onChange={(e) => {
@@ -133,7 +133,7 @@ export function CreditDebitNoteForm({ invoiceId, invoiceTotal, notes }: { invoic
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Motivo</label>
+              <label className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">Motivo</label>
               <select value={reasonCode} onChange={(e) => setReasonCode(e.target.value)} className={cn(inputClass, "w-full")}>
                 {reasons.map((r) => (
                   <option key={r.code} value={r.code}>
@@ -145,8 +145,8 @@ export function CreditDebitNoteForm({ invoiceId, invoiceTotal, notes }: { invoic
           </div>
 
           <div>
-            <label className="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Alcance</label>
-            <div className="flex gap-4 text-sm text-zinc-300">
+            <label className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">Alcance</label>
+            <div className="flex gap-4 text-sm text-foreground/90">
               <label className="flex items-center gap-1.5">
                 <input type="radio" checked={mode === "FULL"} onChange={() => setMode("FULL")} />
                 Monto completo (S/ {invoiceTotal.toFixed(2)})
@@ -160,7 +160,7 @@ export function CreditDebitNoteForm({ invoiceId, invoiceTotal, notes }: { invoic
 
           {mode === "CUSTOM" && (
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex flex-col gap-1 text-sm text-zinc-300">
+              <label className="flex flex-col gap-1 text-sm text-foreground/90">
                 Monto (con IGV)
                 <input
                   required
@@ -172,7 +172,7 @@ export function CreditDebitNoteForm({ invoiceId, invoiceTotal, notes }: { invoic
                   className={inputClass}
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-zinc-300">
+              <label className="flex flex-col gap-1 text-sm text-foreground/90">
                 Descripción
                 <input required value={customDescription} onChange={(e) => setCustomDescription(e.target.value)} className={inputClass} />
               </label>

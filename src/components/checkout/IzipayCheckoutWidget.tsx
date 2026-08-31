@@ -32,7 +32,7 @@ export function IzipayCheckoutWidget({ orderId, formToken, publicKey }: { orderI
   }, [orderId, publicKey]);
 
   return (
-    <div className="rounded-2xl border border-zinc-800/80 bg-white p-4">
+    <div className="rounded-2xl border border-border/80 bg-white p-4">
       <div className="kr-embedded" kr-form-token={formToken} />
     </div>
   );

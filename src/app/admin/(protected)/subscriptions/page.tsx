@@ -25,21 +25,21 @@ export default async function PlatformSubscriptionsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-2xl font-bold text-zinc-100">Suscripciones</h2>
+        <h2 className="text-2xl font-bold text-foreground">Suscripciones</h2>
         <RunBillingButton />
       </div>
 
-      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
-        <span className="text-xs uppercase tracking-wide text-zinc-500">MRR estimado</span>
+      <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">MRR estimado</span>
         <p className="mt-1 text-2xl font-bold text-yellow-400">{formatPrice(totalMonthlyRevenue)}</p>
       </div>
 
       {subscriptions.length === 0 ? (
-        <p className="text-sm text-zinc-500">Todavía no hay suscripciones.</p>
+        <p className="text-sm text-muted-foreground">Todavía no hay suscripciones.</p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md">
+        <div className="overflow-x-auto rounded-2xl border border-border/80 bg-card/60 backdrop-blur-md">
           <table className="w-full text-left">
-            <thead className="bg-white/[0.03] text-xs uppercase tracking-wide text-zinc-400">
+            <thead className="bg-accent text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="p-3">Negocio</th>
                 <th className="p-3">Plan</th>
@@ -50,18 +50,18 @@ export default async function PlatformSubscriptionsPage() {
             </thead>
             <tbody>
               {subscriptions.map((sub) => (
-                <tr key={sub.id} className="border-b border-zinc-800/60">
-                  <td className="p-3 text-sm text-zinc-100">
-                    {sub.tenant.businessName} <span className="text-zinc-500">({sub.tenant.slug})</span>
+                <tr key={sub.id} className="border-b border-border/60">
+                  <td className="p-3 text-sm text-foreground">
+                    {sub.tenant.businessName} <span className="text-muted-foreground">({sub.tenant.slug})</span>
                   </td>
                   <td className="p-3">
                     <Badge variant="outline">{sub.tenant.planTier}</Badge>
                   </td>
-                  <td className="p-3 text-sm text-zinc-300">{formatPrice(PLAN_PRICE_PEN[sub.tenant.planTier])}/mes</td>
+                  <td className="p-3 text-sm text-foreground/90">{formatPrice(PLAN_PRICE_PEN[sub.tenant.planTier])}/mes</td>
                   <td className="p-3">
                     <Badge variant={STATUS_VARIANT[sub.status] ?? "outline"}>{sub.status}</Badge>
                   </td>
-                  <td className="p-3 text-sm text-zinc-500">{new Date(sub.currentPeriodEnd).toLocaleDateString("es-PE")}</td>
+                  <td className="p-3 text-sm text-muted-foreground">{new Date(sub.currentPeriodEnd).toLocaleDateString("es-PE")}</td>
                 </tr>
               ))}
             </tbody>

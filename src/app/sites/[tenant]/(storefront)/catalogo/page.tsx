@@ -37,10 +37,10 @@ export default async function CatalogPage({ searchParams }: { searchParams: { se
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold text-zinc-100">Catálogo</h1>
+      <h1 className="mb-6 text-2xl font-bold text-foreground">Catálogo</h1>
       <CatalogFilters categories={categories} activeCategory={searchParams.category} activeSearch={searchParams.search} />
       {products.length === 0 ? (
-        <p className="text-zinc-500">
+        <p className="text-muted-foreground">
           {searchParams.search || searchParams.category ? "Ningún producto coincide con ese filtro." : "Todavía no hay productos publicados."}
         </p>
       ) : (

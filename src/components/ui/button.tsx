@@ -9,8 +9,8 @@ const VARIANT_CLASSES: Record<Variant, string> = {
   // en vez de un shade fijo tipo "yellow-300" porque no hay un tono más claro conocido para un
   // color arbitrario elegido por el tenant.
   default: "bg-primary text-primary-foreground hover:brightness-110",
-  outline: "border border-white/10 bg-white/5 text-zinc-100 hover:border-primary/50",
-  ghost: "text-zinc-400 hover:bg-white/5 hover:text-zinc-100",
+  outline: "border border-border bg-accent text-foreground hover:border-primary/50",
+  ghost: "text-muted-foreground hover:bg-accent hover:text-foreground",
 };
 
 const SIZE_CLASSES: Record<Size, string> = {

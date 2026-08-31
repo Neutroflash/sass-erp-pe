@@ -24,7 +24,7 @@ export default async function OrderTicketPage({ params }: { params: { id: string
   return (
     <div className="flex flex-col items-center gap-4 py-4 print:gap-0 print:py-0">
       <div className="w-full max-w-md print:hidden">
-        <Link href={`/panel/pedidos/${params.id}`} className="text-sm text-zinc-400 hover:text-zinc-100">
+        <Link href={`/panel/pedidos/${params.id}`} className="text-sm text-muted-foreground hover:text-foreground">
           ← Volver al pedido
         </Link>
       </div>

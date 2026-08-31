@@ -32,7 +32,7 @@ export default async function PedidosPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-zinc-100">Pedidos</h1>
+      <h1 className="text-2xl font-bold text-foreground">Pedidos</h1>
       <OrdersTable orders={rows} />
     </div>
   );

@@ -17,13 +17,13 @@ export function CartDrawer() {
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && closeCart()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60" />
-        <Dialog.Content className="fixed right-0 top-0 z-50 flex h-full w-full max-w-xs flex-col border-l border-white/10 bg-neutral-950">
-          <div className="flex items-center justify-between border-b border-white/10 p-4">
-            <Dialog.Title className="flex items-center gap-2 text-lg font-bold text-zinc-100">
+        <Dialog.Content className="fixed right-0 top-0 z-50 flex h-full w-full max-w-xs flex-col border-l border-border bg-background">
+          <div className="flex items-center justify-between border-b border-border p-4">
+            <Dialog.Title className="flex items-center gap-2 text-lg font-bold text-foreground">
               <ShoppingCart className="h-5 w-5" /> Tu carrito
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button aria-label="Cerrar carrito" className="text-zinc-400 hover:text-zinc-100">
+              <button aria-label="Cerrar carrito" className="text-muted-foreground hover:text-foreground">
                 <X className="h-5 w-5" />
               </button>
             </Dialog.Close>
@@ -31,26 +31,26 @@ export function CartDrawer() {
 
           <div className="flex-1 overflow-y-auto p-4">
             {items.length === 0 ? (
-              <p className="mt-10 text-center text-zinc-500">Tu carrito está vacío.</p>
+              <p className="mt-10 text-center text-muted-foreground">Tu carrito está vacío.</p>
             ) : (
               <ul className="flex flex-col gap-4">
                 {items.map((item) => (
-                  <li key={item.variantId} className="flex gap-3 border-b border-white/10 pb-4">
+                  <li key={item.variantId} className="flex gap-3 border-b border-border pb-4">
                     <div className="flex flex-1 flex-col gap-1">
-                      <span className="text-sm font-medium text-zinc-100">{item.productName}</span>
-                      <span className="text-xs text-zinc-500">{item.variantName}</span>
-                      <div className="mt-1 flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-1 py-1 w-fit">
+                      <span className="text-sm font-medium text-foreground">{item.productName}</span>
+                      <span className="text-xs text-muted-foreground">{item.variantName}</span>
+                      <div className="mt-1 flex items-center gap-1 rounded-full border border-border bg-accent px-1 py-1 w-fit">
                         <button
                           onClick={() => setQuantity(item.variantId, Math.max(1, item.quantity - 1))}
-                          className="flex h-5 w-5 items-center justify-center rounded-full text-zinc-300 hover:bg-white/10 hover:text-primary"
+                          className="flex h-5 w-5 items-center justify-center rounded-full text-foreground/90 hover:bg-accent hover:text-primary"
                           aria-label="Disminuir cantidad"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
-                        <span className="w-5 text-center text-xs font-medium text-zinc-200">{item.quantity}</span>
+                        <span className="w-5 text-center text-xs font-medium text-foreground">{item.quantity}</span>
                         <button
                           onClick={() => setQuantity(item.variantId, item.quantity + 1)}
-                          className="flex h-5 w-5 items-center justify-center rounded-full text-zinc-300 hover:bg-white/10 hover:text-primary"
+                          className="flex h-5 w-5 items-center justify-center rounded-full text-foreground/90 hover:bg-accent hover:text-primary"
                           aria-label="Aumentar cantidad"
                         >
                           <Plus className="h-3 w-3" />
@@ -58,10 +58,10 @@ export function CartDrawer() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end justify-between">
-                      <span className="text-sm font-semibold text-zinc-100">{formatPrice(item.price * item.quantity)}</span>
+                      <span className="text-sm font-semibold text-foreground">{formatPrice(item.price * item.quantity)}</span>
                       <button
                         onClick={() => removeItem(item.variantId)}
-                        className="text-xs text-zinc-500 hover:text-destructive"
+                        className="text-xs text-muted-foreground hover:text-destructive"
                       >
                         Quitar
                       </button>
@@ -73,8 +73,8 @@ export function CartDrawer() {
           </div>
 
           {items.length > 0 && (
-            <div className="border-t border-white/10 p-4">
-              <div className="mb-4 flex items-center justify-between text-lg font-bold text-zinc-100">
+            <div className="border-t border-border p-4">
+              <div className="mb-4 flex items-center justify-between text-lg font-bold text-foreground">
                 <span>Subtotal</span>
                 <span className="text-primary">{formatPrice(totalPrice())}</span>
               </div>

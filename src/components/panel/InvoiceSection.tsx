@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { CreditDebitNoteForm, type NoteSummary } from "./CreditDebitNoteForm";
 
 const inputClass =
-  "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
+  "h-9 rounded-lg border border-border bg-input px-2 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 export interface OrderInvoiceSummary {
   id: string;
@@ -38,12 +38,12 @@ export function InvoiceSection({ orderId, invoice }: { orderId: string; invoice:
   if (invoice) {
     return (
       <div className="flex flex-col gap-4">
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
-          <span className="text-xs uppercase tracking-wide text-zinc-500">Comprobante</span>
-          <p className="mt-1 text-zinc-100">
+        <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Comprobante</span>
+          <p className="mt-1 text-foreground">
             {invoice.type === "BOLETA" ? "Boleta" : "Factura"} {invoice.series}-{invoice.number}
           </p>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted-foreground">
             {invoice.documentType} {invoice.documentNumber}
             {invoice.businessName ? ` · ${invoice.businessName}` : ""}
           </p>
@@ -93,23 +93,23 @@ export function InvoiceSection({ orderId, invoice }: { orderId: string; invoice:
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
-      <span className="text-xs uppercase tracking-wide text-zinc-500">Comprobante</span>
-      <p className="mb-3 mt-1 text-sm text-zinc-400">Esta orden no tiene un comprobante emitido.</p>
+    <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
+      <span className="text-xs uppercase tracking-wide text-muted-foreground">Comprobante</span>
+      <p className="mb-3 mt-1 text-sm text-muted-foreground">Esta orden no tiene un comprobante emitido.</p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
         <div>
-          <label className="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Tipo</label>
-          <select value={type} onChange={(e) => setType(e.target.value as IssueInvoiceInput["type"])} className={cn(inputClass, "text-zinc-100")}>
+          <label className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">Tipo</label>
+          <select value={type} onChange={(e) => setType(e.target.value as IssueInvoiceInput["type"])} className={cn(inputClass, "text-foreground")}>
             <option value="BOLETA">Boleta</option>
             <option value="FACTURA">Factura</option>
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Documento</label>
+          <label className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">Documento</label>
           <select
             value={documentType}
             onChange={(e) => setDocumentType(e.target.value as IssueInvoiceInput["documentType"])}
-            className={cn(inputClass, "text-zinc-100")}
+            className={cn(inputClass, "text-foreground")}
           >
             <option value="DNI">DNI</option>
             <option value="RUC">RUC</option>
@@ -118,12 +118,12 @@ export function InvoiceSection({ orderId, invoice }: { orderId: string; invoice:
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-xs uppercase tracking-wide text-zinc-500">N° documento</label>
+          <label className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">N° documento</label>
           <input required value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} className={inputClass} />
         </div>
         {type === "FACTURA" && (
           <div>
-            <label className="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Razón social</label>
+            <label className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">Razón social</label>
             <input required value={businessName} onChange={(e) => setBusinessName(e.target.value)} className={inputClass} />
           </div>
         )}

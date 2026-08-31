@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
+  "h-10 rounded-lg border border-border bg-input px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 export interface IzipayConfigStatus {
   configured: boolean;
@@ -60,34 +60,34 @@ export function IzipayCredentialsForm({ initial }: { initial: IzipayConfigStatus
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+    <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
       <div className="mb-1 flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-primary/80">Pago en línea (Izipay)</h2>
         {initial.configured ? <Badge variant="success">Configurado</Badge> : <Badge variant="secondary">Sin configurar</Badge>}
       </div>
-      <p className="mb-4 text-xs text-zinc-500">
+      <p className="mb-4 text-xs text-muted-foreground">
         Tarjetas, Yape y Plin desde el checkout. Necesitas una cuenta comercio en Izipay — las credenciales de{" "}
-        <strong className="text-zinc-400">prueba (Test)</strong> están en tu Back Office Vendedor. Sin esto configurado, el checkout
+        <strong className="text-muted-foreground">prueba (Test)</strong> están en tu Back Office Vendedor. Sin esto configurado, el checkout
         sigue con confirmación manual de pago.
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Identificador de tienda (USERNAME)
             <input required value={username} onChange={(e) => setUsername(e.target.value)} className={inputClass} placeholder={initial.username ?? ""} />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Clave (PASSWORD)
             <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} />
           </label>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Llave pública (PUBLIC_KEY)
             <input required value={publicKey} onChange={(e) => setPublicKey(e.target.value)} className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+          <label className="flex flex-col gap-1.5 text-sm text-foreground/90">
             Llave HMAC-SHA-256
             <input required type="password" value={hmacKey} onChange={(e) => setHmacKey(e.target.value)} className={inputClass} />
           </label>
