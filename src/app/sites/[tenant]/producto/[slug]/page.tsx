@@ -45,7 +45,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
             >
               <span className="text-sm text-zinc-200">{variant.name}</span>
               <div className="flex items-center gap-3">
-                <span className="font-bold text-yellow-400">{formatPrice(variant.price)}</span>
+                <span className="font-bold text-primary">{formatPrice(variant.price)}</span>
                 <AddToCartButton
                   variantId={variant.id}
                   productSlug={product.slug}

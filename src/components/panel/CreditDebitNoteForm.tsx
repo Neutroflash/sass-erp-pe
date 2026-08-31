@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
+  "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
 
 // Espeja los catálogos 09/10 de SUNAT (src/domain/invoicing/sunat/note-catalogs.ts) — duplicado a
 // propósito acá en el cliente (evita un round-trip solo para poblar un <select>); si el catálogo

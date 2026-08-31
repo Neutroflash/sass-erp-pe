@@ -26,7 +26,7 @@ interface SaleLine {
 }
 
 const inputClass =
-  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
+  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
 
 // El check de `available` acá es solo UX (evita que el vendedor arme una venta que va a fallar) —
 // la verdad final sigue siendo el lock de fila en createPosSale(), igual que en el checkout online.
@@ -117,7 +117,7 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
                     <span>
                       {v.productName} — {v.name} <span className="text-zinc-500">({v.sku})</span>
                     </span>
-                    <span className="text-yellow-400">{formatPrice(v.price)}</span>
+                    <span className="text-primary">{formatPrice(v.price)}</span>
                   </button>
                 );
               })}
@@ -174,7 +174,7 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
       </div>
 
       <div className="flex h-fit flex-col gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-4 backdrop-blur-md">
-        <div className="flex items-center gap-2 text-yellow-400">
+        <div className="flex items-center gap-2 text-primary">
           <ShoppingCart className="h-4 w-4" />
           <span className="text-sm font-semibold">Cobro</span>
         </div>
@@ -188,7 +188,7 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
 
         <div className="flex justify-between border-t border-zinc-800/60 pt-3 text-lg font-bold text-zinc-100">
           <span>Total</span>
-          <span className="text-yellow-400">{formatPrice(total)}</span>
+          <span className="text-primary">{formatPrice(total)}</span>
         </div>
 
         {error && <span className="text-sm text-destructive">{error}</span>}

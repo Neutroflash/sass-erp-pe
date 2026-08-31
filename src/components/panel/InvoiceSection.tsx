@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { CreditDebitNoteForm, type NoteSummary } from "./CreditDebitNoteForm";
 
 const inputClass =
-  "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
+  "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
 
 export interface OrderInvoiceSummary {
   id: string;
@@ -49,14 +49,14 @@ export function InvoiceSection({ orderId, invoice }: { orderId: string; invoice:
           </p>
           {(invoice.type === "BOLETA" || invoice.type === "FACTURA") && invoice.status === "ISSUED" && (
             <div className="mt-2 flex flex-wrap gap-3 text-sm">
-              <Link href={`/panel/pedidos/${orderId}/ticket`} className="text-yellow-400 hover:underline">
+              <Link href={`/panel/pedidos/${orderId}/ticket`} className="text-primary hover:underline">
                 Ver ticket
               </Link>
               <a
                 href={`/api/invoices/${invoice.id}/pdf`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-yellow-400 hover:underline"
+                className="text-primary hover:underline"
               >
                 Descargar PDF
               </a>

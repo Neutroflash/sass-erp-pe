@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 const inputClass =
-  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
+  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
 
 // Fuera de /panel a propósito — ver el comentario en panel/layout.tsx sobre por qué esta página
 // no puede vivir dentro del árbol que ese layout protege.
@@ -41,7 +41,7 @@ export default function TenantLoginPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
-      <span className="mb-1 text-xs uppercase tracking-widest text-yellow-400/80">Panel de gestión</span>
+      <span className="mb-1 text-xs uppercase tracking-widest text-primary/80">Panel de gestión</span>
       <h1 className="mb-6 text-2xl font-bold text-zinc-100">Ingresar</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input

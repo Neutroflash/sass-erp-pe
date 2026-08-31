@@ -42,11 +42,11 @@ export default async function FacturacionPage() {
       <h1 className="text-2xl font-bold text-zinc-100">Facturación SUNAT</h1>
       <p className="text-sm text-zinc-400">
         Los comprobantes se emiten desde el detalle de cada pedido pagado, en{" "}
-        <Link href="/panel/pedidos" className="text-yellow-400 hover:underline">
+        <Link href="/panel/pedidos" className="text-primary hover:underline">
           Pedidos
         </Link>
         . Sin credenciales SUNAT configuradas en{" "}
-        <Link href="/panel/configuracion" className="text-yellow-400 hover:underline">
+        <Link href="/panel/configuracion" className="text-primary hover:underline">
           Configuración
         </Link>
         , la emisión queda simulada — ver el aviso al pie.
@@ -83,14 +83,14 @@ export default async function FacturacionPage() {
                     {inv.documentType} {inv.documentNumber}
                     {inv.businessName ? ` · ${inv.businessName}` : ""}
                   </td>
-                  <td className="p-3 text-sm font-medium text-yellow-400">{formatPrice(Number(inv.totalAmount))}</td>
+                  <td className="p-3 text-sm font-medium text-primary">{formatPrice(Number(inv.totalAmount))}</td>
                   <td className="p-3">
                     <Badge variant={STATUS_VARIANT[inv.status] ?? "outline"}>{STATUS_LABEL[inv.status] ?? inv.status}</Badge>
                   </td>
                   <td className="p-3">
                     <div className="flex items-center gap-3">
                       {(inv.orderId ?? inv.relatedInvoice?.orderId) && (
-                        <Link href={`/panel/pedidos/${inv.orderId ?? inv.relatedInvoice?.orderId}`} className="text-xs text-yellow-400 hover:underline">
+                        <Link href={`/panel/pedidos/${inv.orderId ?? inv.relatedInvoice?.orderId}`} className="text-xs text-primary hover:underline">
                           Ver pedido
                         </Link>
                       )}

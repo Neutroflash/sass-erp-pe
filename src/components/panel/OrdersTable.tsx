@@ -84,7 +84,7 @@ export function OrdersTable({ orders }: { orders: AdminOrderRow[] }) {
               </td>
               <td className="p-3 text-sm text-zinc-400">{order.channel === "ONLINE" ? "Tienda online" : "POS"}</td>
               <td className="p-3 text-sm text-zinc-100">{order.itemCount}</td>
-              <td className="p-3 text-sm font-medium text-yellow-400">{formatPrice(order.totalAmount)}</td>
+              <td className="p-3 text-sm font-medium text-primary">{formatPrice(order.totalAmount)}</td>
               <td className="p-3">
                 <Badge variant={STATUS_VARIANT[order.status]}>{STATUS_LABEL[order.status]}</Badge>
               </td>

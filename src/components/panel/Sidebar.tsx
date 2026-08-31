@@ -42,7 +42,7 @@ export function Sidebar({ features, role }: { features: TenantFeatures; role: Us
 
   return (
     <nav className="flex h-fit flex-col gap-1 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-4 backdrop-blur-md">
-      <span className="mb-2 px-3 text-xs font-semibold uppercase tracking-widest text-yellow-400/80">
+      <span className="mb-2 px-3 text-xs font-semibold uppercase tracking-widest text-primary/80">
         Panel de gestión
       </span>
       {visibleLinks.map(({ href, label, icon: Icon }) => {
@@ -53,7 +53,7 @@ export function Sidebar({ features, role }: { features: TenantFeatures; role: Us
             href={href}
             className={cn(
               "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              active ? "bg-yellow-400/10 text-yellow-400" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-100",
+              active ? "bg-primary/10 text-primary" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-100",
             )}
           >
             <Icon className="h-4 w-4" />

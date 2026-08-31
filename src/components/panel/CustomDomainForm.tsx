@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
+  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
 
 export interface CustomDomainStatus {
   customDomain: string | null;
@@ -79,14 +79,14 @@ export function CustomDomainForm({ initial }: { initial: CustomDomainStatus }) {
   return (
     <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-yellow-400/80">Dominio propio</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-primary/80">Dominio propio</h2>
         {initial.customDomain ? <Badge variant="success">Verificado</Badge> : pendingResult ? <Badge variant="secondary">Pendiente</Badge> : <Badge variant="outline">Sin configurar</Badge>}
       </div>
 
       {initial.customDomain && !pendingResult ? (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-zinc-300">
-            Tu tienda responde en <span className="text-yellow-400">{initial.customDomain}</span>.
+            Tu tienda responde en <span className="text-primary">{initial.customDomain}</span>.
           </p>
           <Button size="sm" variant="outline" disabled={removing} onClick={handleRemove} className="w-fit">
             Quitar dominio

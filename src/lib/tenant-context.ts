@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { prisma } from "./prisma";
@@ -9,11 +10,12 @@ import type { Tenant } from "@prisma/client";
  * /sites/[tenant]/**, nunca desde el sitio de marketing ni el panel de plataforma (ahí no hay
  * tenant en contexto, y headers().get("x-tenant-slug") sería null).
  *
- * TODO cuando existan más tenants que quepan cómodos en cada request: cachear esta lectura
- * (React `cache()` por request como mínimo; considerar además un cache de aplicación con TTL
- * corto una vez que el volumen lo justifique) — hoy pega a Postgres en cada navegación.
+ * Envuelto en `cache()` de React: dentro de un mismo request, layout.tsx (para inyectar el color
+ * primario del tenant) y cada page.tsx bajo /sites/[tenant]/** vuelven a llamar esto de forma
+ * independiente — sin memoizar, cada uno pegaba a Postgres por separado (era un TODO pendiente
+ * desde antes de este cambio, que ahora se vuelve necesario en vez de solo "nice to have").
  */
-export async function getCurrentTenant(): Promise<Tenant> {
+async function fetchCurrentTenant(): Promise<Tenant> {
   const slug = headers().get("x-tenant-slug");
   if (!slug) {
     // Alguien llegó a una ruta bajo /sites/[tenant] sin pasar por el middleware (o el matcher
@@ -28,3 +30,5 @@ export async function getCurrentTenant(): Promise<Tenant> {
 
   return tenant;
 }
+
+export const getCurrentTenant = cache(fetchCurrentTenant);

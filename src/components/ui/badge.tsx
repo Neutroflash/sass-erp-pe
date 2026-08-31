@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 type Variant = "default" | "secondary" | "success" | "destructive" | "outline";
 
 const VARIANT_CLASSES: Record<Variant, string> = {
-  default: "bg-yellow-400/10 text-yellow-400 border-yellow-500/30",
+  default: "bg-primary/10 text-primary border-primary/30",
   secondary: "bg-white/10 text-zinc-200 border-white/10",
   success: "bg-emerald-400/10 text-emerald-400 border-emerald-500/30",
   destructive: "bg-red-400/10 text-red-400 border-red-500/30",

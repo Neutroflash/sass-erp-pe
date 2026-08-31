@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
+  "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
 
 interface VariantDraft extends CreateProductVariantInput {
   attributesList: { key: string; value: string }[];
@@ -221,7 +221,7 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs uppercase tracking-wide text-zinc-500">Atributos (switch, color, talla...)</label>
-                <button type="button" onClick={() => addAttribute(vIndex)} className="text-xs text-yellow-400 hover:text-yellow-300">
+                <button type="button" onClick={() => addAttribute(vIndex)} className="text-xs text-primary hover:text-yellow-300">
                   + agregar atributo
                 </button>
               </div>

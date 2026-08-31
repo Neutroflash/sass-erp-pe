@@ -10,7 +10,7 @@ export function ProductCard({ product }: { product: PublicProduct }) {
   return (
     <Link
       href={`/producto/${product.slug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md transition-colors hover:border-yellow-500/40"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md transition-colors hover:border-primary/40"
     >
       <div className="relative aspect-square bg-black/30">
         {image ? (
@@ -27,7 +27,7 @@ export function ProductCard({ product }: { product: PublicProduct }) {
       <div className="flex flex-col gap-1 p-4">
         {product.brand && <span className="text-xs text-zinc-500">{product.brand}</span>}
         <span className="font-semibold text-zinc-100">{product.name}</span>
-        <span className="font-bold text-yellow-400">{formatPrice(minPrice)}</span>
+        <span className="font-bold text-primary">{formatPrice(minPrice)}</span>
       </div>
     </Link>
   );

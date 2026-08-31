@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { IzipayCheckoutWidget } from "@/components/checkout/IzipayCheckoutWidget";
 
 const inputClass =
-  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
+  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
 
 // Si el tenant tiene Izipay configurado, el pedido se crea igual (PENDING_PAYMENT + stock
 // reservado) y luego se muestra el widget de pago en línea en vez de navegar directo a la
@@ -79,7 +79,7 @@ export default function CheckoutPage() {
         ))}
         <div className="mt-2 flex justify-between border-t border-zinc-800/60 pt-2 font-bold text-zinc-100">
           <span>Total</span>
-          <span className="text-yellow-400">{formatPrice(totalPrice())}</span>
+          <span className="text-primary">{formatPrice(totalPrice())}</span>
         </div>
       </div>
 

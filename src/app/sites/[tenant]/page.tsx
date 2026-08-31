@@ -37,7 +37,7 @@ export default async function TenantStorefrontPage() {
             {tenant.logoUrl ? (
               <Image src={tenant.logoUrl} alt={tenant.businessName} width={32} height={32} unoptimized className="rounded-full" />
             ) : (
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400/10 text-sm font-bold text-yellow-400">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                 {tenant.businessName.charAt(0).toUpperCase()}
               </span>
             )}

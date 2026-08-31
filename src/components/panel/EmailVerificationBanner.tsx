@@ -26,7 +26,7 @@ export function EmailVerificationBanner({ email }: { email: string }) {
   }
 
   return (
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-yellow-500/30 bg-yellow-400/10 px-4 py-2.5 text-sm">
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2.5 text-sm">
       <span className="text-yellow-200">
         Todavía no confirmaste <span className="font-medium">{email}</span>.
         {sent && <span className="ml-2 text-emerald-400">Te reenviamos el enlace.</span>}

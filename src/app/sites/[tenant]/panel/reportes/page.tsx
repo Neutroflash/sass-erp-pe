@@ -33,7 +33,7 @@ export default async function ReportesPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
           <span className="text-xs uppercase tracking-wide text-zinc-500">Ventas (30 días)</span>
-          <p className="mt-1 text-2xl font-bold text-yellow-400">{formatPrice(totalLast30)}</p>
+          <p className="mt-1 text-2xl font-bold text-primary">{formatPrice(totalLast30)}</p>
           <p className="text-xs text-zinc-500">{ordersLast30} pedidos pagados</p>
         </div>
         <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
@@ -48,12 +48,12 @@ export default async function ReportesPage() {
       </div>
 
       <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-yellow-400/80">Ventas por día (últimos 30 días)</h2>
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary/80">Ventas por día (últimos 30 días)</h2>
         <div className="flex h-32 items-end gap-1 overflow-x-auto">
           {salesByDay.map((d) => (
             <div key={d.date} className="group relative flex h-full flex-1 min-w-[6px] items-end">
               <div
-                className="w-full rounded-t bg-yellow-400/70 transition-colors group-hover:bg-yellow-400"
+                className="w-full rounded-t bg-primary/70 transition-colors group-hover:bg-primary"
                 style={{ height: `${Math.max(2, (d.total / maxDay) * 100)}%` }}
               />
               <div className="pointer-events-none absolute -top-8 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-xs text-zinc-100 group-hover:block">
@@ -65,7 +65,7 @@ export default async function ReportesPage() {
       </div>
 
       <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md">
-        <h2 className="p-5 pb-0 text-sm font-semibold uppercase tracking-wide text-yellow-400/80">Productos más vendidos</h2>
+        <h2 className="p-5 pb-0 text-sm font-semibold uppercase tracking-wide text-primary/80">Productos más vendidos</h2>
         {topProducts.length === 0 ? (
           <p className="p-5 text-sm text-zinc-500">Todavía no hay ventas pagadas para reportar.</p>
         ) : (

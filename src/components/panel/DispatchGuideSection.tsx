@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 const inputClass =
-  "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
+  "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
 
 export interface OrderDispatchGuideSummary {
   id: string;
@@ -85,7 +85,7 @@ export function DispatchGuideSection({ orderId, dispatchGuide }: { orderId: stri
 
   return (
     <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
-      <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-yellow-400/80">Guía de remisión (transporte privado)</h3>
+      <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-primary/80">Guía de remisión (transporte privado)</h3>
       <p className="mb-4 text-xs text-zinc-500">Motivo: venta. El vehículo y el conductor son los propios del negocio, sin transportista contratado.</p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">

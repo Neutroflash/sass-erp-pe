@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
+  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
 
 const FEATURE_LABELS: Record<keyof TenantFeatures, { label: string; hint: string }> = {
   inventoryManagement: { label: "Inventario", hint: "CRUD de productos/variantes/categorías + kardex." },
@@ -70,7 +70,7 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-yellow-400/80">Datos del negocio</h2>
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary/80">Datos del negocio</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
             Razón social / nombre comercial
@@ -109,14 +109,14 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
       </div>
 
       <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
-        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-yellow-400/80">Aviso de stock bajo</h2>
+        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-primary/80">Aviso de stock bajo</h2>
         <p className="mb-4 text-xs text-zinc-500">Un correo diario con las variantes cuyo stock disponible cae al umbral o por debajo.</p>
         <label className="mb-3 flex cursor-pointer items-center gap-3 rounded-lg p-2 hover:bg-white/[0.03]">
           <input
             type="checkbox"
             checked={lowStockEnabled}
             onChange={(e) => setLowStockEnabled(e.target.checked)}
-            className="h-4 w-4 accent-yellow-400"
+            className="h-4 w-4 accent-primary"
           />
           <span className="text-sm font-medium text-zinc-100">Activar aviso de stock bajo</span>
         </label>
@@ -135,7 +135,7 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
       </div>
 
       <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
-        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-yellow-400/80">Módulos activos</h2>
+        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-primary/80">Módulos activos</h2>
         <p className="mb-4 text-xs text-zinc-500">Desactivar un módulo lo oculta del menú y bloquea sus rutas para todo el equipo.</p>
         <div className="flex flex-col gap-3">
           {(Object.keys(FEATURE_LABELS) as (keyof TenantFeatures)[]).map((key) => (
@@ -144,7 +144,7 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
                 type="checkbox"
                 checked={features[key]}
                 onChange={(e) => setFeatures((f) => ({ ...f, [key]: e.target.checked }))}
-                className="mt-1 h-4 w-4 accent-yellow-400"
+                className="mt-1 h-4 w-4 accent-primary"
               />
               <span>
                 <span className="block text-sm font-medium text-zinc-100">{FEATURE_LABELS[key].label}</span>

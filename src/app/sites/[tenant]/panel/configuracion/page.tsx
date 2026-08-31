@@ -29,7 +29,7 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
       </div>
       {limit !== null && (
         <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
-          <div className={`h-full ${nearLimit ? "bg-red-500" : "bg-yellow-400"}`} style={{ width: `${pct}%` }} />
+          <div className={`h-full ${nearLimit ? "bg-red-500" : "bg-primary"}`} style={{ width: `${pct}%` }} />
         </div>
       )}
     </div>
@@ -86,7 +86,7 @@ export default async function ConfiguracionPage() {
 
       <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-yellow-400/80">Plan y uso</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-primary/80">Plan y uso</h2>
           <div className="flex items-center gap-2">
             <Badge variant="outline">{row.planTier}</Badge>
             {subscription && (

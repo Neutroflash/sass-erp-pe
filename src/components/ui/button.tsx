@@ -5,8 +5,11 @@ type Variant = "default" | "outline" | "ghost";
 type Size = "sm" | "md" | "icon";
 
 const VARIANT_CLASSES: Record<Variant, string> = {
-  default: "bg-yellow-400 text-black hover:bg-yellow-300",
-  outline: "border border-white/10 bg-white/5 text-zinc-100 hover:border-yellow-500/50",
+  // primary/primary-foreground responden al color del tenant (ver tenant-theme.ts) — brightness
+  // en vez de un shade fijo tipo "yellow-300" porque no hay un tono más claro conocido para un
+  // color arbitrario elegido por el tenant.
+  default: "bg-primary text-primary-foreground hover:brightness-110",
+  outline: "border border-white/10 bg-white/5 text-zinc-100 hover:border-primary/50",
   ghost: "text-zinc-400 hover:bg-white/5 hover:text-zinc-100",
 };
 

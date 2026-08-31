@@ -45,7 +45,7 @@ export default async function OrderConfirmationPage({ params }: { params: { orde
         ))}
         <div className="mt-2 flex justify-between border-t border-zinc-800/60 pt-2 font-bold text-zinc-100">
           <span>Total</span>
-          <span className="text-yellow-400">{formatPrice(Number(order.totalAmount))}</span>
+          <span className="text-primary">{formatPrice(Number(order.totalAmount))}</span>
         </div>
       </div>
 

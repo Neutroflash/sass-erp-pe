@@ -43,7 +43,7 @@ function VerifyEmailInner() {
       <>
         <h1 className="mb-2 text-xl font-bold text-zinc-100">No se pudo verificar</h1>
         <p className="text-sm text-destructive">{error}</p>
-        <Link href="/panel" className="mt-6 inline-block text-sm text-yellow-400 hover:underline">
+        <Link href="/panel" className="mt-6 inline-block text-sm text-primary hover:underline">
           Ir al panel
         </Link>
       </>
