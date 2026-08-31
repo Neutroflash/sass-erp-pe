@@ -21,6 +21,7 @@ export interface CreateProductInput {
   categoryId?: string;
   isFeatured?: boolean;
   variants: CreateProductVariantInput[];
+  images?: ProductImageInput[];
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

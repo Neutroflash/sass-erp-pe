@@ -19,6 +19,15 @@ function emptyVariant(): VariantDraft {
   return { sku: "", name: "", price: 0, costPrice: 0, stock: 0, attributesList: [{ key: "", value: "" }] };
 }
 
+interface ImageDraft {
+  url: string;
+  altText: string;
+}
+
+function emptyImage(): ImageDraft {
+  return { url: "", altText: "" };
+}
+
 export function CreateProductForm({ categories: initialCategories }: { categories: AdminCategory[] }) {
   const router = useRouter();
   const [categories, setCategories] = useState(initialCategories);
@@ -31,6 +40,8 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
   const [newCategoryName, setNewCategoryName] = useState("");
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [variants, setVariants] = useState<VariantDraft[]>([emptyVariant()]);
+  const [images, setImages] = useState<ImageDraft[]>([emptyImage()]);
+  const [primaryImageIndex, setPrimaryImageIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,6 +88,17 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
     );
   }
 
+  function addImage() {
+    setImages((prev) => [...prev, emptyImage()]);
+  }
+  function updateImage(index: number, patch: Partial<ImageDraft>) {
+    setImages((prev) => prev.map((img, i) => (i === index ? { ...img, ...patch } : img)));
+  }
+  function removeImage(index: number) {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setPrimaryImageIndex((prev) => (prev === index ? 0 : prev > index ? prev - 1 : prev));
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSubmitting(true);
@@ -96,6 +118,16 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
           stock: v.stock,
           attributes: Object.fromEntries(v.attributesList.filter((a) => a.key.trim()).map((a) => [a.key, a.value])),
         })),
+        images: (() => {
+          const valid = images
+            .map((img, i) => ({ ...img, wasPrimary: i === primaryImageIndex }))
+            .filter((img) => img.url.trim());
+          // Si la que estaba marcada como principal quedó vacía (URL en blanco, filtrada arriba),
+          // la primera que sí tenga URL pasa a ser la principal — nunca se manda el set sin
+          // ninguna marcada, el storefront siempre necesita una imagen primaria definida.
+          if (valid.length > 0 && !valid.some((img) => img.wasPrimary)) valid[0].wasPrimary = true;
+          return valid.map((img) => ({ url: img.url.trim(), altText: img.altText.trim() || undefined, isPrimary: img.wasPrimary }));
+        })(),
       });
       // No hay página de detalle/edición de producto todavía (más allá de precio/costo/stock por
       // variante, ya editable inline en /panel/inventario) — pendiente, ver el roadmap.
@@ -168,6 +200,64 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
           <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} />
           Producto destacado
         </label>
+      </div>
+
+      <div className="flex flex-col gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-100">Imágenes</h2>
+            <p className="text-xs text-zinc-500">Pega la URL de cada imagen (no hay subida de archivos todavía) y marca cuál es la principal.</p>
+          </div>
+          <Button type="button" size="sm" variant="outline" onClick={addImage}>
+            <Plus className="h-3.5 w-3.5" />
+            Agregar imagen
+          </Button>
+        </div>
+
+        {images.map((image, index) => (
+          <div key={index} className="flex flex-col gap-2 rounded-xl border border-zinc-800/80 bg-black/20 p-3 sm:flex-row sm:items-center">
+            {image.url.trim() ? (
+              // eslint-disable-next-line @next/next/no-img-element -- vista previa de una URL arbitraria, no un asset propio del proyecto
+              <img src={image.url} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
+            ) : (
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-white/5 text-[10px] text-zinc-600">Sin URL</div>
+            )}
+            <div className="flex flex-1 flex-col gap-2 sm:flex-row">
+              <input
+                placeholder="https://..."
+                value={image.url}
+                onChange={(e) => updateImage(index, { url: e.target.value })}
+                className={cn(inputClass, "flex-1")}
+              />
+              <input
+                placeholder="Texto alternativo (opcional)"
+                value={image.altText}
+                onChange={(e) => updateImage(index, { altText: e.target.value })}
+                className={cn(inputClass, "flex-1")}
+              />
+            </div>
+            <label className="flex shrink-0 items-center gap-1.5 text-xs text-zinc-400">
+              <input
+                type="radio"
+                name="primaryImage"
+                checked={primaryImageIndex === index}
+                onChange={() => setPrimaryImageIndex(index)}
+                className="accent-primary"
+              />
+              Principal
+            </label>
+            {images.length > 1 && (
+              <button
+                type="button"
+                onClick={() => removeImage(index)}
+                className="shrink-0 text-zinc-500 hover:text-red-400"
+                aria-label="Quitar imagen"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        ))}
       </div>
 
       <div className="flex flex-col gap-4">

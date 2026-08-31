@@ -62,6 +62,12 @@ const variantSchema = z.object({
   attributes: z.record(z.unknown()).optional(),
 });
 
+const imageSchema = z.object({
+  url: z.string().url(),
+  altText: z.string().optional(),
+  isPrimary: z.boolean().optional(),
+});
+
 const createProductSchema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),
@@ -69,6 +75,7 @@ const createProductSchema = z.object({
   categoryId: z.string().uuid().optional(),
   isFeatured: z.boolean().optional(),
   variants: z.array(variantSchema).min(1),
+  images: z.array(imageSchema).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -149,6 +156,17 @@ export async function POST(req: NextRequest) {
             attributes: (v.attributes ?? {}) as Prisma.InputJsonValue,
           })),
         },
+        // Sin isPrimary explícito en ninguna, la primera de la lista queda como principal — el
+        // storefront (ProductCard/ProductGallery) siempre necesita una imagen "primaria" definida.
+        images: input.images
+          ? {
+              create: input.images.map((img, i) => ({
+                url: img.url,
+                altText: img.altText,
+                isPrimary: img.isPrimary ?? i === 0,
+              })),
+            }
+          : undefined,
       },
       include: productInclude,
     }),

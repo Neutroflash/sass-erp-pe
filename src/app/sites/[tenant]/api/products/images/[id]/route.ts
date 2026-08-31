@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireTenantStaff } from "@/lib/api-guards";
+import { withTenantRLS } from "@/lib/tenant-rls";
 
 const updateImageSchema = z.object({
   url: z.string().url().optional(),
@@ -9,8 +10,14 @@ const updateImageSchema = z.object({
   isPrimary: z.boolean().optional(),
 });
 
+// product_images no tiene tenant_id propio ni política RLS (ver docs/RLS.md) — pero SÍ filtra acá
+// por relación hacia products, que tiene RLS forzado: sin fijar app.tenant_id, ese JOIN implícito
+// nunca matchea nada y esto devolvía "no encontrada" aunque la imagen existiera. Bug real,
+// encontrado en vivo al usar el formulario de imágenes recién agregado.
 async function findOwnedImage(imageId: string, tenantId: string) {
-  return prisma.productImage.findFirst({ where: { id: imageId, product: { tenantId } }, include: { product: true } });
+  return withTenantRLS(prisma, tenantId, (tx) =>
+    tx.productImage.findFirst({ where: { id: imageId, product: { tenantId } }, include: { product: true } }),
+  );
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
