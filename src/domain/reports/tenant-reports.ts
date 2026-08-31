@@ -88,6 +88,41 @@ export async function getTopProducts(prisma: PrismaClient, tenantId: string, lim
     .filter((row): row is TopProduct => row !== null);
 }
 
+export interface PeriodTotals {
+  total: number;
+  orderCount: number;
+}
+
+/**
+ * Totales del período [days*2, days) atrás — el período INMEDIATAMENTE ANTERIOR al que ya
+ * devuelve getSalesByDay, para poder mostrar un "+12.5% vs período anterior" real en vez de
+ * inventado. Una sola query de sumas, sin desglose diario (a diferencia de getSalesByDay no hace
+ * falta: esto solo alimenta un delta porcentual, no un gráfico).
+ */
+export async function getPreviousPeriodSales(prisma: PrismaClient, tenantId: string, days = 30): Promise<PeriodTotals> {
+  const periodEnd = new Date();
+  periodEnd.setDate(periodEnd.getDate() - days);
+  periodEnd.setHours(0, 0, 0, 0);
+  const periodStart = new Date(periodEnd);
+  periodStart.setDate(periodStart.getDate() - days);
+
+  const orders = await withTenantRLS(prisma, tenantId, (tx) =>
+    tx.order.findMany({
+      where: { tenantId, status: "PAID", createdAt: { gte: periodStart, lt: periodEnd } },
+      select: { totalAmount: true },
+    }),
+  );
+
+  return orders.reduce((acc, o) => ({ total: acc.total + Number(o.totalAmount), orderCount: acc.orderCount + 1 }), { total: 0, orderCount: 0 });
+}
+
+/** Delta porcentual entre dos totales — null si no hay base de comparación (período anterior en
+ * cero), para que quien lo consuma decida cómo mostrar "sin datos" en vez de un 0%/Infinity engañoso. */
+export function percentChange(current: number, previous: number): number | null {
+  if (previous === 0) return current === 0 ? null : null;
+  return ((current - previous) / previous) * 100;
+}
+
 export interface InventoryValuation {
   totalUnits: number;
   totalValue: number;

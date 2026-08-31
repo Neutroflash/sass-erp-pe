@@ -5,29 +5,60 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { getCurrentTenantUser } from "@/lib/auth";
 import { withTenantRLS } from "@/lib/tenant-rls";
-import { InventoryTable } from "@/components/panel/InventoryTable";
+import { InventoryDataTable } from "@/components/panel/inventario/InventoryDataTable";
 import { Button } from "@/components/ui/button";
 import type { AdminProduct } from "@/types/panel";
 
 export const dynamic = "force-dynamic";
 
 const productInclude = { variants: true, images: true, category: true } satisfies Prisma.ProductInclude;
+const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_LOW_STOCK_THRESHOLD = 5;
 
-export default async function InventoryPage() {
+export default async function InventoryPage({
+  searchParams,
+}: {
+  searchParams: { page?: string; pageSize?: string; sort?: string; search?: string; category?: string };
+}) {
   const tenant = await getCurrentTenant();
   const user = await getCurrentTenantUser(tenant.id);
   const canSeeCost = user?.role === "OWNER";
 
-  const rows = await withTenantRLS(prisma, tenant.id, (tx) =>
-    tx.product.findMany({
-      where: { tenantId: tenant.id },
+  const page = Math.max(Number(searchParams.page) || 1, 1);
+  const pageSize = Number(searchParams.pageSize) || DEFAULT_PAGE_SIZE;
+  const [sortId, sortDir] = (searchParams.sort ?? "name.asc").split(".");
+  const direction: Prisma.SortOrder = sortDir === "desc" ? "desc" : "asc";
+  const orderBy: Prisma.ProductOrderByWithRelationInput = sortId === "createdAt" ? { createdAt: direction } : { name: direction };
+  const categoryIds = searchParams.category?.split(",").filter(Boolean);
+
+  const where: Prisma.ProductWhereInput = {
+    tenantId: tenant.id,
+    ...(categoryIds && categoryIds.length > 0 ? { categoryId: { in: categoryIds } } : {}),
+    ...(searchParams.search
+      ? {
+          OR: [
+            { name: { contains: searchParams.search, mode: "insensitive" as const } },
+            { brand: { contains: searchParams.search, mode: "insensitive" as const } },
+            { variants: { some: { sku: { contains: searchParams.search, mode: "insensitive" as const } } } },
+          ],
+        }
+      : {}),
+  };
+
+  const [rows, total, categories] = await withTenantRLS(prisma, tenant.id, async (tx) => [
+    await tx.product.findMany({
+      where,
       include: productInclude,
-      orderBy: { createdAt: "desc" },
+      orderBy,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
     }),
-  );
+    await tx.product.count({ where }),
+    await tx.category.findMany({ where: { tenantId: tenant.id }, select: { id: true, name: true, slug: true }, orderBy: { name: "asc" } }),
+  ]);
 
   // costPrice ni siquiera se manda al cliente si no es OWNER — no es solo "ocultar la columna",
-  // ver el comentario en InventoryTable.tsx sobre por qué (Fase 4, roles más finos).
+  // ver el comentario en columns.tsx sobre por qué (Fase 4, roles más finos).
   const products: AdminProduct[] = rows.map((p) => ({
     id: p.id,
     name: p.name,
@@ -61,7 +92,14 @@ export default async function InventoryPage() {
           </Link>
         )}
       </div>
-      <InventoryTable products={products} canSeeCost={canSeeCost} />
+      <InventoryDataTable
+        products={products}
+        categories={categories}
+        canSeeCost={canSeeCost}
+        lowStockThreshold={tenant.lowStockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD}
+        pageCount={Math.max(Math.ceil(total / pageSize), 1)}
+        total={total}
+      />
     </div>
   );
 }
