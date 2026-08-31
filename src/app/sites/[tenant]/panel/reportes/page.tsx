@@ -49,7 +49,11 @@ export default async function ReportesPage() {
 
       <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary/80">Ventas por día (últimos 30 días)</h2>
-        <div className="flex h-32 items-end gap-1 overflow-x-auto">
+        {/* Sin overflow-x-auto a propósito: con 30 barras a flex-1 nunca hay overflow horizontal
+            real que scrollear, pero el contenedor SÍ reaccionaba al tooltip absoluto de abajo
+            (que se sale del borde al hacer hover en una barra cerca del extremo) — aparecía una
+            barra de scroll horizontal fantasma justo al pasar el mouse. */}
+        <div className="flex h-32 items-end gap-1">
           {salesByDay.map((d) => (
             <div key={d.date} className="group relative flex h-full flex-1 min-w-[6px] items-end">
               <div
