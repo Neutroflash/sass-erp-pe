@@ -34,7 +34,7 @@ export default async function TenantStorefrontPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4">
-      <HeroSection businessName={tenant.businessName} />
+      <HeroSection businessName={tenant.businessName} coverImageUrl={tenant.coverImageUrl} />
 
       {featured.length > 0 && (
         <section className="pb-16">

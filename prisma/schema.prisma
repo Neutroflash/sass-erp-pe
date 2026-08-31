@@ -63,6 +63,12 @@ model Tenant {
   ruc               String?
   fiscalAddress     String?  @map("fiscal_address")
   logoUrl           String?  @map("logo_url")
+  // Imagen de fondo del Hero de la tienda pública — opcional, sin ella el Hero usa solo el glow de
+  // color (--primary). Ninguna otra parte del sitio la usa.
+  coverImageUrl     String?  @map("cover_image_url")
+  // Formato E.164 sin "+" (ej. "51987654321", como lo pide la URL wa.me) — habilita el botón
+  // flotante de WhatsApp y el contacto del Footer. `null` = ninguno de los dos se muestra.
+  whatsappNumber    String?  @map("whatsapp_number")
   primaryColor      String?  @map("primary_color")
   planTier          PlanTier @default(FREE)
   planProductLimit  Int?     @map("plan_product_limit")

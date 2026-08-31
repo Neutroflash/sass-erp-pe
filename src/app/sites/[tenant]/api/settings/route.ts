@@ -14,6 +14,8 @@ const settingsSchema = z.object({
   ruc: z.preprocess(emptyToUndefined, z.string().regex(/^\d{11}$/).optional()),
   fiscalAddress: z.preprocess(emptyToUndefined, z.string().optional()),
   logoUrl: z.preprocess(emptyToUndefined, z.string().url().optional()),
+  coverImageUrl: z.preprocess(emptyToUndefined, z.string().url().optional()),
+  whatsappNumber: z.preprocess(emptyToUndefined, z.string().regex(/^\d{9,15}$/).optional()),
   primaryColor: z.preprocess(emptyToUndefined, z.string().regex(/^#[0-9a-fA-F]{6}$/).optional()),
   // null = desactivar el resumen de stock bajo para este negocio (ver src/domain/inventory/low-stock.ts).
   lowStockThreshold: z.number().int().min(0).max(100000).nullable().optional(),
@@ -60,6 +62,8 @@ export async function PATCH(req: NextRequest) {
       ruc: tenant.ruc,
       fiscalAddress: tenant.fiscalAddress,
       logoUrl: tenant.logoUrl,
+      coverImageUrl: tenant.coverImageUrl,
+      whatsappNumber: tenant.whatsappNumber,
       primaryColor: tenant.primaryColor,
       lowStockThreshold: tenant.lowStockThreshold,
       features: mergedFeatures,

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion, Variants } from "framer-motion";
 import { ArrowRight } from "lucide-react";
@@ -16,16 +17,26 @@ const item: Variants = {
 
 interface Props {
   businessName: string;
+  coverImageUrl: string | null;
 }
 
-export function HeroSection({ businessName }: Props) {
+export function HeroSection({ businessName, coverImageUrl }: Props) {
   return (
-    <section className="relative flex flex-col items-center gap-6 overflow-hidden py-16 text-center sm:py-20">
-      {/* Glow atado a --primary (el color del tenant) — no dorado fijo. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-[120px]"
-      />
+    <section className="relative flex flex-col items-center gap-6 overflow-hidden rounded-3xl py-16 text-center sm:py-20">
+      {coverImageUrl ? (
+        <>
+          <Image src={coverImageUrl} alt="" fill unoptimized priority className="-z-20 object-cover" />
+          {/* Overlay oscuro para que el texto siga siendo legible sobre cualquier foto que suba el
+              negocio, sin importar qué tan clara sea. */}
+          <div aria-hidden className="absolute inset-0 -z-10 bg-black/60" />
+        </>
+      ) : (
+        // Sin cover configurado: mismo glow atado a --primary de siempre.
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-[120px]"
+        />
+      )}
 
       <motion.div variants={container} initial="hidden" animate="show" className="flex flex-col items-center gap-6">
         <motion.span

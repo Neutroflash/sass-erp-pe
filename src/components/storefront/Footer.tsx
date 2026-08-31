@@ -1,16 +1,21 @@
 import Link from "next/link";
+import { MapPin, MessageCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 interface Props {
   tenantId: string;
   businessName: string;
   izipayEnabled: boolean;
+  fiscalAddress: string | null;
+  whatsappNumber: string | null;
 }
 
 // A diferencia del footer de Flashkings, no hay métodos de pago hardcodeados: cada tenant tiene
 // los suyos propios (Izipay opcional, o cobro manual Yape/Plin/efectivo fuera de la plataforma) —
-// la columna solo aparece si el tenant configuró Izipay de verdad.
-export async function Footer({ tenantId, businessName, izipayEnabled }: Props) {
+// la columna solo aparece si el tenant configuró Izipay de verdad. Mismo criterio para el contacto:
+// WhatsApp/dirección solo aparecen si el negocio los configuró en Configuración.
+export async function Footer({ tenantId, businessName, izipayEnabled, fiscalAddress, whatsappNumber }: Props) {
   const categories = await prisma.category.findMany({
     where: { tenantId },
     select: { id: true, name: true, slug: true },
@@ -55,6 +60,23 @@ export async function Footer({ tenantId, businessName, izipayEnabled }: Props) {
                 Catálogo completo
               </Link>
             </li>
+            {whatsappNumber && (
+              <li>
+                <a
+                  href={buildWhatsAppLink(whatsappNumber, `Hola ${businessName}, tengo una consulta.`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 hover:text-primary"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" /> Escríbenos por WhatsApp
+                </a>
+              </li>
+            )}
+            {fiscalAddress && (
+              <li className="flex items-start gap-1.5">
+                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {fiscalAddress}
+              </li>
+            )}
           </ul>
         </div>
 

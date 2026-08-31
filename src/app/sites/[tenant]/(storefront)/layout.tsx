@@ -3,6 +3,7 @@ import { getCurrentTenant } from "@/lib/tenant-context";
 import { Navbar } from "@/components/storefront/Navbar";
 import { Footer } from "@/components/storefront/Footer";
 import { CartDrawer } from "@/components/storefront/CartDrawer";
+import { WhatsAppButton } from "@/components/storefront/WhatsAppButton";
 
 // Antes de esto, TODAS las páginas de {slug}.flashstock.pe heredaban el <title>/<meta
 // description> genérico del root layout ("SaaS E-Commerce & ERP para Perú") — un cliente que
@@ -35,7 +36,14 @@ export default async function StorefrontLayout({ children }: { children: React.R
       <Navbar businessName={tenant.businessName} logoUrl={tenant.logoUrl} />
       <CartDrawer />
       <main className="flex-1">{children}</main>
-      <Footer tenantId={tenant.id} businessName={tenant.businessName} izipayEnabled={Boolean(tenant.izipayUsername)} />
+      <Footer
+        tenantId={tenant.id}
+        businessName={tenant.businessName}
+        izipayEnabled={Boolean(tenant.izipayUsername)}
+        fiscalAddress={tenant.fiscalAddress}
+        whatsappNumber={tenant.whatsappNumber}
+      />
+      {tenant.whatsappNumber && <WhatsAppButton whatsappNumber={tenant.whatsappNumber} businessName={tenant.businessName} />}
     </div>
   );
 }

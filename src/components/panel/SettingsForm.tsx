@@ -28,6 +28,8 @@ export interface TenantSettingsData {
   ruc: string | null;
   fiscalAddress: string | null;
   logoUrl: string | null;
+  coverImageUrl: string | null;
+  whatsappNumber: string | null;
   primaryColor: string | null;
   lowStockThreshold: number | null;
   features: TenantFeatures;
@@ -39,6 +41,8 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
   const [ruc, setRuc] = useState(initial.ruc ?? "");
   const [fiscalAddress, setFiscalAddress] = useState(initial.fiscalAddress ?? "");
   const [logoUrl, setLogoUrl] = useState(initial.logoUrl ?? "");
+  const [coverImageUrl, setCoverImageUrl] = useState(initial.coverImageUrl ?? "");
+  const [whatsappNumber, setWhatsappNumber] = useState(initial.whatsappNumber ?? "");
   const [primaryColor, setPrimaryColor] = useState(initial.primaryColor ?? "#eab308");
   const [lowStockEnabled, setLowStockEnabled] = useState(initial.lowStockThreshold !== null);
   const [lowStockThreshold, setLowStockThreshold] = useState(String(initial.lowStockThreshold ?? 5));
@@ -58,6 +62,8 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
         ruc,
         fiscalAddress,
         logoUrl,
+        coverImageUrl,
+        whatsappNumber,
         primaryColor,
         lowStockThreshold: lowStockEnabled ? Number(lowStockThreshold) : null,
         features,
@@ -96,6 +102,25 @@ export function SettingsForm({ initial }: { initial: TenantSettingsData }) {
           <label className="flex flex-col gap-1.5 text-sm text-zinc-300 sm:col-span-2">
             URL del logo
             <input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://..." className={inputClass} />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm text-zinc-300 sm:col-span-2">
+            URL de imagen de portada (Hero de la tienda)
+            <input
+              value={coverImageUrl}
+              onChange={(e) => setCoverImageUrl(e.target.value)}
+              placeholder="https://..."
+              className={inputClass}
+            />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
+            WhatsApp de contacto
+            <input
+              value={whatsappNumber}
+              onChange={(e) => setWhatsappNumber(e.target.value)}
+              placeholder="51987654321"
+              className={inputClass}
+            />
+            <span className="text-xs text-zinc-500">Con código de país, sin "+" ni espacios. Habilita el botón flotante y el contacto del pie de página.</span>
           </label>
           <label className="flex flex-col gap-1.5 text-sm text-zinc-300">
             Color primario

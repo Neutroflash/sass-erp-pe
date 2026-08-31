@@ -137,6 +137,8 @@ export interface UpdateTenantSettingsInput {
   ruc?: string;
   fiscalAddress?: string;
   logoUrl?: string;
+  coverImageUrl?: string;
+  whatsappNumber?: string;
   primaryColor?: string;
   lowStockThreshold?: number | null;
   features?: Partial<TenantFeatures>;
