@@ -13,6 +13,7 @@ const PILOT_FEATURES: TenantFeatures = {
   orderValidation: true,
   posWeb: true,
   autoSendInvoiceEmail: true,
+  publicStorefront: true,
 };
 
 async function main() {

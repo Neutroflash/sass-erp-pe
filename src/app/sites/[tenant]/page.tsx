@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
+import { requirePublicStorefront } from "@/lib/feature-guards";
 import { toPublicProduct } from "@/domain/inventory/product";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/storefront/ProductCard";
@@ -21,6 +22,7 @@ const productInclude = { variants: true, images: true } satisfies Prisma.Product
 // el segmento de URL crudo — así un dominio propio (sin slug real en la URL) funciona igual.
 export default async function TenantStorefrontPage() {
   const tenant = await getCurrentTenant();
+  await requirePublicStorefront(tenant.id);
 
   const featured = await prisma.product.findMany({
     where: { tenantId: tenant.id, isFeatured: true },

@@ -25,6 +25,7 @@ const settingsSchema = z.object({
       orderValidation: z.boolean(),
       posWeb: z.boolean(),
       autoSendInvoiceEmail: z.boolean(),
+      publicStorefront: z.boolean(),
     })
     .partial()
     .optional(),

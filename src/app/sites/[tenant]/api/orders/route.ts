@@ -7,6 +7,7 @@ import { createOrderWithStockReservation } from "@/domain/orders/reserve-stock";
 import { InsufficientStockError } from "@/domain/orders/errors";
 import { stockHoldScheduler } from "@/lib/stock-hold-queue";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { assertPublicStorefrontOrRespond404 } from "@/lib/feature-guards";
 
 const cartItemSchema = z.object({ variantId: z.string().uuid(), quantity: z.number().int().positive() });
 
@@ -25,6 +26,9 @@ export async function POST(req: NextRequest) {
   if (limited) return limited;
 
   const tenant = await getCurrentTenant();
+  const denied = await assertPublicStorefrontOrRespond404(tenant.id);
+  if (denied) return denied;
+
   const parsed = createOrderSchema.safeParse(await req.json());
   if (!parsed.success) {
     return NextResponse.json({ error: "Datos de entrada inválidos", details: parsed.error.flatten() }, { status: 400 });

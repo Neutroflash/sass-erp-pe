@@ -17,6 +17,10 @@ const FEATURE_LABELS: Record<keyof TenantFeatures, { label: string; hint: string
   posWeb: { label: "Punto de venta", hint: "Venta presencial desde /panel/pos." },
   sunatInvoicing: { label: "Facturación SUNAT", hint: "Emitir boletas/facturas. Necesita un proveedor (PSE) real conectado — ver docs/ROADMAP.md." },
   autoSendInvoiceEmail: { label: "Envío automático del comprobante", hint: "Mandar el PDF de la boleta/factura al correo del cliente apenas SUNAT la acepta." },
+  publicStorefront: {
+    label: "Tienda pública",
+    hint: "Catálogo, producto y checkout en línea. Desactívalo si solo vendes por POS/mostrador/WhatsApp — el resto del panel sigue funcionando igual.",
+  },
 };
 
 export interface TenantSettingsData {

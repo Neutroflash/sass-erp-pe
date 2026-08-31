@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
+import { requirePublicStorefront } from "@/lib/feature-guards";
 import { toPublicProduct } from "@/domain/inventory/product";
 import { ProductCard } from "@/components/storefront/ProductCard";
 
@@ -10,6 +11,7 @@ const productInclude = { variants: true, images: true } satisfies Prisma.Product
 
 export default async function CatalogPage({ searchParams }: { searchParams: { search?: string; category?: string } }) {
   const tenant = await getCurrentTenant();
+  await requirePublicStorefront(tenant.id);
 
   const products = await prisma.product.findMany({
     where: {

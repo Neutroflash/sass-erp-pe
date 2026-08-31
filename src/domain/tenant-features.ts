@@ -23,6 +23,12 @@ export interface TenantFeatures {
    * no tienen plantilla de PDF todavía). No requiere `sunatInvoicing` como precondición explícita
    * en código porque nunca dispara sin un comprobante ISSUED de por medio. */
   autoSendInvoiceEmail: boolean;
+  /** Tienda pública (`/`, `/catalogo`, `/producto/[slug]`, `/checkout`) — para un negocio que
+   * vende solo por POS/mostrador/WhatsApp y no quiere que nadie pueda navegar ni comprar online.
+   * Default `true` (a diferencia de posWeb/sunatInvoicing): es opt-OUT, no opt-in — apagarlo es
+   * la excepción, no el estado inicial de un negocio recién registrado que sí espera vender
+   * online por default. `/panel/pos` y el resto del panel no dependen de esto en absoluto. */
+  publicStorefront: boolean;
 }
 
 /**
@@ -40,6 +46,7 @@ export const DEFAULT_TENANT_FEATURES: TenantFeatures = {
   orderValidation: true,
   posWeb: false,
   autoSendInvoiceEmail: true,
+  publicStorefront: true,
 };
 
 /**

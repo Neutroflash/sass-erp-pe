@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
+import { requirePublicStorefront } from "@/lib/feature-guards";
 import { toPublicProduct } from "@/domain/inventory/product";
 import { formatPrice } from "@/lib/utils";
 import { AddToCartButton } from "@/components/storefront/AddToCartButton";
@@ -13,6 +14,7 @@ const productInclude = { variants: true, images: true } satisfies Prisma.Product
 
 export default async function ProductDetailPage({ params }: { params: { slug: string } }) {
   const tenant = await getCurrentTenant();
+  await requirePublicStorefront(tenant.id);
   const row = await prisma.product.findUnique({
     where: { tenantId_slug: { tenantId: tenant.id, slug: params.slug } },
     include: productInclude,
