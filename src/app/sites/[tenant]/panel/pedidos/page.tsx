@@ -3,8 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { requireFeature } from "@/lib/feature-guards";
 import { withTenantRLS } from "@/lib/tenant-rls";
+import { STATUS_LABEL } from "@/domain/orders/order-status";
 import { DataTable } from "@/components/panel/data-table/data-table";
-import { columns, STATUS_LABEL, type AdminOrderRow } from "@/components/panel/pedidos/columns";
+import { columns, type AdminOrderRow } from "@/components/panel/pedidos/columns";
 
 export const dynamic = "force-dynamic";
 

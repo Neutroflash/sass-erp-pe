@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
+import { STATUS_LABEL, STATUS_BADGE_VARIANT } from "@/domain/orders/order-status";
 import { DataTableColumnHeader } from "@/components/panel/data-table/data-table-column-header";
 import { OrderRowActions } from "./order-row-actions";
 
@@ -16,24 +17,6 @@ export interface AdminOrderRow {
   createdAt: string;
   itemCount: number;
 }
-
-export const STATUS_LABEL: Record<AdminOrderRow["status"], string> = {
-  PENDING_PAYMENT: "Pendiente de pago",
-  PAID: "Pagado",
-  IN_PREPARATION: "En preparación",
-  SHIPPED: "Enviado",
-  DELIVERED: "Entregado",
-  CANCELLED: "Cancelado",
-};
-
-const STATUS_VARIANT: Record<AdminOrderRow["status"], "success" | "destructive" | "outline"> = {
-  PENDING_PAYMENT: "outline",
-  PAID: "success",
-  IN_PREPARATION: "success",
-  SHIPPED: "success",
-  DELIVERED: "success",
-  CANCELLED: "destructive",
-};
 
 const CHANNEL_LABEL: Record<AdminOrderRow["channel"], string> = {
   ONLINE: "Tienda online",
@@ -87,7 +70,7 @@ export const columns: ColumnDef<AdminOrderRow>[] = [
     header: "Estado",
     meta: { label: "Estado" },
     enableSorting: false,
-    cell: ({ row }) => <Badge variant={STATUS_VARIANT[row.original.status]}>{STATUS_LABEL[row.original.status]}</Badge>,
+    cell: ({ row }) => <Badge variant={STATUS_BADGE_VARIANT[row.original.status]}>{STATUS_LABEL[row.original.status]}</Badge>,
   },
   {
     id: "actions",
