@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { getCurrentTenantUser } from "@/lib/auth";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
@@ -12,15 +13,14 @@ const TYPE_LABEL: Record<string, string> = { RECLAMO: "Reclamo", QUEJA: "Queja" 
 // OWNER-only, mismo criterio que Configuración — ver el comentario en api/complaints/[id]/route.ts.
 export default async function ReclamosPage() {
   const tenant = await getCurrentTenant();
-  const user = await getCurrentTenantUser();
+  const user = await getCurrentTenantUser(tenant.id);
   if (!user || user.role !== "OWNER") {
     redirect("/panel");
   }
 
-  const complaints = await prisma.complaint.findMany({
-    where: { tenantId: tenant.id },
-    orderBy: { folio: "desc" },
-  });
+  const complaints = await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.complaint.findMany({ where: { tenantId: tenant.id }, orderBy: { folio: "desc" } }),
+  );
 
   return (
     <div className="flex flex-col gap-6">

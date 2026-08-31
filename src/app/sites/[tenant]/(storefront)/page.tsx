@@ -4,6 +4,7 @@ import { getCurrentTenant } from "@/lib/tenant-context";
 import { toPublicProduct } from "@/domain/inventory/product";
 import { HeroSection } from "@/components/storefront/HeroSection";
 import { CatalogGrid } from "@/components/storefront/CatalogGrid";
+import { withTenantRLS } from "@/lib/tenant-rls";
 
 // Depende de headers() (middleware.ts) para saber qué tenant es — no se puede pre-renderizar en
 // build sin esa información, y aunque se pudiera generar por tenant vía generateStaticParams más
@@ -23,12 +24,14 @@ const productInclude = { variants: true, images: true } satisfies Prisma.Product
 export default async function TenantStorefrontPage() {
   const tenant = await getCurrentTenant();
 
-  const featured = await prisma.product.findMany({
-    where: { tenantId: tenant.id, isFeatured: true },
-    include: productInclude,
-    orderBy: { createdAt: "desc" },
-    take: 8,
-  });
+  const featured = await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.product.findMany({
+      where: { tenantId: tenant.id, isFeatured: true },
+      include: productInclude,
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    }),
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-4">

@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { sendLowStockDigestEmail } from "@/lib/email";
 
 export interface LowStockVariant {
@@ -13,10 +14,12 @@ export interface LowStockVariant {
  * unidad reservada por un checkout en curso no cuenta como disponible para reponer.
  */
 export async function getLowStockVariants(prisma: PrismaClient, tenantId: string, threshold: number): Promise<LowStockVariant[]> {
-  const variants = await prisma.productVariant.findMany({
-    where: { tenantId },
-    select: { sku: true, name: true, stock: true, reservedStock: true },
-  });
+  const variants = await withTenantRLS(prisma, tenantId, (tx) =>
+    tx.productVariant.findMany({
+      where: { tenantId },
+      select: { sku: true, name: true, stock: true, reservedStock: true },
+    }),
+  );
   return variants
     .map((v) => ({ sku: v.sku, name: v.name, available: v.stock - v.reservedStock, threshold }))
     .filter((v) => v.available <= threshold)
@@ -41,7 +44,9 @@ export async function runLowStockDigest(prisma: PrismaClient): Promise<number> {
       const lowStock = await getLowStockVariants(prisma, tenant.id, threshold);
       if (lowStock.length === 0) continue;
 
-      const owners = await prisma.user.findMany({ where: { tenantId: tenant.id, role: "OWNER" }, select: { email: true, name: true } });
+      const owners = await withTenantRLS(prisma, tenant.id, (tx) =>
+        tx.user.findMany({ where: { tenantId: tenant.id, role: "OWNER" }, select: { email: true, name: true } }),
+      );
       for (const owner of owners) {
         await sendLowStockDigestEmail({ to: owner.email, recipientName: owner.name, businessName: tenant.businessName, items: lowStock });
       }

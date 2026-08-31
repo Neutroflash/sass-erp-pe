@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Datos de entrada inválidos", details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const user = await getCurrentTenantUser();
+  const user = await getCurrentTenantUser(tenant.id);
   const currentUser = user && user.tenantId === tenant.id ? user : null;
 
   try {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireTenantStaff } from "@/lib/api-guards";
+import { setTenantForTransaction, withTenantRLS } from "@/lib/tenant-rls";
 
 const baseSchema = z.object({
   variantId: z.string().uuid(),
@@ -24,12 +25,14 @@ export async function GET() {
   const auth = await requireTenantStaff();
   if (auth instanceof NextResponse) return auth;
 
-  const movements = await prisma.stockMovement.findMany({
-    where: { tenantId: auth.tenantId },
-    include: { variant: { select: { sku: true, name: true } }, createdBy: { select: { name: true } } },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-  });
+  const movements = await withTenantRLS(prisma, auth.tenantId, (tx) =>
+    tx.stockMovement.findMany({
+      where: { tenantId: auth.tenantId },
+      include: { variant: { select: { sku: true, name: true } }, createdBy: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+    }),
+  );
 
   return NextResponse.json({ items: movements });
 }
@@ -44,7 +47,7 @@ export async function POST(req: NextRequest) {
   }
   const input = parsed.data;
 
-  const variant = await prisma.productVariant.findFirst({ where: { id: input.variantId, tenantId: auth.tenantId } });
+  const variant = await withTenantRLS(prisma, auth.tenantId, (tx) => tx.productVariant.findFirst({ where: { id: input.variantId, tenantId: auth.tenantId } }));
   if (!variant) {
     return NextResponse.json({ error: "Variante no encontrada" }, { status: 404 });
   }
@@ -67,6 +70,7 @@ export async function POST(req: NextRequest) {
   }
 
   const movement = await prisma.$transaction(async (tx) => {
+    await setTenantForTransaction(tx, auth.tenantId);
     await tx.productVariant.update({ where: { id: variant.id }, data: { stock: newStock } });
     return tx.stockMovement.create({
       data: {

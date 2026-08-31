@@ -1,6 +1,7 @@
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { getTenantFeatures } from "@/lib/features";
 import { prisma } from "@/lib/prisma";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { formatPrice } from "@/lib/utils";
 
 // Nunca estática — cada tarjeta refleja el estado del negocio en este momento.
@@ -31,19 +32,21 @@ export default async function TenantDashboardPage() {
   // (ni mostrar el dato) de un módulo que este negocio no tiene activo.
   const [salesToday, pendingValidations, todaysMargin, lowStockCount] = await Promise.all([
     features.orderValidation || features.posWeb
-      ? prisma.order.count({ where: { tenantId: tenant.id, createdAt: { gte: startOfToday } } })
+      ? withTenantRLS(prisma, tenant.id, (tx) => tx.order.count({ where: { tenantId: tenant.id, createdAt: { gte: startOfToday } } }))
       : null,
     features.orderValidation
-      ? prisma.order.count({ where: { tenantId: tenant.id, status: "PENDING_PAYMENT" } })
+      ? withTenantRLS(prisma, tenant.id, (tx) => tx.order.count({ where: { tenantId: tenant.id, status: "PENDING_PAYMENT" } }))
       : null,
     features.profitMargins
-      ? prisma.orderItem.findMany({
-          where: { order: { tenantId: tenant.id, createdAt: { gte: startOfToday }, status: { not: "CANCELLED" } } },
-          select: { quantity: true, price: true, variant: { select: { costPrice: true } } },
-        })
+      ? withTenantRLS(prisma, tenant.id, (tx) =>
+          tx.orderItem.findMany({
+            where: { order: { tenantId: tenant.id, createdAt: { gte: startOfToday }, status: { not: "CANCELLED" } } },
+            select: { quantity: true, price: true, variant: { select: { costPrice: true } } },
+          }),
+        )
       : null,
     features.inventoryManagement
-      ? prisma.productVariant.count({ where: { tenantId: tenant.id, stock: { lte: LOW_STOCK_THRESHOLD } } })
+      ? withTenantRLS(prisma, tenant.id, (tx) => tx.productVariant.count({ where: { tenantId: tenant.id, stock: { lte: LOW_STOCK_THRESHOLD } } }))
       : null,
   ]);
 

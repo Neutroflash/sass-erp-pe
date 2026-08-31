@@ -5,6 +5,7 @@ import { getCurrentTenant } from "@/lib/tenant-context";
 import { toPublicProduct } from "@/domain/inventory/product";
 import { CatalogGrid } from "@/components/storefront/CatalogGrid";
 import { CatalogFilters } from "@/components/storefront/CatalogFilters";
+import { withTenantRLS } from "@/lib/tenant-rls";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +16,8 @@ const productInclude = { variants: true, images: true } satisfies Prisma.Product
 export default async function CatalogPage({ searchParams }: { searchParams: { search?: string; category?: string } }) {
   const tenant = await getCurrentTenant();
 
-  const [products, categories] = await Promise.all([
-    prisma.product.findMany({
+  const [products, categories] = await withTenantRLS(prisma, tenant.id, async (tx) => [
+    await tx.product.findMany({
       where: {
         tenantId: tenant.id,
         ...(searchParams.category ? { category: { slug: searchParams.category } } : {}),
@@ -27,7 +28,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: { se
       include: productInclude,
       orderBy: { createdAt: "desc" },
     }),
-    prisma.category.findMany({
+    await tx.category.findMany({
       where: { tenantId: tenant.id },
       select: { slug: true, name: true },
       orderBy: { name: "asc" },

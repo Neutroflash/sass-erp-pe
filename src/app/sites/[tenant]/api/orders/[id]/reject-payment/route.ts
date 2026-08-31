@@ -4,6 +4,7 @@ import { requireTenantStaff } from "@/lib/api-guards";
 import { assertFeatureOrRespond403 } from "@/lib/feature-guards";
 import { stockHoldScheduler } from "@/lib/stock-hold-queue";
 import { releaseOrderHold } from "@/domain/orders/resolve-order";
+import { withTenantRLS } from "@/lib/tenant-rls";
 
 export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireTenantStaff();
@@ -11,7 +12,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
   const denied = await assertFeatureOrRespond403(auth.tenantId, "orderValidation");
   if (denied) return denied;
 
-  const order = await prisma.order.findFirst({ where: { id: params.id, tenantId: auth.tenantId } });
+  const order = await withTenantRLS(prisma, auth.tenantId, (tx) => tx.order.findFirst({ where: { id: params.id, tenantId: auth.tenantId } }));
   if (!order) {
     return NextResponse.json({ error: "Orden no encontrada" }, { status: 404 });
   }

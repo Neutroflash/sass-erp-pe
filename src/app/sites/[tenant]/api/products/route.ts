@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { getCurrentTenantUser } from "@/lib/auth";
 import { requireTenantOwner } from "@/lib/api-guards";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { slugify } from "@/lib/slugify";
 import { toPublicProduct } from "@/domain/inventory/product";
 import { resolvePlanLimits } from "@/domain/plan-limits";
@@ -38,9 +39,11 @@ export async function GET(req: NextRequest) {
       : {}),
   };
 
-  const products = await prisma.product.findMany({ where, include: productInclude, orderBy: { createdAt: "desc" } });
+  const products = await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.product.findMany({ where, include: productInclude, orderBy: { createdAt: "desc" } }),
+  );
 
-  const user = await getCurrentTenantUser();
+  const user = await getCurrentTenantUser(tenant.id);
   const isOwner = user && user.tenantId === tenant.id && user.role === "OWNER";
 
   return NextResponse.json({
@@ -87,7 +90,7 @@ export async function POST(req: NextRequest) {
   });
   const { productLimit } = resolvePlanLimits(tenant);
   if (productLimit !== null) {
-    const currentCount = await prisma.product.count({ where: { tenantId: auth.tenantId } });
+    const currentCount = await withTenantRLS(prisma, auth.tenantId, (tx) => tx.product.count({ where: { tenantId: auth.tenantId } }));
     if (currentCount >= productLimit) {
       return NextResponse.json(
         { error: `Alcanzaste el límite de ${productLimit} productos de tu plan (${tenant.planTier}). Sube de plan para agregar más.` },
@@ -97,7 +100,9 @@ export async function POST(req: NextRequest) {
   }
 
   if (input.categoryId) {
-    const category = await prisma.category.findFirst({ where: { id: input.categoryId, tenantId: auth.tenantId } });
+    const category = await withTenantRLS(prisma, auth.tenantId, (tx) =>
+      tx.category.findFirst({ where: { id: input.categoryId, tenantId: auth.tenantId } }),
+    );
     if (!category) {
       return NextResponse.json({ error: "La categoría especificada no existe" }, { status: 404 });
     }
@@ -108,7 +113,7 @@ export async function POST(req: NextRequest) {
   let suffix = 1;
   // El slug es único por tenant, no globalmente — dos negocios distintos pueden vender ambos un
   // "Mouse Gaming X". Solo dentro de un mismo negocio hay que desambiguar con un sufijo.
-  while (await prisma.product.findUnique({ where: { tenantId_slug: { tenantId: auth.tenantId, slug } } })) {
+  while (await withTenantRLS(prisma, auth.tenantId, (tx) => tx.product.findUnique({ where: { tenantId_slug: { tenantId: auth.tenantId, slug } } }))) {
     suffix += 1;
     slug = `${baseSlug}-${suffix}`;
   }
@@ -116,49 +121,55 @@ export async function POST(req: NextRequest) {
   // SKU también es único por tenant (ver @@unique([tenantId, sku]) en el schema) — validar antes
   // de intentar el create evita depender de que Postgres devuelva el error de constraint crudo.
   const skus = input.variants.map((v) => v.sku);
-  const existingSku = await prisma.productVariant.findFirst({ where: { tenantId: auth.tenantId, sku: { in: skus } } });
+  const existingSku = await withTenantRLS(prisma, auth.tenantId, (tx) =>
+    tx.productVariant.findFirst({ where: { tenantId: auth.tenantId, sku: { in: skus } } }),
+  );
   if (existingSku) {
     return NextResponse.json({ error: `El SKU "${existingSku.sku}" ya existe en este negocio` }, { status: 409 });
   }
 
-  const product = await prisma.product.create({
-    data: {
-      tenantId: auth.tenantId,
-      name: input.name,
-      slug,
-      description: input.description,
-      brand: input.brand,
-      categoryId: input.categoryId,
-      isFeatured: input.isFeatured ?? false,
-      variants: {
-        create: input.variants.map((v) => ({
-          tenantId: auth.tenantId,
-          sku: v.sku,
-          name: v.name,
-          price: v.price,
-          costPrice: v.costPrice,
-          stock: v.stock,
-          attributes: (v.attributes ?? {}) as Prisma.InputJsonValue,
-        })),
+  const product = await withTenantRLS(prisma, auth.tenantId, (tx) =>
+    tx.product.create({
+      data: {
+        tenantId: auth.tenantId,
+        name: input.name,
+        slug,
+        description: input.description,
+        brand: input.brand,
+        categoryId: input.categoryId,
+        isFeatured: input.isFeatured ?? false,
+        variants: {
+          create: input.variants.map((v) => ({
+            tenantId: auth.tenantId,
+            sku: v.sku,
+            name: v.name,
+            price: v.price,
+            costPrice: v.costPrice,
+            stock: v.stock,
+            attributes: (v.attributes ?? {}) as Prisma.InputJsonValue,
+          })),
+        },
       },
-    },
-    include: productInclude,
-  });
+      include: productInclude,
+    }),
+  );
 
   // Todo producto nuevo con stock inicial > 0 arranca con un movimiento de kardex tipo IN — el
   // historial de "de dónde salió el stock" empieza desde el primer día, nunca desde cero sin rastro.
   const initialStockEntries = product.variants.filter((v) => v.stock > 0);
   if (initialStockEntries.length > 0) {
-    await prisma.stockMovement.createMany({
-      data: initialStockEntries.map((v) => ({
-        tenantId: auth.tenantId,
-        variantId: v.id,
-        type: "IN" as const,
-        quantity: v.stock,
-        reason: "Stock inicial al crear el producto",
-        createdById: auth.user.id,
-      })),
-    });
+    await withTenantRLS(prisma, auth.tenantId, (tx) =>
+      tx.stockMovement.createMany({
+        data: initialStockEntries.map((v) => ({
+          tenantId: auth.tenantId,
+          variantId: v.id,
+          type: "IN" as const,
+          quantity: v.stock,
+          reason: "Stock inicial al crear el producto",
+          createdById: auth.user.id,
+        })),
+      }),
+    );
   }
 
   return NextResponse.json({ product }, { status: 201 });

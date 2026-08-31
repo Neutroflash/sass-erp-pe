@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { hashResetToken } from "@/domain/password-reset";
 import { PasswordHasher } from "@/lib/password";
 
@@ -19,18 +20,22 @@ export async function POST(req: NextRequest) {
   const tenant = await getCurrentTenant();
   const tokenHash = hashResetToken(parsed.data.token);
 
-  const user = await prisma.user.findFirst({
-    where: { tenantId: tenant.id, passwordResetTokenHash: tokenHash, passwordResetTokenExpiresAt: { gt: new Date() } },
-  });
+  const user = await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.user.findFirst({
+      where: { tenantId: tenant.id, passwordResetTokenHash: tokenHash, passwordResetTokenExpiresAt: { gt: new Date() } },
+    }),
+  );
   if (!user) {
     return NextResponse.json({ error: "El enlace es inválido o ya venció — solicita uno nuevo" }, { status: 400 });
   }
 
   const passwordHash = await PasswordHasher.hash(parsed.data.newPassword);
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { passwordHash, passwordResetTokenHash: null, passwordResetTokenExpiresAt: null },
-  });
+  await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.user.update({
+      where: { id: user.id },
+      data: { passwordHash, passwordResetTokenHash: null, passwordResetTokenExpiresAt: null },
+    }),
+  );
 
   return NextResponse.json({ message: "Contraseña actualizada" });
 }

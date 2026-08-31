@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { resolvePaymentGateway } from "@/lib/payment-gateway";
 
 /**
@@ -17,7 +18,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ configured: false });
   }
 
-  const order = await prisma.order.findFirst({ where: { id: params.id, tenantId: tenant.id } });
+  const order = await withTenantRLS(prisma, tenant.id, (tx) => tx.order.findFirst({ where: { id: params.id, tenantId: tenant.id } }));
   if (!order) {
     return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
   }

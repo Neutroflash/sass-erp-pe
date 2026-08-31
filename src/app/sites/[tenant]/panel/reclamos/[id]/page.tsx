@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { getCurrentTenantUser } from "@/lib/auth";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
 import { RespondComplaintForm } from "@/components/panel/RespondComplaintForm";
@@ -23,12 +24,14 @@ function Field({ label, value }: { label: string; value: string | null | undefin
 
 export default async function ReclamoDetailPage({ params }: { params: { id: string } }) {
   const tenant = await getCurrentTenant();
-  const user = await getCurrentTenantUser();
+  const user = await getCurrentTenantUser(tenant.id);
   if (!user || user.role !== "OWNER") {
     redirect("/panel");
   }
 
-  const complaint = await prisma.complaint.findFirst({ where: { id: params.id, tenantId: tenant.id } });
+  const complaint = await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.complaint.findFirst({ where: { id: params.id, tenantId: tenant.id } }),
+  );
   if (!complaint) notFound();
 
   return (

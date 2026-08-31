@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { buildInvoicePdfPayload } from "./sunat/build-payload";
 import { extractDocumentDigestValue } from "./sunat/extract-digest";
 import { buildQrContent } from "./sunat/qr";
@@ -17,10 +18,12 @@ export async function buildTicketComprobanteData(
   tenantId: string,
   invoiceId: string,
 ): Promise<TicketComprobanteData | null> {
-  const invoice = await prisma.invoice.findFirst({
-    where: { id: invoiceId, tenantId },
-    include: { items: true, order: { select: { customerName: true } } },
-  });
+  const invoice = await withTenantRLS(prisma, tenantId, (tx) =>
+    tx.invoice.findFirst({
+      where: { id: invoiceId, tenantId },
+      include: { items: true, order: { select: { customerName: true } } },
+    }),
+  );
   if (!invoice) return null;
   if (invoice.type !== "BOLETA" && invoice.type !== "FACTURA") return null;
   if (invoice.status !== "ISSUED") return null;

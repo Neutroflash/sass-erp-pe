@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireTenantOwner } from "@/lib/api-guards";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { retryPendingSunatInvoice } from "@/domain/invoicing/sunat/retry";
 
 // Reintento manual e inmediato (fuera de la cola/backoff automático) — para cuando se agotaron
@@ -10,7 +11,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
   const auth = await requireTenantOwner();
   if (auth instanceof NextResponse) return auth;
 
-  const invoice = await prisma.invoice.findFirst({ where: { id: params.id, tenantId: auth.tenantId } });
+  const invoice = await withTenantRLS(prisma, auth.tenantId, (tx) => tx.invoice.findFirst({ where: { id: params.id, tenantId: auth.tenantId } }));
   if (!invoice) {
     return NextResponse.json({ error: "Comprobante no encontrado" }, { status: 404 });
   }
@@ -20,6 +21,6 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
 
   await retryPendingSunatInvoice(prisma, invoice.id);
 
-  const updated = await prisma.invoice.findUniqueOrThrow({ where: { id: invoice.id } });
+  const updated = await withTenantRLS(prisma, auth.tenantId, (tx) => tx.invoice.findUniqueOrThrow({ where: { id: invoice.id } }));
   return NextResponse.json({ status: updated.status });
 }

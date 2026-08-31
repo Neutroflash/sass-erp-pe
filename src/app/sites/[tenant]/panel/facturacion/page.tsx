@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { requireFeature } from "@/lib/feature-guards";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { RetrySunatButton } from "@/components/panel/RetrySunatButton";
@@ -28,12 +29,14 @@ export default async function FacturacionPage() {
   const tenant = await getCurrentTenant();
   await requireFeature(tenant.id, "sunatInvoicing");
 
-  const invoices = await prisma.invoice.findMany({
-    where: { tenantId: tenant.id },
-    include: { relatedInvoice: { select: { orderId: true, type: true, series: true, number: true } } },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
+  const invoices = await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.invoice.findMany({
+      where: { tenantId: tenant.id },
+      include: { relatedInvoice: { select: { orderId: true, type: true, series: true, number: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
+  );
 
   const TYPE_LABEL: Record<string, string> = { BOLETA: "Boleta", FACTURA: "Factura", NOTA_CREDITO: "N. Crédito", NOTA_DEBITO: "N. Débito" };
 

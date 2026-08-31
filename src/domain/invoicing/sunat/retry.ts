@@ -1,4 +1,5 @@
 import type { PrismaClient, Prisma } from "@prisma/client";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { resolveSunatCredentials } from "@/lib/sunat-credentials";
 import { sunatRetryScheduler } from "@/lib/sunat-retry-queue";
 import { sendToSunat } from "./soap-client";
@@ -12,6 +13,8 @@ import { notifyInvoiceIssued } from "../notify-invoice-issued";
  * ISSUED/FAILED por otra vía, es un no-op.
  */
 export async function retryPendingSunatInvoice(prisma: PrismaClient, invoiceId: string): Promise<void> {
+  // Bootstrap sin tenant conocido todavía (el job/caller solo trae invoiceId) — mismo patrón que
+  // el worker de stock-hold y resolve-ticket.ts.
   const invoice = await prisma.invoice.findUnique({ where: { id: invoiceId } });
   if (!invoice || invoice.status !== "PENDING_SUNAT" || !invoice.signedXml) return;
 
@@ -27,7 +30,7 @@ export async function retryPendingSunatInvoice(prisma: PrismaClient, invoiceId: 
   if (result.transient) {
     const nextAttempt = invoice.sunatRetryCount + 1;
     const maxAttempts = Number(process.env.SUNAT_RETRY_MAX_ATTEMPTS ?? 5);
-    await prisma.invoice.update({ where: { id: invoice.id }, data: { sunatRetryCount: nextAttempt } });
+    await withTenantRLS(prisma, invoice.tenantId, (tx) => tx.invoice.update({ where: { id: invoice.id }, data: { sunatRetryCount: nextAttempt } }));
     // Se agotaron los reintentos automáticos — queda PENDING_SUNAT visible en /panel/facturacion
     // para que el OWNER lo reintente a mano más tarde, en vez de seguir insistiendo indefinidamente.
     if (nextAttempt < maxAttempts) {
@@ -36,16 +39,18 @@ export async function retryPendingSunatInvoice(prisma: PrismaClient, invoiceId: 
     return;
   }
 
-  await prisma.invoice.update({
-    where: { id: invoice.id },
-    data: {
-      status: result.accepted ? "ISSUED" : "FAILED",
-      issuedAt: result.accepted ? new Date() : null,
-      providerResponse: { responseCode: result.responseCode, description: result.description } as unknown as Prisma.InputJsonValue,
-    },
-  });
+  await withTenantRLS(prisma, invoice.tenantId, (tx) =>
+    tx.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        status: result.accepted ? "ISSUED" : "FAILED",
+        issuedAt: result.accepted ? new Date() : null,
+        providerResponse: { responseCode: result.responseCode, description: result.description } as unknown as Prisma.InputJsonValue,
+      },
+    }),
+  );
 
   if (result.accepted) {
-    await notifyInvoiceIssued(prisma, invoice.id);
+    await notifyInvoiceIssued(prisma, invoice.tenantId, invoice.id);
   }
 }

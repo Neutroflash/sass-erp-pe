@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MapPin, MessageCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 interface Props {
@@ -16,12 +17,14 @@ interface Props {
 // la columna solo aparece si el tenant configuró Izipay de verdad. Mismo criterio para el contacto:
 // WhatsApp/dirección solo aparecen si el negocio los configuró en Configuración.
 export async function Footer({ tenantId, businessName, izipayEnabled, fiscalAddress, whatsappNumber }: Props) {
-  const categories = await prisma.category.findMany({
-    where: { tenantId },
-    select: { id: true, name: true, slug: true },
-    orderBy: { name: "asc" },
-    take: 8,
-  });
+  const categories = await withTenantRLS(prisma, tenantId, (tx) =>
+    tx.category.findMany({
+      where: { tenantId },
+      select: { id: true, name: true, slug: true },
+      orderBy: { name: "asc" },
+      take: 8,
+    }),
+  );
 
   return (
     <footer className="mt-24 border-t border-white/10 bg-black/40">

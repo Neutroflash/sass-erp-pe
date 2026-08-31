@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireTenantStaff } from "@/lib/api-guards";
 import { assertFeatureOrRespond403 } from "@/lib/feature-guards";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { issueDispatchGuide, GreNotConfiguredError } from "@/domain/dispatch-guides/issue-dispatch-guide";
 
 const schema = z.object({
@@ -38,10 +39,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "Datos de entrada inválidos", details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const order = await prisma.order.findFirst({
-    where: { id: params.id, tenantId: auth.tenantId },
-    include: { items: { include: { variant: { select: { name: true, sku: true } } } }, dispatchGuide: true },
-  });
+  const order = await withTenantRLS(prisma, auth.tenantId, (tx) =>
+    tx.order.findFirst({
+      where: { id: params.id, tenantId: auth.tenantId },
+      include: { items: { include: { variant: { select: { name: true, sku: true } } } }, dispatchGuide: true },
+    }),
+  );
   if (!order) {
     return NextResponse.json({ error: "Orden no encontrada" }, { status: 404 });
   }

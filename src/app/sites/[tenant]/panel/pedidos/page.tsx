@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { requireFeature } from "@/lib/feature-guards";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { OrdersTable, type AdminOrderRow } from "@/components/panel/OrdersTable";
 
 export const dynamic = "force-dynamic";
@@ -9,12 +10,14 @@ export default async function PedidosPage() {
   const tenant = await getCurrentTenant();
   await requireFeature(tenant.id, "orderValidation");
 
-  const orders = await prisma.order.findMany({
-    where: { tenantId: tenant.id },
-    include: { _count: { select: { items: true } } },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
+  const orders = await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.order.findMany({
+      where: { tenantId: tenant.id },
+      include: { _count: { select: { items: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
+  );
 
   const rows: AdminOrderRow[] = orders.map((o) => ({
     id: o.id,

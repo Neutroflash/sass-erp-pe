@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -14,10 +15,12 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function OrderConfirmationPage({ params }: { params: { orderId: string } }) {
   const tenant = await getCurrentTenant();
-  const order = await prisma.order.findFirst({
-    where: { id: params.orderId, tenantId: tenant.id },
-    include: { items: { include: { variant: { select: { sku: true, name: true } } } } },
-  });
+  const order = await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.order.findFirst({
+      where: { id: params.orderId, tenantId: tenant.id },
+      include: { items: { include: { variant: { select: { sku: true, name: true } } } } },
+    }),
+  );
   if (!order) notFound();
 
   return (

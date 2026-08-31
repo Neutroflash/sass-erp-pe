@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { getCurrentTenantUser } from "@/lib/auth";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { InventoryTable } from "@/components/panel/InventoryTable";
 import { Button } from "@/components/ui/button";
 import type { AdminProduct } from "@/types/panel";
@@ -14,14 +15,16 @@ const productInclude = { variants: true, images: true, category: true } satisfie
 
 export default async function InventoryPage() {
   const tenant = await getCurrentTenant();
-  const user = await getCurrentTenantUser();
+  const user = await getCurrentTenantUser(tenant.id);
   const canSeeCost = user?.role === "OWNER";
 
-  const rows = await prisma.product.findMany({
-    where: { tenantId: tenant.id },
-    include: productInclude,
-    orderBy: { createdAt: "desc" },
-  });
+  const rows = await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.product.findMany({
+      where: { tenantId: tenant.id },
+      include: productInclude,
+      orderBy: { createdAt: "desc" },
+    }),
+  );
 
   // costPrice ni siquiera se manda al cliente si no es OWNER — no es solo "ocultar la columna",
   // ver el comentario en InventoryTable.tsx sobre por qué (Fase 4, roles más finos).

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { resolvePaymentGateway } from "@/lib/payment-gateway";
 import { markOrderPaid } from "@/domain/orders/resolve-order";
 import { stockHoldScheduler } from "@/lib/stock-hold-queue";
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (event.paid) {
-    const order = await prisma.order.findFirst({ where: { id: event.orderId, tenantId: tenant.id } });
+    const order = await withTenantRLS(prisma, tenant.id, (tx) => tx.order.findFirst({ where: { id: event.orderId, tenantId: tenant.id } }));
     if (order) {
       const confirmed = await markOrderPaid(prisma, tenant.id, order.id);
       if (confirmed) {

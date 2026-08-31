@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { checkTicketStatus } from "./gre-client";
 import { resolveGreCredentials } from "@/lib/gre-credentials";
 import { greTicketScheduler } from "@/lib/gre-ticket-queue";
@@ -10,6 +11,9 @@ const MAX_ATTEMPTS = 6; // 30s, 60s, 2min, 4min, 8min, 16min — ~30min de venta
  * debería pasar por el jobId único, pero por las dudas) es un no-op.
  */
 export async function resolveDispatchGuideTicket(prisma: PrismaClient, dispatchGuideId: string, attempt = 0): Promise<void> {
+  // El job de BullMQ solo carga el dispatchGuideId — este lookup sin tenant es intencional, es el
+  // paso de "a qué tenant pertenece esto" que por definición corre antes de poder fijar
+  // app.tenant_id (mismo patrón que el worker de stock-hold).
   const guide = await prisma.dispatchGuide.findUnique({ where: { id: dispatchGuideId } });
   if (!guide || guide.status !== "PENDING_SUNAT" || !guide.numTicket) return;
 
@@ -30,15 +34,19 @@ export async function resolveDispatchGuideTicket(prisma: PrismaClient, dispatchG
   }
 
   if (status.state === "ISSUED") {
-    await prisma.dispatchGuide.update({
-      where: { id: guide.id },
-      data: { status: "ISSUED", issuedAt: new Date(), sunatResponseCode: "0" },
-    });
+    await withTenantRLS(prisma, guide.tenantId, (tx) =>
+      tx.dispatchGuide.update({
+        where: { id: guide.id },
+        data: { status: "ISSUED", issuedAt: new Date(), sunatResponseCode: "0" },
+      }),
+    );
     return;
   }
 
-  await prisma.dispatchGuide.update({
-    where: { id: guide.id },
-    data: { status: "FAILED", sunatResponseCode: status.errorCode, sunatDescription: status.errorDescription },
-  });
+  await withTenantRLS(prisma, guide.tenantId, (tx) =>
+    tx.dispatchGuide.update({
+      where: { id: guide.id },
+      data: { status: "FAILED", sunatResponseCode: status.errorCode, sunatDescription: status.errorDescription },
+    }),
+  );
 }

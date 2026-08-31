@@ -18,7 +18,7 @@ export interface TenantStaffContext {
  */
 export async function requireTenantStaff(): Promise<TenantStaffContext | NextResponse> {
   const tenant = await getCurrentTenant();
-  const user = await getCurrentTenantUser();
+  const user = await getCurrentTenantUser(tenant.id);
 
   if (!user || user.tenantId !== tenant.id || user.role === "CUSTOMER") {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -34,7 +34,7 @@ export async function requireTenantStaff(): Promise<TenantStaffContext | NextRes
  */
 export async function requireTenantOwner(): Promise<TenantStaffContext | NextResponse> {
   const tenant = await getCurrentTenant();
-  const user = await getCurrentTenantUser();
+  const user = await getCurrentTenantUser(tenant.id);
 
   if (!user || user.tenantId !== tenant.id || user.role !== "OWNER") {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });

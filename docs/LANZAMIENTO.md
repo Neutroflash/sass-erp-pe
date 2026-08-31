@@ -84,6 +84,20 @@ Pasos:
 2. Cargar `client_id`/`client_secret` en `/panel/configuracion` → sección "Guías de remisión (opcional)", dentro del mismo formulario de credenciales SUNAT (hay que volver a subir el certificado y el usuario/clave SOL al guardarlo, el form siempre exige el set completo).
 3. Emitir una guía de remisión de prueba real desde el detalle de un pedido y confirmar que: SUNAT recibe el envío (`numTicket`), el worker consulta el ticket y la guía pasa a `ISSUED` — esto es lo único que quedó sin poder verificarse en este entorno, exactamente por no tener credenciales reales.
 
+## 6. Activar RLS de verdad en producción — una sola vez, no bloqueante
+
+El código y las políticas de Row Level Security ya están completos y verificados (ver
+`docs/RLS.md`) — lo que falta es puramente de infraestructura, en el Postgres de producción real:
+
+1. Correr `scripts/setup-app-role.sh` contra la base de producción (crea el rol `flashstock_app`,
+   sin privilegios de dueño).
+2. Setear `RUNTIME_DATABASE_URL` en las variables de entorno del hosting, apuntando a ese rol.
+
+Sin este paso, la app sigue funcionando exactamente igual que hoy (conectada con el rol dueño de
+las migraciones) — el filtro `tenantId` de cada query sigue siendo la protección real, solo sin el
+respaldo extra de RLS a nivel de base de datos. No bloquea el lanzamiento, pero conviene hacerlo
+temprano — es un cambio de infraestructura sin código nuevo, no una carrera contra el tiempo.
+
 ## Resumen: ¿qué bloquea el lanzamiento y qué no?
 
 | Ítem | Bloquea lanzar la plataforma | Bloquea la funcionalidad para UN tenant |
@@ -93,3 +107,4 @@ Pasos:
 | Certificado SUNAT (CDT gratis o pago) | No (es por tenant) | Sí, factura electrónica real de ese tenant |
 | Cuenta comercio Izipay | No (es por tenant, y el checkout sigue funcionando con confirmación manual sin ella) | Sí, pago en línea real (tarjetas/Yape/Plin) de ese tenant |
 | Credenciales OAuth2 API GRE | No (es por tenant) | Sí, guías de remisión reales de ese tenant |
+| Activar RLS (rol + `RUNTIME_DATABASE_URL`) | No (el filtro `tenantId` de siempre sigue protegiendo) | — |

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { StockMovementForm } from "@/components/panel/StockMovementForm";
 import { Badge } from "@/components/ui/badge";
 
@@ -10,13 +11,13 @@ const TYPE_LABEL: Record<string, string> = { IN: "Entrada", OUT: "Salida", ADJUS
 export default async function KardexPage() {
   const tenant = await getCurrentTenant();
 
-  const [variants, movements] = await Promise.all([
-    prisma.productVariant.findMany({
+  const [variants, movements] = await withTenantRLS(prisma, tenant.id, async (tx) => [
+    await tx.productVariant.findMany({
       where: { tenantId: tenant.id },
       include: { product: { select: { name: true } } },
       orderBy: { name: "asc" },
     }),
-    prisma.stockMovement.findMany({
+    await tx.stockMovement.findMany({
       where: { tenantId: tenant.id },
       include: { variant: { select: { sku: true, name: true } }, createdBy: { select: { name: true } } },
       orderBy: { createdAt: "desc" },

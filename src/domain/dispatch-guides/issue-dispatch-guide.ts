@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { reserveInvoiceNumber } from "../invoicing/counter";
 import { signSunatXML } from "../invoicing/sunat/sign";
 import { generateDispatchGuideXML } from "./xml-builder";
@@ -65,39 +66,41 @@ export async function issueDispatchGuide(prisma: PrismaClient, params: IssueDisp
 
   const fileName = `${credentials.gre.ruc}-09-${SERIES}-${number}`;
 
-  const guide = await prisma.dispatchGuide.create({
-    data: {
-      tenantId: params.tenantId,
-      orderId: params.orderId,
-      series: SERIES,
-      number,
-      status: "PENDING_SUNAT",
-      transferReasonCode: params.motivoTrasladoCodigo,
-      transferDate: params.fechaTraslado,
-      grossWeightKg: params.pesoTotalKg,
-      originUbigeo: params.origen.ubigeo,
-      originAddress: params.origen.address,
-      destinationUbigeo: params.destino.ubigeo,
-      destinationAddress: params.destino.address,
-      recipientDocType: params.destinatario.documentTypeCode,
-      recipientDocNumber: params.destinatario.documentNumber,
-      recipientName: params.destinatario.name,
-      vehiclePlate: params.vehiculoPlaca,
-      driverDocNumber: params.chofer.documentNumber,
-      driverFirstName: params.chofer.firstName,
-      driverLastName: params.chofer.lastName,
-      driverLicense: params.chofer.license,
-      signedXml,
-      items: {
-        create: params.lineas.map((l) => ({ variantId: l.variantId, description: l.description, quantity: l.quantity, unitCode: l.unitCode })),
+  const guide = await withTenantRLS(prisma, params.tenantId, (tx) =>
+    tx.dispatchGuide.create({
+      data: {
+        tenantId: params.tenantId,
+        orderId: params.orderId,
+        series: SERIES,
+        number,
+        status: "PENDING_SUNAT",
+        transferReasonCode: params.motivoTrasladoCodigo,
+        transferDate: params.fechaTraslado,
+        grossWeightKg: params.pesoTotalKg,
+        originUbigeo: params.origen.ubigeo,
+        originAddress: params.origen.address,
+        destinationUbigeo: params.destino.ubigeo,
+        destinationAddress: params.destino.address,
+        recipientDocType: params.destinatario.documentTypeCode,
+        recipientDocNumber: params.destinatario.documentNumber,
+        recipientName: params.destinatario.name,
+        vehiclePlate: params.vehiculoPlaca,
+        driverDocNumber: params.chofer.documentNumber,
+        driverFirstName: params.chofer.firstName,
+        driverLastName: params.chofer.lastName,
+        driverLicense: params.chofer.license,
+        signedXml,
+        items: {
+          create: params.lineas.map((l) => ({ variantId: l.variantId, description: l.description, quantity: l.quantity, unitCode: l.unitCode })),
+        },
       },
-    },
-    include: { items: true },
-  });
+      include: { items: true },
+    }),
+  );
 
   try {
     const result = await sendDispatchGuide(signedXml, credentials.gre, fileName);
-    await prisma.dispatchGuide.update({ where: { id: guide.id }, data: { numTicket: result.numTicket } });
+    await withTenantRLS(prisma, params.tenantId, (tx) => tx.dispatchGuide.update({ where: { id: guide.id }, data: { numTicket: result.numTicket } }));
     await greTicketScheduler.schedule(guide.id);
     return { ...guide, numTicket: result.numTicket };
   } catch (err) {
@@ -106,10 +109,12 @@ export async function issueDispatchGuide(prisma: PrismaClient, params: IssueDisp
     // a diferencia de boletas/facturas no hay un mecanismo de "reintentar el mismo intento" para
     // GRE en este alcance v1 (emitir una guía nueva es la vía, mismo criterio que un número
     // quemado en un POS físico).
-    await prisma.dispatchGuide.update({
-      where: { id: guide.id },
-      data: { status: "FAILED", sunatDescription: err instanceof Error ? err.message : "Error desconocido al enviar" },
-    });
+    await withTenantRLS(prisma, params.tenantId, (tx) =>
+      tx.dispatchGuide.update({
+        where: { id: guide.id },
+        data: { status: "FAILED", sunatDescription: err instanceof Error ? err.message : "Error desconocido al enviar" },
+      }),
+    );
     throw err;
   }
 }

@@ -123,7 +123,7 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
   if (result.status === "PENDING_SUNAT") {
     await sunatRetryScheduler.schedule(invoice.id);
   } else if (result.status === "ISSUED") {
-    await notifyInvoiceIssued(prisma, invoice.id);
+    await notifyInvoiceIssued(prisma, params.tenantId, invoice.id);
   }
 
   return invoice;

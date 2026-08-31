@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { withTenantRLS } from "@/lib/tenant-rls";
 
 export interface DailySales {
   date: string; // YYYY-MM-DD
@@ -17,10 +18,12 @@ export async function getSalesByDay(prisma: PrismaClient, tenantId: string, days
   since.setDate(since.getDate() - (days - 1));
   since.setHours(0, 0, 0, 0);
 
-  const orders = await prisma.order.findMany({
-    where: { tenantId, status: "PAID", createdAt: { gte: since } },
-    select: { totalAmount: true, createdAt: true },
-  });
+  const orders = await withTenantRLS(prisma, tenantId, (tx) =>
+    tx.order.findMany({
+      where: { tenantId, status: "PAID", createdAt: { gte: since } },
+      select: { totalAmount: true, createdAt: true },
+    }),
+  );
 
   const byDay = new Map<string, DailySales>();
   for (let i = 0; i < days; i++) {
@@ -51,19 +54,23 @@ export interface TopProduct {
 }
 
 export async function getTopProducts(prisma: PrismaClient, tenantId: string, limit = 10): Promise<TopProduct[]> {
-  const grouped = await prisma.orderItem.groupBy({
-    by: ["variantId"],
-    where: { order: { tenantId, status: "PAID" } },
-    _sum: { quantity: true },
-    orderBy: { _sum: { quantity: "desc" } },
-    take: limit,
-  });
+  const grouped = await withTenantRLS(prisma, tenantId, (tx) =>
+    tx.orderItem.groupBy({
+      by: ["variantId"],
+      where: { order: { tenantId, status: "PAID" } },
+      _sum: { quantity: true },
+      orderBy: { _sum: { quantity: "desc" } },
+      take: limit,
+    }),
+  );
   if (grouped.length === 0) return [];
 
-  const variants = await prisma.productVariant.findMany({
-    where: { id: { in: grouped.map((g) => g.variantId) } },
-    include: { product: { select: { name: true } } },
-  });
+  const variants = await withTenantRLS(prisma, tenantId, (tx) =>
+    tx.productVariant.findMany({
+      where: { id: { in: grouped.map((g) => g.variantId) } },
+      include: { product: { select: { name: true } } },
+    }),
+  );
   const variantById = new Map(variants.map((v) => [v.id, v]));
 
   return grouped
@@ -89,10 +96,12 @@ export interface InventoryValuation {
 /** Capital inmovilizado en inventario (stock físico × costo), no incluye reservedStock aparte —
  * el stock físico ya lo incluye, reservado o no sigue siendo inventario que el negocio posee. */
 export async function getInventoryValuation(prisma: PrismaClient, tenantId: string): Promise<InventoryValuation> {
-  const variants = await prisma.productVariant.findMany({
-    where: { tenantId },
-    select: { stock: true, costPrice: true },
-  });
+  const variants = await withTenantRLS(prisma, tenantId, (tx) =>
+    tx.productVariant.findMany({
+      where: { tenantId },
+      select: { stock: true, costPrice: true },
+    }),
+  );
 
   return variants.reduce(
     (acc, v) => ({

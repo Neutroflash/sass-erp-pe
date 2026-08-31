@@ -1,4 +1,5 @@
 import type { Complaint, PrismaClient } from "@prisma/client";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { sendComplaintReceiptEmail, sendComplaintNotificationEmail } from "@/lib/email";
 
 /**
@@ -18,7 +19,9 @@ export async function notifyComplaintSubmitted(prisma: PrismaClient, tenantId: s
       type: complaint.type,
     });
 
-    const owners = await prisma.user.findMany({ where: { tenantId, role: "OWNER" }, select: { email: true, name: true } });
+    const owners = await withTenantRLS(prisma, tenantId, (tx) =>
+      tx.user.findMany({ where: { tenantId, role: "OWNER" }, select: { email: true, name: true } }),
+    );
     for (const owner of owners) {
       await sendComplaintNotificationEmail({
         to: owner.email,

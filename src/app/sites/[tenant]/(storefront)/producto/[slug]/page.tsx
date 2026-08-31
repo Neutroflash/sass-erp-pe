@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { toPublicProduct } from "@/domain/inventory/product";
 import { formatPrice } from "@/lib/utils";
 import { AddToCartButton } from "@/components/storefront/AddToCartButton";
@@ -21,36 +22,42 @@ const productInclude = {
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const tenant = await getCurrentTenant();
-  const product = await prisma.product.findUnique({
-    where: { tenantId_slug: { tenantId: tenant.id, slug: params.slug } },
-    select: { name: true, description: true },
-  });
+  const product = await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.product.findUnique({
+      where: { tenantId_slug: { tenantId: tenant.id, slug: params.slug } },
+      select: { name: true, description: true },
+    }),
+  );
   if (!product) return {};
   return { title: product.name, description: product.description ?? undefined };
 }
 
 export default async function ProductDetailPage({ params }: { params: { slug: string } }) {
   const tenant = await getCurrentTenant();
-  const row = await prisma.product.findUnique({
-    where: { tenantId_slug: { tenantId: tenant.id, slug: params.slug } },
-    include: productInclude,
-  });
+  const row = await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.product.findUnique({
+      where: { tenantId_slug: { tenantId: tenant.id, slug: params.slug } },
+      include: productInclude,
+    }),
+  );
   if (!row) notFound();
 
   const product = toPublicProduct(row);
 
   // Mismo categoryId primero (más relevante para el cliente); si el producto no tiene categoría,
   // o esa categoría no tiene más productos, se completa con lo más reciente del negocio.
-  const relatedRows = await prisma.product.findMany({
-    where: {
-      tenantId: tenant.id,
-      id: { not: row.id },
-      ...(row.categoryId ? { categoryId: row.categoryId } : {}),
-    },
-    include: { variants: true, images: true },
-    orderBy: { createdAt: "desc" },
-    take: 4,
-  });
+  const relatedRows = await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.product.findMany({
+      where: {
+        tenantId: tenant.id,
+        id: { not: row.id },
+        ...(row.categoryId ? { categoryId: row.categoryId } : {}),
+      },
+      include: { variants: true, images: true },
+      orderBy: { createdAt: "desc" },
+      take: 4,
+    }),
+  );
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">

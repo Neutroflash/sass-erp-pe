@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 // InventoryTable/panel de configuración (Fase 4 del roadmap).
 export default async function ReportesPage() {
   const tenant = await getCurrentTenant();
-  const user = await getCurrentTenantUser();
+  const user = await getCurrentTenantUser(tenant.id);
   if (!user || user.role !== "OWNER") {
     redirect("/panel");
   }

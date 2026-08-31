@@ -11,7 +11,7 @@ import { EmailVerificationBanner } from "@/components/panel/EmailVerificationBan
 // real vuelve a chequearse en cada Route Handler bajo /api/**, esto es solo la puerta de la UI.
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const tenant = await getCurrentTenant();
-  const user = await getCurrentTenantUser();
+  const user = await getCurrentTenantUser(tenant.id);
 
   if (!user || user.tenantId !== tenant.id || user.role === "CUSTOMER") {
     // /ingresar vive fuera de /panel a propósito — si estuviera anidada bajo panel/, este mismo

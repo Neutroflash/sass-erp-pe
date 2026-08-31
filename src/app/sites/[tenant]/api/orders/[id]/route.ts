@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
+import { withTenantRLS } from "@/lib/tenant-rls";
 
 // Público — página de confirmación de pedido. El id es un UUID no adivinable, suficiente para
 // este alcance (mismo criterio que Flashkings): no expone nada sensible de costos, solo lo que
 // el propio comprador ya sabe de su pedido.
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const tenant = await getCurrentTenant();
-  const order = await prisma.order.findFirst({
-    where: { id: params.id, tenantId: tenant.id },
-    include: { items: { include: { variant: { select: { sku: true, name: true } } } } },
-  });
+  const order = await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.order.findFirst({
+      where: { id: params.id, tenantId: tenant.id },
+      include: { items: { include: { variant: { select: { sku: true, name: true } } } } },
+    }),
+  );
   if (!order) {
     return NextResponse.json({ error: "Orden no encontrada" }, { status: 404 });
   }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { generateResetToken, hashResetToken, resetTokenExpiresAt } from "@/domain/password-reset";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { enforceRateLimit } from "@/lib/rate-limit";
@@ -20,14 +21,18 @@ export async function POST(req: NextRequest) {
   }
 
   const tenant = await getCurrentTenant();
-  const user = await prisma.user.findUnique({ where: { tenantId_email: { tenantId: tenant.id, email: parsed.data.email } } });
+  const user = await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.user.findUnique({ where: { tenantId_email: { tenantId: tenant.id, email: parsed.data.email } } }),
+  );
 
   if (user) {
     const token = generateResetToken();
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { passwordResetTokenHash: hashResetToken(token), passwordResetTokenExpiresAt: resetTokenExpiresAt() },
-    });
+    await withTenantRLS(prisma, tenant.id, (tx) =>
+      tx.user.update({
+        where: { id: user.id },
+        data: { passwordResetTokenHash: hashResetToken(token), passwordResetTokenExpiresAt: resetTokenExpiresAt() },
+      }),
+    );
 
     const resetUrl = new URL(`/restablecer-password?token=${token}`, req.url).toString();
     try {

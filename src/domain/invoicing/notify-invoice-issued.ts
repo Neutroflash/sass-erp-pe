@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { parseTenantFeatures } from "@/domain/tenant-features";
 import { generatePDFComprobante } from "./sunat/pdf";
 import { buildInvoicePdfPayload } from "./sunat/build-payload";
@@ -12,16 +13,18 @@ import { sendInvoiceEmail } from "@/lib/email";
  * (`sunat/retry.ts`) — es el único punto que decide si corresponde mandar el correo, para no
  * duplicar el chequeo de feature flag / tipo de documento / email del cliente en cada llamador.
  */
-export async function notifyInvoiceIssued(prisma: PrismaClient, invoiceId: string): Promise<void> {
+export async function notifyInvoiceIssued(prisma: PrismaClient, tenantId: string, invoiceId: string): Promise<void> {
   try {
-    const invoice = await prisma.invoice.findUnique({
-      where: { id: invoiceId },
-      include: {
-        items: true,
-        order: { select: { customerEmail: true, customerName: true } },
-        tenant: { select: { ruc: true, businessName: true, fiscalAddress: true, features: true } },
-      },
-    });
+    const invoice = await withTenantRLS(prisma, tenantId, (tx) =>
+      tx.invoice.findUnique({
+        where: { id: invoiceId },
+        include: {
+          items: true,
+          order: { select: { customerEmail: true, customerName: true } },
+          tenant: { select: { ruc: true, businessName: true, fiscalAddress: true, features: true } },
+        },
+      }),
+    );
     if (!invoice || invoice.status !== "ISSUED") return;
     // Mismo límite que /api/invoices/[id]/pdf: notas de crédito/débito no tienen plantilla de PDF.
     if (invoice.type !== "BOLETA" && invoice.type !== "FACTURA") return;

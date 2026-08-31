@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { getTenantFeatures } from "@/lib/features";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { InvoiceSection, type OrderInvoiceSummary } from "@/components/panel/InvoiceSection";
@@ -24,14 +25,16 @@ export default async function OrderDetailPage({ params }: { params: { id: string
   const tenant = await getCurrentTenant();
 
   const [order, features] = await Promise.all([
-    prisma.order.findFirst({
-      where: { id: params.id, tenantId: tenant.id },
-      include: {
-        items: { include: { variant: { select: { sku: true, name: true } } } },
-        invoice: { include: { corrections: true } },
-        dispatchGuide: true,
-      },
-    }),
+    withTenantRLS(prisma, tenant.id, (tx) =>
+      tx.order.findFirst({
+        where: { id: params.id, tenantId: tenant.id },
+        include: {
+          items: { include: { variant: { select: { sku: true, name: true } } } },
+          invoice: { include: { corrections: true } },
+          dispatchGuide: true,
+        },
+      }),
+    ),
     getTenantFeatures(tenant.id),
   ]);
   if (!order) notFound();

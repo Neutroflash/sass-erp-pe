@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireTenantStaff } from "@/lib/api-guards";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { generatePDFComprobante } from "@/domain/invoicing/sunat/pdf";
 import { buildInvoicePdfPayload } from "@/domain/invoicing/sunat/build-payload";
 import { extractDocumentDigestValue } from "@/domain/invoicing/sunat/extract-digest";
@@ -16,10 +17,12 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   const auth = await requireTenantStaff();
   if (auth instanceof NextResponse) return auth;
 
-  const invoice = await prisma.invoice.findFirst({
-    where: { id: params.id, tenantId: auth.tenantId },
-    include: { items: true },
-  });
+  const invoice = await withTenantRLS(prisma, auth.tenantId, (tx) =>
+    tx.invoice.findFirst({
+      where: { id: params.id, tenantId: auth.tenantId },
+      include: { items: true },
+    }),
+  );
   if (!invoice) {
     return NextResponse.json({ error: "Comprobante no encontrado" }, { status: 404 });
   }

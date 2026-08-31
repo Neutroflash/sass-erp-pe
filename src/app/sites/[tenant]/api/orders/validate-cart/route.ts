@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
+import { withTenantRLS } from "@/lib/tenant-rls";
 
 const schema = z.object({
   items: z.array(z.object({ variantId: z.string().uuid(), quantity: z.number().int().positive() })).min(1),
@@ -19,7 +20,9 @@ export async function POST(req: NextRequest) {
   }
 
   const variantIds = parsed.data.items.map((i) => i.variantId);
-  const variants = await prisma.productVariant.findMany({ where: { id: { in: variantIds }, tenantId: tenant.id } });
+  const variants = await withTenantRLS(prisma, tenant.id, (tx) =>
+    tx.productVariant.findMany({ where: { id: { in: variantIds }, tenantId: tenant.id } }),
+  );
   const byId = new Map(variants.map((v) => [v.id, v]));
 
   const items = parsed.data.items.map((item) => {

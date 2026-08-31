@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { getCurrentTenantUser } from "@/lib/auth";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { parseTenantFeatures } from "@/domain/tenant-features";
 import { resolvePlanLimits, startOfCurrentMonth } from "@/domain/plan-limits";
 import { PLAN_PRICE_PEN } from "@/domain/platform-billing/pricing";
@@ -40,7 +41,7 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
 // un SELLER deba poder tocar, aunque panel/layout.tsx ya lo deje entrar al resto del panel.
 export default async function ConfiguracionPage() {
   const tenant = await getCurrentTenant();
-  const user = await getCurrentTenantUser();
+  const user = await getCurrentTenantUser(tenant.id);
   if (!user || user.role !== "OWNER") {
     redirect("/panel");
   }
@@ -78,8 +79,12 @@ export default async function ConfiguracionPage() {
   });
 
   const [productCount, invoicesThisMonth, subscription] = await Promise.all([
-    prisma.product.count({ where: { tenantId: tenant.id } }),
-    prisma.invoice.count({ where: { tenantId: tenant.id, createdAt: { gte: startOfCurrentMonth() } } }),
+    withTenantRLS(prisma, tenant.id, (tx) => tx.product.count({ where: { tenantId: tenant.id } })),
+    withTenantRLS(prisma, tenant.id, (tx) =>
+      tx.invoice.count({ where: { tenantId: tenant.id, createdAt: { gte: startOfCurrentMonth() } } }),
+    ),
+    // platform_subscriptions no está en el alcance de RLS (ver docs/RLS.md) — el SuperAdmin y el
+    // worker de facturación necesitan cruzar todos los tenants a la vez.
     prisma.platformSubscription.findUnique({ where: { tenantId: tenant.id } }),
   ]);
   const limits = resolvePlanLimits(row);
