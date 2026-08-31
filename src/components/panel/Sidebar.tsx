@@ -6,6 +6,7 @@ import { BarChart3, LayoutGrid, Package, Receipt, ShoppingCart, Sliders, Warehou
 import type { TenantFeatures } from "@/domain/tenant-features";
 import type { UserRole } from "@prisma/client";
 import { cn } from "@/lib/utils";
+import { LogoutButton } from "./LogoutButton";
 
 interface NavLink {
   href: string;
@@ -61,6 +62,8 @@ export function Sidebar({ features, role }: { features: TenantFeatures; role: Us
           </Link>
         );
       })}
+      <hr className="my-2 border-zinc-800/80" />
+      <LogoutButton />
     </nav>
   );
 }
