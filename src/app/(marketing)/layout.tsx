@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Footer } from "@/components/marketing/Footer";
 
 // Header compartido de flashstock.pe/flashstock.pe/precios — no confundir con panel/layout.tsx (ese
 // guarda el panel de UN tenant); acá no hay sesión que verificar, es contenido público.
@@ -22,6 +23,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         </div>
       </header>
       <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   );
 }
