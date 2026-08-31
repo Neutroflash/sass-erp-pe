@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingCart } from "lucide-react";
+import { Search, ShoppingCart } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import { Button } from "@/components/ui/button";
 
@@ -11,17 +11,17 @@ interface Props {
   logoUrl: string | null;
 }
 
-// Sin ícono de cuenta a propósito: la tienda pública de un tenant no tiene sistema de cuentas de
-// cliente — el único login bajo /ingresar es para el staff del panel, y enlazarlo acá desde una
-// vista de cliente final sería engañoso.
+// Sin ícono de cuenta ni link de "Pedidos" a propósito: la tienda pública de un tenant no tiene
+// sistema de cuentas/historial de pedidos de cliente — el único login bajo /ingresar es para el
+// staff del panel. Un link a algo que no existe sería peor que no tenerlo.
 export function Navbar({ businessName, logoUrl }: Props) {
   const totalItems = useCartStore((state) => state.totalItems());
   const openCart = useCartStore((state) => state.openCart);
 
   return (
     <header className="sticky top-4 z-50 mx-4 sm:mx-auto sm:max-w-7xl sm:px-4">
-      <div className="flex h-16 items-center gap-4 rounded-2xl border border-white/10 bg-black/40 px-4 shadow-lg shadow-black/20 backdrop-blur-xl">
-        <Link href="/" className="flex min-w-0 shrink items-center gap-2">
+      <div className="flex h-16 items-center gap-4 rounded-full border border-white/10 bg-card/80 px-4 shadow-lg shadow-black/30 backdrop-blur-xl">
+        <Link href="/" className="flex min-w-0 shrink items-center gap-2.5">
           {logoUrl ? (
             <Image src={logoUrl} alt={businessName} width={32} height={32} unoptimized className="shrink-0 rounded-full" />
           ) : (
@@ -32,26 +32,35 @@ export function Navbar({ businessName, logoUrl }: Props) {
           <span className="truncate text-sm font-bold text-zinc-100">{businessName}</span>
         </Link>
 
-        <nav className="hidden gap-6 text-sm font-medium sm:flex">
+        <nav className="hidden flex-1 items-center justify-center gap-6 text-sm font-medium sm:flex">
           <Link href="/catalogo" className="text-zinc-400 transition-colors hover:text-primary">
             Catálogo
           </Link>
         </nav>
 
-        <Button
-          variant="outline"
-          size="icon"
-          className="relative ml-auto shrink-0 rounded-full"
-          onClick={openCart}
-          aria-label="Abrir carrito"
-        >
-          <ShoppingCart className="h-5 w-5" />
-          {totalItems > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-              {totalItems}
-            </span>
-          )}
-        </Button>
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <Link
+            href="/catalogo"
+            aria-label="Buscar productos"
+            className="hidden h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-300 transition-colors hover:border-primary/50 hover:text-primary sm:flex"
+          >
+            <Search className="h-4 w-4" />
+          </Link>
+
+          <Button
+            size="icon"
+            className="relative rounded-full shadow-glow"
+            onClick={openCart}
+            aria-label="Abrir carrito"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {totalItems > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-bold text-black ring-2 ring-card">
+                {totalItems}
+              </span>
+            )}
+          </Button>
+        </div>
       </div>
     </header>
   );

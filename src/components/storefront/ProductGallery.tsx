@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { ProductImage } from "./ProductImage";
 
 interface GalleryImage {
   url: string;
@@ -19,18 +20,10 @@ export function ProductGallery({ images, productName }: Props) {
   const sorted = [...images].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
   const [active, setActive] = useState(sorted[0]);
 
-  if (!active) {
-    return (
-      <div className="flex aspect-square items-center justify-center rounded-2xl border border-zinc-800/80 bg-black/30 text-sm text-zinc-600">
-        Sin imagen
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative aspect-square overflow-hidden rounded-2xl border border-zinc-800/80 bg-black/30">
-        <Image src={active.url} alt={active.altText ?? productName} fill unoptimized className="object-cover" />
+      <div className="relative aspect-square overflow-hidden rounded-2xl border border-white/10 bg-card/40">
+        <ProductImage src={active?.url} alt={active?.altText ?? productName} priority className="object-cover" />
       </div>
 
       {sorted.length > 1 && (
@@ -42,7 +35,7 @@ export function ProductGallery({ images, productName }: Props) {
               onClick={() => setActive(img)}
               className={cn(
                 "relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border transition-colors",
-                img.url === active.url ? "border-primary" : "border-zinc-800/80 hover:border-zinc-700",
+                img.url === active?.url ? "border-primary" : "border-white/10 hover:border-white/30",
               )}
               aria-label={`Ver imagen ${img.altText ?? productName}`}
             >

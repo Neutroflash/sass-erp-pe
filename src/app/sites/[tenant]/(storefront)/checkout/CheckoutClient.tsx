@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { IzipayCheckoutWidget } from "@/components/checkout/IzipayCheckoutWidget";
 
 const inputClass =
-  "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50";
+  "rounded-lg border border-white/10 bg-neutral-900 px-4 py-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary";
 
 // Si el tenant tiene Izipay configurado, el pedido se crea igual (PENDING_PAYMENT + stock
 // reservado) y luego se muestra el widget de pago en línea en vez de navegar directo a la
@@ -71,7 +71,7 @@ export function CheckoutClient() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold text-zinc-100">Checkout</h1>
 
-      <div className="mb-6 flex flex-col gap-2 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-4">
+      <div className="mb-6 flex flex-col gap-2 rounded-2xl border border-white/10 bg-card/60 p-4">
         {items.map((item) => (
           <div key={item.variantId} className="flex justify-between text-sm text-zinc-300">
             <span>
@@ -80,7 +80,7 @@ export function CheckoutClient() {
             <span>{formatPrice(item.price * item.quantity)}</span>
           </div>
         ))}
-        <div className="mt-2 flex justify-between border-t border-zinc-800/60 pt-2 font-bold text-zinc-100">
+        <div className="mt-2 flex justify-between border-t border-white/10 pt-2 font-bold text-zinc-100">
           <span>Total</span>
           <span className="text-primary">{formatPrice(totalPrice())}</span>
         </div>

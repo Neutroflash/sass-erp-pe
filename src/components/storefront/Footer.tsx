@@ -24,7 +24,7 @@ export async function Footer({ tenantId, businessName, izipayEnabled, fiscalAddr
   });
 
   return (
-    <footer className="mt-24 border-t border-zinc-800/80 bg-black/40">
+    <footer className="mt-24 border-t border-white/10 bg-black/40">
       <div className={`mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 ${izipayEnabled ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
         <div className="flex flex-col gap-3">
           <span className="text-lg font-bold text-zinc-100">{businessName}</span>
@@ -87,7 +87,7 @@ export async function Footer({ tenantId, businessName, izipayEnabled, fiscalAddr
               {["Tarjeta", "Yape", "Plin"].map((method) => (
                 <span
                   key={method}
-                  className="rounded-md border border-zinc-800/80 bg-zinc-900/60 px-2.5 py-1 text-xs font-medium text-zinc-300"
+                  className="rounded-md border border-white/10 bg-card/60 px-2.5 py-1 text-xs font-medium text-zinc-300"
                 >
                   {method}
                 </span>
@@ -97,8 +97,11 @@ export async function Footer({ tenantId, businessName, izipayEnabled, fiscalAddr
         )}
       </div>
 
-      <div className="border-t border-zinc-800/80 py-4 text-center text-xs text-zinc-600">
-        © {new Date().getFullYear()} {businessName}. Todos los derechos reservados.
+      <div className="border-t border-white/10 py-4 text-center text-xs text-zinc-600">
+        <p>
+          © {new Date().getFullYear()} {businessName}. Todos los derechos reservados.
+        </p>
+        <p className="mt-1 text-zinc-700">Tienda impulsada por FlashStock</p>
       </div>
     </footer>
   );

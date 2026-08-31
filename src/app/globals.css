@@ -7,8 +7,12 @@
     /* Mismo tema base que el panel admin de Flashkings (ver ADMIN_DESIGN_SYSTEM.md en ese repo) —
        fondo oscuro, acento dorado. Reutilizado acá porque este proyecto explícitamente sigue ese
        mismo patrón visual, no porque comparta código con Flashkings. */
-    --background: 240 9% 4%;
+    --background: 228 24% 6%;
     --foreground: 0 0% 96%;
+    /* Superficie de tarjetas/paneles (Navbar, ProductCard, drawers, inputs) — un tono más claro
+       que --background pero de la misma familia azul-violeta oscura, no gris neutro plano. */
+    --card: 226 25% 10%;
+    --card-foreground: 0 0% 96%;
     --primary: 48 96% 53%;
     --primary-foreground: 0 0% 9%;
     --radius: 0.75rem;

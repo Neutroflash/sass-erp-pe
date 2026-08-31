@@ -8,6 +8,10 @@ const config: Config = {
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        card: {
+          DEFAULT: "hsl(var(--card) / <alpha-value>)",
+          foreground: "hsl(var(--card-foreground) / <alpha-value>)",
+        },
         // "<alpha-value>" es el placeholder que Tailwind sustituye por el número de opacidad de un
         // modificador tipo "bg-primary/50" — sin él, esos modificadores no tienen ningún canal de
         // alpha al que engancharse y se ignoran en silencio (renderiza 100% opaco). La mayoría de

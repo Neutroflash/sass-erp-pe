@@ -17,8 +17,8 @@ export function CartDrawer() {
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && closeCart()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60" />
-        <Dialog.Content className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l border-zinc-800/80 bg-zinc-950">
-          <div className="flex items-center justify-between border-b border-zinc-800/80 p-4">
+        <Dialog.Content className="fixed right-0 top-0 z-50 flex h-full w-full max-w-xs flex-col border-l border-white/10 bg-neutral-950">
+          <div className="flex items-center justify-between border-b border-white/10 p-4">
             <Dialog.Title className="flex items-center gap-2 text-lg font-bold text-zinc-100">
               <ShoppingCart className="h-5 w-5" /> Tu carrito
             </Dialog.Title>
@@ -35,22 +35,22 @@ export function CartDrawer() {
             ) : (
               <ul className="flex flex-col gap-4">
                 {items.map((item) => (
-                  <li key={item.variantId} className="flex gap-3 border-b border-zinc-800/60 pb-4">
+                  <li key={item.variantId} className="flex gap-3 border-b border-white/10 pb-4">
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-sm font-medium text-zinc-100">{item.productName}</span>
                       <span className="text-xs text-zinc-500">{item.variantName}</span>
-                      <div className="flex items-center gap-2">
+                      <div className="mt-1 flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-1 py-1 w-fit">
                         <button
                           onClick={() => setQuantity(item.variantId, Math.max(1, item.quantity - 1))}
-                          className="rounded border border-zinc-700 p-0.5 hover:border-primary"
+                          className="flex h-5 w-5 items-center justify-center rounded-full text-zinc-300 hover:bg-white/10 hover:text-primary"
                           aria-label="Disminuir cantidad"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
-                        <span className="w-6 text-center text-sm text-zinc-300">{item.quantity}</span>
+                        <span className="w-5 text-center text-xs font-medium text-zinc-200">{item.quantity}</span>
                         <button
                           onClick={() => setQuantity(item.variantId, item.quantity + 1)}
-                          className="rounded border border-zinc-700 p-0.5 hover:border-primary"
+                          className="flex h-5 w-5 items-center justify-center rounded-full text-zinc-300 hover:bg-white/10 hover:text-primary"
                           aria-label="Aumentar cantidad"
                         >
                           <Plus className="h-3 w-3" />
@@ -73,7 +73,7 @@ export function CartDrawer() {
           </div>
 
           {items.length > 0 && (
-            <div className="border-t border-zinc-800/80 p-4">
+            <div className="border-t border-white/10 p-4">
               <div className="mb-4 flex items-center justify-between text-lg font-bold text-zinc-100">
                 <span>Subtotal</span>
                 <span className="text-primary">{formatPrice(totalPrice())}</span>

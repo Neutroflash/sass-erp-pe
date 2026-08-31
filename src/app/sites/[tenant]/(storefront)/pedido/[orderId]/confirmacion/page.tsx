@@ -34,7 +34,7 @@ export default async function OrderConfirmationPage({ params }: { params: { orde
         brevedad.
       </p>
 
-      <div className="flex flex-col gap-2 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-4">
+      <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-card/60 p-4">
         {order.items.map((item) => (
           <div key={item.id} className="flex justify-between text-sm text-zinc-300">
             <span>
@@ -43,7 +43,7 @@ export default async function OrderConfirmationPage({ params }: { params: { orde
             <span>{formatPrice(Number(item.price) * item.quantity)}</span>
           </div>
         ))}
-        <div className="mt-2 flex justify-between border-t border-zinc-800/60 pt-2 font-bold text-zinc-100">
+        <div className="mt-2 flex justify-between border-t border-white/10 pt-2 font-bold text-zinc-100">
           <span>Total</span>
           <span className="text-primary">{formatPrice(Number(order.totalAmount))}</span>
         </div>

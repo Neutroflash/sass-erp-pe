@@ -28,7 +28,7 @@ export function CatalogFilters({ categories, activeCategory, activeSearch }: Pro
             name="search"
             defaultValue={activeSearch}
             placeholder="Buscar productos..."
-            className="h-10 w-full rounded-lg border border-white/10 bg-black/30 pl-9 pr-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary/50"
+            className="h-11 w-full rounded-lg border border-white/10 bg-neutral-900 pl-9 pr-3 text-sm text-zinc-100 outline-none transition-colors focus:border-primary"
           />
         </div>
       </form>
@@ -41,7 +41,7 @@ export function CatalogFilters({ categories, activeCategory, activeSearch }: Pro
               "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
               !activeCategory
                 ? "border-primary bg-primary/10 text-primary"
-                : "border-zinc-800/80 text-zinc-400 hover:border-zinc-700 hover:text-zinc-100",
+                : "border-white/10 text-zinc-400 hover:border-white/30 hover:text-zinc-100",
             )}
           >
             Todas
@@ -59,7 +59,7 @@ export function CatalogFilters({ categories, activeCategory, activeSearch }: Pro
                   "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                   active
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-zinc-800/80 text-zinc-400 hover:border-zinc-700 hover:text-zinc-100",
+                    : "border-white/10 text-zinc-400 hover:border-white/30 hover:text-zinc-100",
                 )}
               >
                 {category.name}

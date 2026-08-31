@@ -79,7 +79,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
             {product.variants.map((variant) => (
               <div
                 key={variant.id}
-                className="flex items-center justify-between rounded-lg border border-zinc-800/80 bg-zinc-900/60 px-4 py-3"
+                className="flex items-center justify-between rounded-lg border border-white/10 bg-card/60 px-4 py-3"
               >
                 <span className="text-sm text-zinc-200">{variant.name}</span>
                 <div className="flex items-center gap-3">
