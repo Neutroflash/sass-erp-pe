@@ -1,6 +1,7 @@
 import type { PrismaClient, PlanTier } from "@prisma/client";
 import { resolvePlanLimits, startOfCurrentMonth } from "@/domain/plan-limits";
 import { InvoicePlanLimitError } from "./errors";
+import { withTenantRLS } from "@/lib/tenant-rls";
 
 export interface TenantInvoicingInfo {
   planTier: PlanTier;
@@ -23,9 +24,9 @@ export async function getTenantForInvoicing(prisma: PrismaClient, tenantId: stri
 
   const { invoiceLimit } = resolvePlanLimits(tenant);
   if (invoiceLimit !== null) {
-    const issuedThisMonth = await prisma.invoice.count({
-      where: { tenantId, createdAt: { gte: startOfCurrentMonth() } },
-    });
+    const issuedThisMonth = await withTenantRLS(prisma, tenantId, (tx) =>
+      tx.invoice.count({ where: { tenantId, createdAt: { gte: startOfCurrentMonth() } } }),
+    );
     if (issuedThisMonth >= invoiceLimit) {
       throw new InvoicePlanLimitError(
         `Alcanzaste el límite de ${invoiceLimit} comprobantes este mes en tu plan (${tenant.planTier}). Sube de plan para emitir más.`,

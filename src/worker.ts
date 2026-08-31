@@ -18,7 +18,16 @@ import { resolveDispatchGuideTicket } from "./domain/dispatch-guides/resolve-tic
 const stockHoldWorker = new Worker<StockHoldJobData>(
   STOCK_HOLD_QUEUE_NAME,
   async (job) => {
-    const released = await releaseOrderHold(prisma, job.data.orderId);
+    // El job de BullMQ solo carga el orderId (ver lib/stock-hold-queue.ts) — este lookup sin
+    // tenantId es intencional y necesario: es el paso de "a qué tenant pertenece esto" que por
+    // definición tiene que correr ANTES de poder fijar app.tenant_id para el resto (mismo patrón
+    // que getCurrentTenant() resolviendo el Tenant a partir del slug del hostname).
+    const order = await prisma.order.findUnique({ where: { id: job.data.orderId }, select: { tenantId: true } });
+    if (!order) {
+      console.log(`[stock-hold] orden ${job.data.orderId}: ya no existe, no-op`);
+      return;
+    }
+    const released = await releaseOrderHold(prisma, order.tenantId, job.data.orderId);
     console.log(`[stock-hold] orden ${job.data.orderId}: ${released ? "hold liberado (expiró)" : "ya estaba resuelta, no-op"}`);
   },
   { connection: redisConnection },

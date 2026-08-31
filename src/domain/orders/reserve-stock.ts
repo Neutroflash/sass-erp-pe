@@ -1,5 +1,6 @@
 import type { OrderChannel, Prisma } from "@prisma/client";
 import { InsufficientStockError } from "./errors";
+import { setTenantForTransaction } from "@/lib/tenant-rls";
 
 export interface CartLineInput {
   variantId: string;
@@ -43,6 +44,10 @@ export async function createOrderWithStockReservation(
   if (params.items.length === 0) {
     throw new InsufficientStockError("El carrito está vacío");
   }
+
+  // RLS (ver docs/RLS.md): fija app.tenant_id para el resto de esta transacción, sin importar
+  // qué caller la abrió (checkout online u orders/route.ts, POS vía create-pos-sale.ts).
+  await setTenantForTransaction(tx, params.tenantId);
 
   // Orden estable por variantId — evita deadlocks entre dos checkouts concurrentes que reservan
   // las mismas variantes en orden distinto (si A bloquea 1-luego-2 mientras B bloquea 2-luego-1,

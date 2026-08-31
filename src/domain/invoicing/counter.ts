@@ -1,4 +1,5 @@
 import type { PrismaClient, InvoiceType } from "@prisma/client";
+import { withTenantRLS } from "@/lib/tenant-rls";
 
 /**
  * upsert+increment atómico sobre la clave compuesta (tenantId, type, series) — mismo mecanismo
@@ -8,10 +9,12 @@ import type { PrismaClient, InvoiceType } from "@prisma/client";
  * ambos reserven correlativos exactamente de la misma forma.
  */
 export async function reserveInvoiceNumber(prisma: PrismaClient, tenantId: string, type: InvoiceType, series: string): Promise<number> {
-  const counter = await prisma.invoiceCounter.upsert({
-    where: { tenantId_type_series: { tenantId, type, series } },
-    create: { tenantId, type, series, lastNumber: 1 },
-    update: { lastNumber: { increment: 1 } },
-  });
+  const counter = await withTenantRLS(prisma, tenantId, (tx) =>
+    tx.invoiceCounter.upsert({
+      where: { tenantId_type_series: { tenantId, type, series } },
+      create: { tenantId, type, series, lastNumber: 1 },
+      update: { lastNumber: { increment: 1 } },
+    }),
+  );
   return counter.lastNumber;
 }

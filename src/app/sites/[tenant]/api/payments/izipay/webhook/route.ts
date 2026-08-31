@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   if (event.paid) {
     const order = await prisma.order.findFirst({ where: { id: event.orderId, tenantId: tenant.id } });
     if (order) {
-      const confirmed = await markOrderPaid(prisma, order.id);
+      const confirmed = await markOrderPaid(prisma, tenant.id, order.id);
       if (confirmed) {
         await stockHoldScheduler.cancel(order.id);
       }

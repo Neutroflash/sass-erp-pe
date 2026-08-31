@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { setTenantForTransaction } from "@/lib/tenant-rls";
 
 /**
  * Idempotente: solo transiciona PENDING_PAYMENT -> PAID (guardado en el propio WHERE, no en un
@@ -7,10 +8,11 @@ import type { PrismaClient } from "@prisma/client";
  * acá, se decrementa el stock físico — hasta este momento el stock nunca bajó, solo estaba
  * reservado.
  */
-export async function markOrderPaid(prisma: PrismaClient, orderId: string): Promise<boolean> {
+export async function markOrderPaid(prisma: PrismaClient, tenantId: string, orderId: string): Promise<boolean> {
   return prisma.$transaction(async (tx) => {
+    await setTenantForTransaction(tx, tenantId); // RLS, ver docs/RLS.md
     const result = await tx.order.updateMany({
-      where: { id: orderId, status: "PENDING_PAYMENT" },
+      where: { id: orderId, tenantId, status: "PENDING_PAYMENT" },
       data: { status: "PAID" },
     });
     if (result.count === 0) return false; // ya estaba pagada/cancelada — no-op, no es un error
@@ -32,10 +34,11 @@ export async function markOrderPaid(prisma: PrismaClient, orderId: string): Prom
  * el rechazo manual de un pago como por el worker de expiración — mismo mecanismo, la diferencia
  * es solo quién lo dispara.
  */
-export async function releaseOrderHold(prisma: PrismaClient, orderId: string): Promise<boolean> {
+export async function releaseOrderHold(prisma: PrismaClient, tenantId: string, orderId: string): Promise<boolean> {
   return prisma.$transaction(async (tx) => {
+    await setTenantForTransaction(tx, tenantId); // RLS, ver docs/RLS.md
     const result = await tx.order.updateMany({
-      where: { id: orderId, status: "PENDING_PAYMENT" },
+      where: { id: orderId, tenantId, status: "PENDING_PAYMENT" },
       data: { status: "CANCELLED" },
     });
     if (result.count === 0) return false;

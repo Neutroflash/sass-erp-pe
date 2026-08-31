@@ -16,7 +16,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "Orden no encontrada" }, { status: 404 });
   }
 
-  const rejected = await releaseOrderHold(prisma, order.id);
+  const rejected = await releaseOrderHold(prisma, auth.tenantId, order.id);
   if (!rejected) {
     return NextResponse.json({ error: "La orden ya no está pendiente de pago" }, { status: 409 });
   }

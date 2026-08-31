@@ -1,6 +1,7 @@
 import type { PrismaClient, Prisma } from "@prisma/client";
 import { resolveInvoicingGateway } from "@/lib/invoicing-gateway";
 import { sunatRetryScheduler } from "@/lib/sunat-retry-queue";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { calculateTaxBreakdown } from "./tax";
 import { RelatedInvoiceNotIssuedError, InvalidNoteReasonError } from "./errors";
 import { reserveInvoiceNumber } from "./counter";
@@ -31,10 +32,12 @@ export interface IssueCreditDebitNoteParams {
  * propio número para poder emitir el documento).
  */
 export async function issueCreditDebitNoteForInvoice(prisma: PrismaClient, params: IssueCreditDebitNoteParams) {
-  const relatedInvoice = await prisma.invoice.findFirst({
-    where: { id: params.relatedInvoiceId, tenantId: params.tenantId },
-    include: { items: true },
-  });
+  const relatedInvoice = await withTenantRLS(prisma, params.tenantId, (tx) =>
+    tx.invoice.findFirst({
+      where: { id: params.relatedInvoiceId, tenantId: params.tenantId },
+      include: { items: true },
+    }),
+  );
   if (!relatedInvoice) {
     throw new Error("Comprobante no encontrado");
   }
@@ -100,41 +103,43 @@ export async function issueCreditDebitNoteForInvoice(prisma: PrismaClient, param
     emisorAddress: tenant.fiscalAddress ?? undefined,
   });
 
-  const note = await prisma.invoice.create({
-    data: {
-      tenantId: params.tenantId,
-      orderId: null, // una nota no reclama el orderId único del pedido — ese ya lo tiene el comprobante original
-      relatedInvoiceId: relatedInvoice.id,
-      type: params.type,
-      status: result.status,
-      series,
-      number,
-      documentType: relatedInvoice.documentType,
-      documentNumber: relatedInvoice.documentNumber,
-      businessName: relatedInvoice.businessName,
-      taxedAmount: noteBreakdown.taxedAmount,
-      exemptAmount: noteBreakdown.exemptAmount,
-      unaffectedAmount: noteBreakdown.unaffectedAmount,
-      igvAmount: noteBreakdown.igvAmount,
-      totalAmount,
-      pdfUrl: result.pdfUrl,
-      xmlUrl: result.xmlUrl,
-      signedXml: result.signedXml,
-      providerResponse: result.raw as unknown as Prisma.InputJsonValue,
-      issuedAt: result.status === "ISSUED" ? new Date() : null,
-      items: {
-        create: itemsWithTax.map((i) => ({
-          variantId: i.variantId,
-          description: i.description,
-          quantity: i.quantity,
-          unitPrice: i.unitPrice,
-          igvAmount: i.igvAmount,
-          totalAmount: i.totalAmount,
-        })),
+  const note = await withTenantRLS(prisma, params.tenantId, (tx) =>
+    tx.invoice.create({
+      data: {
+        tenantId: params.tenantId,
+        orderId: null, // una nota no reclama el orderId único del pedido — ese ya lo tiene el comprobante original
+        relatedInvoiceId: relatedInvoice.id,
+        type: params.type,
+        status: result.status,
+        series,
+        number,
+        documentType: relatedInvoice.documentType,
+        documentNumber: relatedInvoice.documentNumber,
+        businessName: relatedInvoice.businessName,
+        taxedAmount: noteBreakdown.taxedAmount,
+        exemptAmount: noteBreakdown.exemptAmount,
+        unaffectedAmount: noteBreakdown.unaffectedAmount,
+        igvAmount: noteBreakdown.igvAmount,
+        totalAmount,
+        pdfUrl: result.pdfUrl,
+        xmlUrl: result.xmlUrl,
+        signedXml: result.signedXml,
+        providerResponse: result.raw as unknown as Prisma.InputJsonValue,
+        issuedAt: result.status === "ISSUED" ? new Date() : null,
+        items: {
+          create: itemsWithTax.map((i) => ({
+            variantId: i.variantId,
+            description: i.description,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+            igvAmount: i.igvAmount,
+            totalAmount: i.totalAmount,
+          })),
+        },
       },
-    },
-    include: { items: true },
-  });
+      include: { items: true },
+    }),
+  );
 
   if (result.status === "PENDING_SUNAT") {
     await sunatRetryScheduler.schedule(note.id);

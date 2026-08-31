@@ -1,6 +1,7 @@
 import type { PrismaClient, Prisma } from "@prisma/client";
 import { resolveInvoicingGateway } from "@/lib/invoicing-gateway";
 import { sunatRetryScheduler } from "@/lib/sunat-retry-queue";
+import { withTenantRLS } from "@/lib/tenant-rls";
 import { calculateTaxBreakdown } from "./tax";
 import { OrderNotPaidError, InvoiceAlreadyIssuedError } from "./errors";
 import { reserveInvoiceNumber } from "./counter";
@@ -27,10 +28,12 @@ export interface IssueInvoiceParams {
  * reutiliza.
  */
 export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueInvoiceParams) {
-  const order = await prisma.order.findFirst({
-    where: { id: params.orderId, tenantId: params.tenantId },
-    include: { items: { include: { variant: { select: { name: true, sku: true } } } }, invoice: true },
-  });
+  const order = await withTenantRLS(prisma, params.tenantId, (tx) =>
+    tx.order.findFirst({
+      where: { id: params.orderId, tenantId: params.tenantId },
+      include: { items: { include: { variant: { select: { name: true, sku: true } } } }, invoice: true },
+    }),
+  );
   if (!order) {
     throw new Error("Orden no encontrada");
   }
@@ -78,40 +81,42 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
     emisorAddress: tenant.fiscalAddress ?? undefined,
   });
 
-  const invoice = await prisma.invoice.create({
-    data: {
-      tenantId: params.tenantId,
-      orderId: order.id,
-      type: params.type,
-      status: result.status,
-      series,
-      number,
-      documentType: params.documentType,
-      documentNumber: params.documentNumber,
-      businessName: params.businessName,
-      taxedAmount: orderBreakdown.taxedAmount,
-      exemptAmount: orderBreakdown.exemptAmount,
-      unaffectedAmount: orderBreakdown.unaffectedAmount,
-      igvAmount: orderBreakdown.igvAmount,
-      totalAmount,
-      pdfUrl: result.pdfUrl,
-      xmlUrl: result.xmlUrl,
-      signedXml: result.signedXml,
-      providerResponse: result.raw as unknown as Prisma.InputJsonValue,
-      issuedAt: result.status === "ISSUED" ? new Date() : null,
-      items: {
-        create: items.map((i) => ({
-          variantId: i.variantId,
-          description: i.description,
-          quantity: i.quantity,
-          unitPrice: i.unitPrice,
-          igvAmount: i.igvAmount,
-          totalAmount: i.totalAmount,
-        })),
+  const invoice = await withTenantRLS(prisma, params.tenantId, (tx) =>
+    tx.invoice.create({
+      data: {
+        tenantId: params.tenantId,
+        orderId: order.id,
+        type: params.type,
+        status: result.status,
+        series,
+        number,
+        documentType: params.documentType,
+        documentNumber: params.documentNumber,
+        businessName: params.businessName,
+        taxedAmount: orderBreakdown.taxedAmount,
+        exemptAmount: orderBreakdown.exemptAmount,
+        unaffectedAmount: orderBreakdown.unaffectedAmount,
+        igvAmount: orderBreakdown.igvAmount,
+        totalAmount,
+        pdfUrl: result.pdfUrl,
+        xmlUrl: result.xmlUrl,
+        signedXml: result.signedXml,
+        providerResponse: result.raw as unknown as Prisma.InputJsonValue,
+        issuedAt: result.status === "ISSUED" ? new Date() : null,
+        items: {
+          create: items.map((i) => ({
+            variantId: i.variantId,
+            description: i.description,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+            igvAmount: i.igvAmount,
+            totalAmount: i.totalAmount,
+          })),
+        },
       },
-    },
-    include: { items: true },
-  });
+      include: { items: true },
+    }),
+  );
 
   // SUNAT no respondió (no es un rechazo) — el documento ya está firmado y guardado, solo falta
   // reintentar la conexión. Nunca se vuelve a firmar ni a reservar un número nuevo en el retry.
