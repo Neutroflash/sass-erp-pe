@@ -19,3 +19,46 @@
     color: hsl(var(--foreground));
   }
 }
+
+@layer utilities {
+  /* Textura sutil de puntos, neutra (no depende de --primary) — misma idea que Flashkings pero sin
+     acoplarla a un color fijo. Aplicar sobre fondos oscuros; los componentes que se apoyan encima
+     deben usar fondos translúcidos (glass) para que la textura siga visible debajo. */
+  .bg-grid-pattern {
+    background-image: radial-gradient(#1e1e24 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+
+  /* Degradado de texto atado a --primary (el color del tenant) — reemplaza el "text-gradient-gold"
+     fijo de Flashkings, que no puede reutilizarse tal cual acá. */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-white via-primary to-primary/70 bg-clip-text text-transparent;
+  }
+
+  /* Brillo metálico que barre un overlay al hacer hover — agnóstico de color, se puede portar tal
+     cual. Combinar con `relative overflow-hidden` en el elemento (ej. el CTA del Hero). */
+  .btn-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-shimmer::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 35%, rgba(255, 255, 255, 0.45) 50%, transparent 65%);
+    transform: translateX(-150%);
+    pointer-events: none;
+  }
+  .btn-shimmer:hover::before {
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+}
+
+/* Chrome de la tienda (Navbar/Footer, ver (storefront)/layout.tsx) nunca debería salir en una
+   impresión — mismo criterio que el ticket de comprobante del panel. */
+@media print {
+  body > header,
+  body > footer {
+    display: none !important;
+  }
+}

@@ -9,7 +9,7 @@ const MODULES = [
   { icon: BarChart3, title: "Reportes", desc: "Ventas por período, productos más vendidos, valorización de inventario." },
 ];
 
-// Landing pública del SaaS (tusaas.pe) — no confundir con la tienda de un tenant, que vive bajo
+// Landing pública del SaaS (flashstock.pe) — no confundir con la tienda de un tenant, que vive bajo
 // el route group (tenant) y se resuelve por subdominio/dominio propio (ver middleware.ts).
 export default function MarketingHomePage() {
   return (

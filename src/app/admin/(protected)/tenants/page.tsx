@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 // contenido de marketing — jamás debe servirse cacheado desde el build.
 export const dynamic = "force-dynamic";
 
-// Panel del SUPERADMIN de la plataforma (admin.tusaas.pe) — lista todos los negocios registrados.
+// Panel del SUPERADMIN de la plataforma (admin.flashstock.pe) — lista todos los negocios registrados.
 export default async function PlatformTenantsPage() {
   const tenants = await prisma.tenant.findMany({ orderBy: { createdAt: "desc" } });
 
@@ -33,12 +33,12 @@ export default async function PlatformTenantsPage() {
                   <td className="p-3 text-sm text-zinc-100">{tenant.businessName}</td>
                   <td className="p-3 text-sm">
                     <Link
-                      href={`https://${tenant.slug}.tusaas.pe`}
+                      href={`https://${tenant.slug}.flashstock.pe`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-yellow-400 hover:underline"
                     >
-                      {tenant.slug}.tusaas.pe
+                      {tenant.slug}.flashstock.pe
                     </Link>
                   </td>
                   <td className="p-3">

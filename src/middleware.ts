@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Dominio raíz de la plataforma SaaS. Cualquier hostname que no sea este (ni un subdominio de
 // este) se trata como un dominio propio de un tenant — ver resolveCustomDomain() más abajo.
-const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "tusaas.pe";
+const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "flashstock.pe";
 
 export async function middleware(req: NextRequest) {
   // req.headers.get("host") incluye el puerto en local (localhost:3000) — se quita para poder
@@ -10,19 +10,19 @@ export async function middleware(req: NextRequest) {
   const hostname = (req.headers.get("host") ?? "").split(":")[0];
   const { pathname, search } = req.nextUrl;
 
-  // 1) admin.tusaas.pe -> panel del SUPERADMIN de la plataforma (gestión de tenants/planes),
+  // 1) admin.flashstock.pe -> panel del SUPERADMIN de la plataforma (gestión de tenants/planes),
   // no confundir con el panel de un tenant individual (ese vive bajo /_sites/{tenant}/panel).
   if (hostname === `admin.${ROOT_DOMAIN}`) {
     return NextResponse.rewrite(new URL(`/admin${pathname}${search}`, req.url));
   }
 
-  // 2) tusaas.pe / www.tusaas.pe -> sitio de marketing (landing, precios, registro de nuevos
+  // 2) flashstock.pe / www.flashstock.pe -> sitio de marketing (landing, precios, registro de nuevos
   // negocios). Estas rutas ya viven en su path real (/, /precios, /registro), sin rewrite.
   if (hostname === ROOT_DOMAIN || hostname === `www.${ROOT_DOMAIN}`) {
     return NextResponse.next();
   }
 
-  // 3) {slug}.tusaas.pe -> tienda/panel de ESE negocio. El slug sale directo del hostname, sin
+  // 3) {slug}.flashstock.pe -> tienda/panel de ESE negocio. El slug sale directo del hostname, sin
   // tocar la base de datos — este es el camino rápido y el que cubre la mayoría del tráfico.
   if (hostname.endsWith(`.${ROOT_DOMAIN}`)) {
     const slug = hostname.slice(0, -(`.${ROOT_DOMAIN}`.length));

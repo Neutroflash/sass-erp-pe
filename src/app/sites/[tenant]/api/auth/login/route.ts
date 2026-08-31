@@ -11,7 +11,7 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-// Servido en {slug}.tusaas.pe/api/auth/login — el middleware ya reescribió el path hasta acá
+// Servido en {slug}.flashstock.pe/api/auth/login — el middleware ya reescribió el path hasta acá
 // (ver src/middleware.ts), así que getCurrentTenant() resuelve el tenant correcto desde el
 // header que dejó, sin que el body del request necesite mandar ningún tenantId.
 export async function POST(req: NextRequest) {

@@ -11,7 +11,7 @@ Aislamiento **por columna** (`tenantId` en cada tabla de negocio), sobre una sol
 ```
 navegador                    middleware.ts                    página/Route Handler
 ──────────                   ──────────────                    ────────────────────
-GET clienteA.tusaas.pe/  →   parsea hostname                →  headers().get("x-tenant-slug")
+GET clienteA.flashstock.pe/  →   parsea hostname                →  headers().get("x-tenant-slug")
                               extrae slug = "clienteA"           = "clienteA"
                               rewrite → /sites/clienteA/         │
                               header x-tenant-slug: clienteA     ▼
@@ -21,9 +21,9 @@ GET clienteA.tusaas.pe/  →   parsea hostname                →  headers().get
 
 Tres casos, ver `src/middleware.ts`:
 
-1. `admin.tusaas.pe` → panel del SUPERADMIN de la plataforma (`/admin/**`), sin relación con ningún tenant.
-2. `tusaas.pe` / `www.tusaas.pe` → sitio de marketing (landing, precios, registro).
-3. `{slug}.tusaas.pe` → tienda/panel de un negocio. El slug sale directo del hostname, sin tocar la base de datos.
+1. `admin.flashstock.pe` → panel del SUPERADMIN de la plataforma (`/admin/**`), sin relación con ningún tenant.
+2. `flashstock.pe` / `www.flashstock.pe` → sitio de marketing (landing, precios, registro).
+3. `{slug}.flashstock.pe` → tienda/panel de un negocio. El slug sale directo del hostname, sin tocar la base de datos.
 4. Dominio propio de un tenant (`tiendadeljuan.pe`) → **pendiente de implementar** (ver el comentario largo en `middleware.ts`). Requiere un almacén compatible con Edge Runtime (Vercel Edge Config o Upstash Redis vía su cliente REST) para mapear `dominio → slug`, porque Prisma (conexión TCP) no corre dentro de Next.js Middleware.
 
 ## Por qué `/sites/[tenant]/` y no un route group
@@ -34,7 +34,7 @@ Nota aparte, ya corregida una vez en este proyecto: un prefijo con guion bajo (`
 
 ## Las rutas de API también viven bajo `sites/[tenant]/` — no en `app/api/` a secas
 
-Segunda corrección real, más sutil que la anterior: el `matcher` de `middleware.ts` es `/((?!_next/static|_next/image|favicon.ico).*)` — **todo**, sin excepción para `/api/**`. Eso significa que una request del navegador a `{slug}.tusaas.pe/api/auth/login` pasa por el mismo rewrite que cualquier página: termina en `/sites/{slug}/api/auth/login` server-side. Un Route Handler puesto en `app/api/auth/login/route.ts` (nivel superior) nunca la recibiría — solo respondería a requests hacia el dominio raíz.
+Segunda corrección real, más sutil que la anterior: el `matcher` de `middleware.ts` es `/((?!_next/static|_next/image|favicon.ico).*)` — **todo**, sin excepción para `/api/**`. Eso significa que una request del navegador a `{slug}.flashstock.pe/api/auth/login` pasa por el mismo rewrite que cualquier página: termina en `/sites/{slug}/api/auth/login` server-side. Un Route Handler puesto en `app/api/auth/login/route.ts` (nivel superior) nunca la recibiría — solo respondería a requests hacia el dominio raíz.
 
 Regla que queda de esto: **si una ruta de API es sobre datos de UN negocio (login de su usuario, sus productos, sus órdenes), vive en `app/sites/[tenant]/api/**`.** Solo lo que es genuinamente de la plataforma entera (registrar un negocio nuevo — todavía no existe un tenant al que pertenecer — o un webhook de un proveedor externo que no conoce el concepto de subdominio) vive en `app/api/**` a secas, y lo que es del `PlatformAdmin` vive en `app/admin/api/**` (mismo rewrite, prefijo `/admin`).
 
@@ -72,15 +72,15 @@ saas-erp-pe/
 │   └── app/
 │       ├── layout.tsx
 │       ├── globals.css                # tema oscuro, mismos tokens que ADMIN_DESIGN_SYSTEM.md de Flashkings
-│       ├── (marketing)/               # tusaas.pe — route group, no aparece en la URL
+│       ├── (marketing)/               # flashstock.pe — route group, no aparece en la URL
 │       │   ├── page.tsx                # landing — implementado
 │       │   ├── precios/page.tsx        # implementado (datos de ejemplo)
 │       │   └── registro/               # PENDIENTE: falta el formulario (el endpoint ya existe, ver abajo)
-│       ├── admin/                     # admin.tusaas.pe — panel del SUPERADMIN
+│       ├── admin/                     # admin.flashstock.pe — panel del SUPERADMIN
 │       │   ├── tenants/page.tsx        # lista de negocios — implementado, sin auth todavía (Fase 1)
 │       │   └── api/auth/               # PENDIENTE: login/logout de PlatformAdmin (el modelo y los
 │       │                                # helpers ya existen, falta el Route Handler y la página)
-│       ├── sites/[tenant]/            # {slug}.tusaas.pe (o dominio propio, cuando exista la Fase 4)
+│       ├── sites/[tenant]/            # {slug}.flashstock.pe (o dominio propio, cuando exista la Fase 4)
 │       │   ├── page.tsx                # home de la tienda — implementado (esqueleto)
 │       │   ├── ingresar/page.tsx       # login del usuario del tenant — implementado
 │       │   ├── catalogo/               # PENDIENTE (Fase 2)

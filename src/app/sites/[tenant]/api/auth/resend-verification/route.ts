@@ -5,7 +5,7 @@ import { getCurrentTenantUser } from "@/lib/auth";
 import { generateEmailVerificationToken, hashEmailVerificationToken, emailVerificationTokenExpiresAt } from "@/domain/email-verification";
 import { sendVerificationEmail } from "@/lib/email";
 
-const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "tusaas.pe";
+const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "flashstock.pe";
 
 // Cualquier usuario logueado de este tenant puede reenviarse su propia verificación — no hace
 // falta ser OWNER/SELLER, esto no es una acción de gestión del negocio.

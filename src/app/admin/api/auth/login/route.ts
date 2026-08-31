@@ -10,7 +10,7 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-// Servido en admin.tusaas.pe/api/auth/login — cookies y JWT completamente separados del login de
+// Servido en admin.flashstock.pe/api/auth/login — cookies y JWT completamente separados del login de
 // un usuario de tenant (ver session-cookies.ts / jwt.ts): un PlatformAdmin nunca debería poder
 // "colarse" como usuario de un negocio ni viceversa.
 export async function POST(req: NextRequest) {

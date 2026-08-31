@@ -24,6 +24,26 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      boxShadow: {
+        // Atado a --primary (el color del tenant), no a un color fijo — a diferencia del
+        // "glow-gold" hardcodeado de Flashkings, este debe verse bien con cualquier primaryColor.
+        glow: "0 0 25px hsl(var(--primary) / 0.15)",
+        "glow-lg": "0 0 45px hsl(var(--primary) / 0.25)",
+      },
+      keyframes: {
+        "glow-pulse": {
+          "0%, 100%": { boxShadow: "0 0 20px hsl(var(--primary) / 0.35), 0 0 40px hsl(var(--primary) / 0.1)" },
+          "50%": { boxShadow: "0 0 32px hsl(var(--primary) / 0.55), 0 0 60px hsl(var(--primary) / 0.2)" },
+        },
+        shimmer: {
+          "0%": { transform: "translateX(-150%)" },
+          "100%": { transform: "translateX(150%)" },
+        },
+      },
+      animation: {
+        "glow-pulse": "glow-pulse 2.4s ease-in-out infinite",
+        shimmer: "shimmer 1.4s ease-in-out infinite",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

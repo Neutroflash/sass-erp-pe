@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Check } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import { Button } from "@/components/ui/button";
 
@@ -13,9 +14,12 @@ interface Props {
   inStock: boolean;
 }
 
+// Agrega y abre el drawer en vez de ir directo a /checkout — deja al cliente revisar/ajustar
+// cantidades antes de pagar, consistente con el nuevo CartDrawer.
 export function AddToCartButton({ variantId, productSlug, productName, variantName, price, inStock }: Props) {
-  const router = useRouter();
+  const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
+  const openCart = useCartStore((s) => s.openCart);
 
   return (
     <Button
@@ -23,10 +27,18 @@ export function AddToCartButton({ variantId, productSlug, productName, variantNa
       disabled={!inStock}
       onClick={() => {
         addItem({ variantId, productSlug, productName, variantName, price });
-        router.push("/checkout");
+        openCart();
+        setAdded(true);
+        setTimeout(() => setAdded(false), 1500);
       }}
     >
-      {inStock ? "Comprar" : "Agotado"}
+      {!inStock ? "Agotado" : added ? (
+        <>
+          <Check className="h-3.5 w-3.5" /> Agregado
+        </>
+      ) : (
+        "Agregar al carrito"
+      )}
     </Button>
   );
 }

@@ -48,7 +48,7 @@ enum SunatEnvironment {
 
 model Tenant {
   id                String   @id @default(uuid())
-  slug              String   @unique // subdominio: {slug}.tusaas.pe — ver middleware.ts
+  slug              String   @unique // subdominio: {slug}.flashstock.pe — ver middleware.ts
   // Dominio propio (ej. tiendadeljuan.pe) — solo `customDomain` importa para el middleware
   // (único, y solo se llena tras verificar). Los otros dos son el estado de una verificación EN
   // CURSO: nunca se resuelve tráfico hacia un dominio reclamado pero no verificado — ver

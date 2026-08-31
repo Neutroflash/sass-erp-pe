@@ -8,7 +8,7 @@ function getResendClient(): Resend {
   return new Resend(apiKey);
 }
 
-const FROM = process.env.RESEND_FROM_EMAIL ?? "TuSaaS <onboarding@resend.dev>";
+const FROM = process.env.RESEND_FROM_EMAIL ?? "FlashStock <onboarding@resend.dev>";
 
 /**
  * Único punto de envío de correo del proyecto — cualquier email transaccional futuro (confirmación

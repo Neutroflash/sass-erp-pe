@@ -9,7 +9,7 @@ Se divide en dos categorías distintas, porque tienen alcance distinto:
 
 ## 1. Hosting — bloqueante para salir en vivo (una sola vez)
 
-Recomendación ya cubierta en conversación previa: Vercel Pro (~US$20/mes, necesario para wildcard subdomains — el plan Hobby no soporta `*.tusaas.pe`) + Render como worker en background (~US$7/mes, `src/worker.ts` es un proceso BullMQ de larga duración, incompatible con serverless) + Neon Postgres (gratis–US$19/mes) + Upstash Redis (~US$0 a escala piloto) + dominio `.pe` (~US$30–90/año). Total estimado **US$30–60/mes**.
+Recomendación ya cubierta en conversación previa: Vercel Pro (~US$20/mes, necesario para wildcard subdomains — el plan Hobby no soporta `*.flashstock.pe`) + Render como worker en background (~US$7/mes, `src/worker.ts` es un proceso BullMQ de larga duración, incompatible con serverless) + Neon Postgres (gratis–US$19/mes) + Upstash Redis (~US$0 a escala piloto) + dominio `.pe` (~US$30–90/año). Total estimado **US$30–60/mes**.
 
 Sin esto no hay "primera versión" — no hay dónde correrla.
 
@@ -18,10 +18,10 @@ Sin esto no hay "primera versión" — no hay dónde correrla.
 Hoy la cuenta de Resend está en **modo sandbox**: solo entrega correos a la dirección verificada del dueño de la cuenta (confirmado en vivo durante la Fase 5 — ver `ROADMAP.md`). Password reset y verificación de email ya están construidos y funcionan, pero **no le va a llegar el correo a ningún tenant/cliente real** hasta resolver esto.
 
 Pasos (en el dashboard de Resend, `resend.com/domains`):
-1. Agregar el dominio de envío (ej. `tusaas.pe` o un subdominio como `mail.tusaas.pe`).
+1. Agregar el dominio de envío (ej. `flashstock.pe` o un subdominio como `mail.flashstock.pe`).
 2. Agregar los registros DNS que Resend pide (SPF, DKIM, y opcionalmente DMARC) en el proveedor de DNS del dominio.
 3. Esperar la verificación (usualmente minutos, a veces hasta 24-48h por propagación DNS).
-4. Actualizar `RESEND_FROM_EMAIL` en `.env` de `TuSaaS <onboarding@resend.dev>` a la dirección real del dominio verificado (ej. `TuSaaS <no-reply@tusaas.pe>`).
+4. Actualizar `RESEND_FROM_EMAIL` en `.env` de `FlashStock <onboarding@resend.dev>` a la dirección real del dominio verificado (ej. `FlashStock <no-reply@flashstock.pe>`).
 
 No bloquea que el registro de un tenant *funcione* (el envío es best-effort, ver Fase 5.3 del roadmap), pero sin esto el flujo de verificación de email y de recuperación de contraseña son inútiles para cualquiera que no sea el dueño de la cuenta de Resend.
 

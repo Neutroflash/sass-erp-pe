@@ -8,9 +8,9 @@ import { generateEmailVerificationToken, hashEmailVerificationToken, emailVerifi
 import { sendVerificationEmail } from "@/lib/email";
 import { enforceRateLimit } from "@/lib/rate-limit";
 
-const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "tusaas.pe";
+const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "flashstock.pe";
 
-// Solo accesible desde el dominio raíz (tusaas.pe/registro) — nunca desde el subdominio de un
+// Solo accesible desde el dominio raíz (flashstock.pe/registro) — nunca desde el subdominio de un
 // tenant, no tendría sentido "registrar un negocio nuevo" desde dentro de uno ya existente.
 const registerSchema = z.object({
   slug: z

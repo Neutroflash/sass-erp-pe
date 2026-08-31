@@ -10,7 +10,7 @@ const REFRESH_MAX_AGE = 7 * 24 * 60 * 60; // 7 días
 
 // Deliberadamente SIN `domain`: sin ese atributo, la cookie queda "host-only" — válida solo para
 // el subdominio exacto que la emitió. Es lo que evita que la sesión de un usuario del negocio A
-// viaje a una request hacia el negocio B, aunque ambos compartan el dominio raíz tusaas.pe — a
+// viaje a una request hacia el negocio B, aunque ambos compartan el dominio raíz flashstock.pe — a
 // diferencia de Flashkings (un solo negocio, backend y frontend en dominios distintos), acá no
 // hay ningún escenario cross-domain que resolver: todo vive bajo el mismo dominio raíz, cada
 // tenant en su propio subdominio, y ese aislamiento por subdominio es justo lo que se necesita.

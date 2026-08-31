@@ -12,21 +12,26 @@ export interface CartItem {
 
 interface CartState {
   items: CartItem[];
+  isOpen: boolean;
   addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
   removeItem: (variantId: string) => void;
   setQuantity: (variantId: string, quantity: number) => void;
   clear: () => void;
   totalItems: () => number;
   totalPrice: () => number;
+  openCart: () => void;
+  closeCart: () => void;
+  toggleCart: () => void;
 }
 
 // Carrito por navegador, no por tenant explícitamente en la clave de storage — cada subdominio
 // de tenant ya es un origen distinto para localStorage, así que el aislamiento viene gratis del
-// propio navegador (el carrito de negocio-a.tusaas.pe nunca es visible desde negocio-b.tusaas.pe).
+// propio navegador (el carrito de negocio-a.flashstock.pe nunca es visible desde negocio-b.flashstock.pe).
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
+      isOpen: false,
       addItem: (item, quantity = 1) =>
         set((state) => {
           const existing = state.items.find((i) => i.variantId === item.variantId);
@@ -41,9 +46,15 @@ export const useCartStore = create<CartState>()(
       clear: () => set({ items: [] }),
       totalItems: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
       totalPrice: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+      openCart: () => set({ isOpen: true }),
+      closeCart: () => set({ isOpen: false }),
+      toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
     }),
     {
       name: "cart-storage",
+      // isOpen es estado transitorio de UI — nunca se persiste, o recargar una pestaña cerrada
+      // reabriría el drawer.
+      partialize: (state) => ({ items: state.items }),
       // skipHydration + rehidratación manual en un componente montado una sola vez
       // (CartHydration) — sin esto, el store se rehidrata sincrónicamente desde localStorage
       // ANTES del primer render del cliente, mientras el HTML del servidor (que no conoce

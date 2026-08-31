@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { requirePublicStorefront } from "@/lib/feature-guards";
 import { toPublicProduct } from "@/domain/inventory/product";
-import { ProductCard } from "@/components/storefront/ProductCard";
+import { CatalogGrid } from "@/components/storefront/CatalogGrid";
 
 export const dynamic = "force-dynamic";
 
@@ -31,11 +31,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: { se
       {products.length === 0 ? (
         <p className="text-zinc-500">Todavía no hay productos publicados.</p>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={toPublicProduct(product)} />
-          ))}
-        </div>
+        <CatalogGrid products={products.map(toPublicProduct)} />
       )}
     </div>
   );
