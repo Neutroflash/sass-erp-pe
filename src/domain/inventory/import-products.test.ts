@@ -131,6 +131,24 @@ describe("parseInventoryCsv", () => {
     expect(stockWarnings[0].message).toContain("-18.5");
   });
 
+  // Encontrado probando con el formato crudo real: el export trae a la vez "ID" (el identificador
+  // interno del otro sistema) y "Cód. Interno" (el código con el que el negocio pide el producto).
+  // Quedarse con el primero que aparece en el archivo elegía "ID", y el negocio terminaba con SKUs
+  // que no reconoce.
+  test("con 'ID' y 'Cód. Interno' a la vez, gana el código interno aunque venga después", () => {
+    const result = parseInventoryCsv(
+      "ID;Cód. Interno;Unidad;Nombre;Stock;P.Público\n142;00142;Unidades;Cierre invisible;3;S/ 2,50",
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.products[0].variants[0].sku).toBe("00142");
+  });
+
+  test("con una sola columna de código, cualquiera de los alias sirve", () => {
+    expect(parseInventoryCsv("ID;Nombre;Precio\n142;Cierre;2.50").products[0].variants[0].sku).toBe("142");
+    expect(parseInventoryCsv("SKU;Nombre;Precio\nABC-1;Cierre;2.50").products[0].variants[0].sku).toBe("ABC-1");
+  });
+
   test("faltar una columna obligatoria aborta antes de mirar las filas", () => {
     const result = parseInventoryCsv("nombre;unidad\nAguja;Unidades");
     expect(result.products).toEqual([]);

@@ -60,10 +60,19 @@ export interface ImportResult {
   totalRows: number;
 }
 
-/** Alias reales de cada columna, ya normalizados con `normalizeHeader`. */
+/**
+ * Alias reales de cada columna, ya normalizados con `normalizeHeader`, **en orden de prioridad**:
+ * gana el primero que aparezca en el archivo, no la primera columna del archivo que matchee alguno.
+ *
+ * El orden importa de verdad. Un export típico trae a la vez `ID` (el identificador interno de la
+ * base del otro sistema) y `Cód. Interno` (el código con el que el negocio realmente pide y busca
+ * el producto). Quedarse con el primero que aparezca en el archivo elige `ID` por venir antes, y
+ * el negocio termina con SKUs que no reconoce. Por eso `id` va último de todos: es el alias más
+ * genérico y el que peor identifica a un producto.
+ */
 const COLUMN_ALIASES = {
-  sku: ["codigo", "cod", "codinterno", "codigointerno", "sku", "id"],
-  name: ["nombre", "producto", "descripcion", "articulo", "item"],
+  sku: ["codinterno", "codigointerno", "codigo", "sku", "cod", "id"],
+  name: ["nombre", "descripcion", "articulo", "item", "producto"],
   // Agrupa varias filas bajo un mismo producto — es lo que convierte 40 estampados sueltos en un
   // producto con 40 variantes. Ausente = cada fila es su propio producto, que es el caso simple.
   group: ["grupo", "productopadre", "agrupador", "familia"],
@@ -82,8 +91,15 @@ function mapColumns(headers: string[]): Partial<Record<ColumnKey, number>> {
   const normalized = headers.map(normalizeHeader);
 
   for (const [key, aliases] of Object.entries(COLUMN_ALIASES) as [ColumnKey, readonly string[]][]) {
-    const index = normalized.findIndex((h) => (aliases as readonly string[]).includes(h));
-    if (index !== -1) mapping[key] = index;
+    // Recorre los ALIAS en orden (no las columnas): el alias más específico que exista en el
+    // archivo gana, aunque su columna esté más a la derecha que la de un alias genérico.
+    for (const alias of aliases) {
+      const index = normalized.indexOf(alias);
+      if (index !== -1) {
+        mapping[key] = index;
+        break;
+      }
+    }
   }
   return mapping;
 }
