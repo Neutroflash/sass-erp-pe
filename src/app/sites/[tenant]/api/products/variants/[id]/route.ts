@@ -6,6 +6,7 @@ import { setTenantForTransaction, withTenantRLS } from "@/lib/tenant-rls";
 import { subQty } from "@/domain/inventory/quantity";
 import { stockSchema } from "@/domain/inventory/quantity-schema";
 import { unitCodeSchema } from "@/domain/inventory/quantity-schema";
+import { TAX_AFFECTATION_CODES } from "@/domain/invoicing/tax-affectation";
 
 // reservedStock intencionalmente ausente — lo gestiona solo el motor de reserva de órdenes
 // (src/domain/orders/reserve-stock.ts), nunca una edición manual.
@@ -14,6 +15,7 @@ const updateVariantSchema = z.object({
   costPrice: z.number().nonnegative().optional(),
   stock: stockSchema.optional(),
   unitCode: unitCodeSchema.optional(),
+  taxAffectationCode: z.enum(TAX_AFFECTATION_CODES).optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {

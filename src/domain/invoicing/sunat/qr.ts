@@ -1,5 +1,5 @@
 import QRCode from "qrcode";
-import { calculateTaxBreakdown } from "../tax";
+import { computeLineBreakdowns, sumTotals } from "./xml-common";
 import type { SunatInvoicePayload } from "./types";
 
 /**
@@ -11,15 +11,17 @@ import type { SunatInvoicePayload } from "./types";
  * especificación oficial del Anexo N°7 hasta ahora.
  */
 export function buildQrContent(payload: SunatInvoicePayload, documentDigest: string): string {
-  const totalVenta = payload.lineas.reduce((sum, l) => sum + l.unitPriceWithTax * l.quantity, 0);
-  const { igvAmount } = calculateTaxBreakdown(totalVenta);
+  // Los mismos totales que arma el XML, no un cálculo paralelo: el IGV del QR tiene que coincidir
+  // exactamente con el del comprobante firmado, y con afectaciones mezcladas no hay forma de
+  // derivarlo del total sin mirar línea por línea.
+  const { totalIgv, totalVenta } = sumTotals(computeLineBreakdowns(payload.lineas));
 
   return [
     payload.emisor.ruc,
     payload.tipoDocumento,
     payload.serie,
     String(payload.numero),
-    igvAmount.toFixed(2),
+    totalIgv.toFixed(2),
     totalVenta.toFixed(2),
     payload.fechaEmision.toISOString().slice(0, 10),
     payload.cliente.documentTypeCode,

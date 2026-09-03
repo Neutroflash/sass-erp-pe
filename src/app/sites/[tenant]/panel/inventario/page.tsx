@@ -77,6 +77,7 @@ export default async function InventoryPage({
       stock: toQty(v.stock),
       reservedStock: toQty(v.reservedStock),
       unitCode: v.unitCode,
+      taxAffectationCode: v.taxAffectationCode,
     })),
   }));
 

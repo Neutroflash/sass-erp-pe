@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn, formatPrice } from "@/lib/utils";
 import { unitLabel, unitShort } from "@/domain/inventory/units";
+import { DEFAULT_TAX_AFFECTATION, TAX_AFFECTATION_OPTIONS } from "@/domain/invoicing/tax-affectation";
 
 const inputClass =
   "h-9 rounded-lg border border-border bg-input px-2 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
@@ -216,12 +217,18 @@ function VariantEditRow({ variant, canSeeCost }: { variant: AdminProduct["varian
   const [price, setPrice] = useState(String(variant.price));
   const [costPrice, setCostPrice] = useState(String(variant.costPrice));
   const [stock, setStock] = useState(String(variant.stock));
+  const [taxAffectationCode, setTaxAffectationCode] = useState(variant.taxAffectationCode || DEFAULT_TAX_AFFECTATION);
   const [saving, setSaving] = useState(false);
 
   async function handleSave() {
     setSaving(true);
     try {
-      await updateVariant(variant.id, { price: Number(price), stock: Number(stock), ...(canSeeCost ? { costPrice: Number(costPrice) } : {}) });
+      await updateVariant(variant.id, {
+        price: Number(price),
+        stock: Number(stock),
+        taxAffectationCode,
+        ...(canSeeCost ? { costPrice: Number(costPrice) } : {}),
+      });
       router.refresh();
     } finally {
       setSaving(false);
@@ -252,6 +259,20 @@ function VariantEditRow({ variant, canSeeCost }: { variant: AdminProduct["varian
         title={`Stock en ${unitLabel(variant.unitCode).toLowerCase()}`}
       />
       <span className="text-xs text-muted-foreground">{unitShort(variant.unitCode)}</span>
+      {/* Reclasificar acá NO toca los comprobantes ya emitidos: la afectación queda congelada en
+          cada InvoiceItem al emitir, igual que la unidad y el precio. */}
+      <select
+        value={taxAffectationCode}
+        onChange={(e) => setTaxAffectationCode(e.target.value)}
+        title="Afectación al IGV"
+        className={cn(inputClass, "w-32 text-foreground")}
+      >
+        {TAX_AFFECTATION_OPTIONS.map((affectation) => (
+          <option key={affectation.code} value={affectation.code}>
+            {affectation.label}
+          </option>
+        ))}
+      </select>
       <Button size="sm" disabled={saving} onClick={handleSave}>
         {saving ? "..." : "Guardar"}
       </Button>

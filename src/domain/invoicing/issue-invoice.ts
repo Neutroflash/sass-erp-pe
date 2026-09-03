@@ -2,7 +2,7 @@ import type { PrismaClient, Prisma } from "@prisma/client";
 import { resolveInvoicingGateway } from "@/lib/invoicing-gateway";
 import { sunatRetryScheduler } from "@/lib/sunat-retry-queue";
 import { withTenantRLS } from "@/lib/tenant-rls";
-import { calculateTaxBreakdown } from "./tax";
+import { calculateTaxBreakdown, sumTaxBreakdowns } from "./tax";
 import { OrderNotPaidError, InvoiceAlreadyIssuedError } from "./errors";
 import { reserveInvoiceNumber } from "./counter";
 import { getTenantForInvoicing } from "./tenant-invoicing-info";
@@ -32,7 +32,7 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
   const order = await withTenantRLS(prisma, params.tenantId, (tx) =>
     tx.order.findFirst({
       where: { id: params.orderId, tenantId: params.tenantId },
-      include: { items: { include: { variant: { select: { name: true, sku: true, unitCode: true } } } }, invoice: true },
+      include: { items: { include: { variant: { select: { name: true, sku: true, unitCode: true, taxAffectationCode: true } } } }, invoice: true },
     }),
   );
   if (!order) {
@@ -48,23 +48,31 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
   const tenant = await getTenantForInvoicing(prisma, params.tenantId);
 
   const totalAmount = Number(order.totalAmount);
-  const orderBreakdown = calculateTaxBreakdown(totalAmount);
 
   const items = order.items.map((item) => {
     const itemTotal = lineTotal(item.quantity, item.price);
-    const { igvAmount } = calculateTaxBreakdown(itemTotal);
+    const breakdown = calculateTaxBreakdown(itemTotal, item.variant.taxAffectationCode);
     return {
       variantId: item.variantId,
       description: `${item.variant.name} (${item.variant.sku})`,
       quantity: toQty(item.quantity),
-      // La unidad se copia del producto y queda congelada acá: el comprobante debe seguir
-      // diciendo lo mismo que se le envió a SUNAT aunque el producto cambie después.
+      // La unidad y la afectación se copian del producto y quedan congeladas acá: el comprobante
+      // debe seguir diciendo lo mismo que se le envió a SUNAT aunque el producto cambie después.
       unitCode: item.variant.unitCode,
+      taxAffectationCode: item.variant.taxAffectationCode,
       unitPrice: Number(item.price),
-      igvAmount,
+      breakdown,
+      igvAmount: breakdown.igvAmount,
       totalAmount: itemTotal,
     };
   });
+
+  // La cabecera se arma sumando las líneas, no descomponiendo `order.totalAmount`: con
+  // afectaciones mezcladas no hay una sola tasa que aplicarle al total, y aun con todo gravado la
+  // suma de líneas es lo que SUNAT contrasta contra el XML (que se arma exactamente así). Puede
+  // diferir un céntimo de `totalAmount` por redondeo de línea — `totalAmount` sigue siendo lo que
+  // el cliente pagó, y es el que se guarda como tal.
+  const orderBreakdown = sumTaxBreakdowns(items.map((i) => i.breakdown));
 
   const series = SERIES[params.type];
   const number = await reserveInvoiceNumber(prisma, params.tenantId, params.type, series);
@@ -78,7 +86,13 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
     documentType: params.documentType,
     documentNumber: params.documentNumber,
     businessName: params.businessName,
-    items: items.map((i) => ({ description: i.description, quantity: i.quantity, unitCode: i.unitCode, unitPrice: i.unitPrice })),
+    items: items.map((i) => ({
+      description: i.description,
+      quantity: i.quantity,
+      unitCode: i.unitCode,
+      taxAffectationCode: i.taxAffectationCode,
+      unitPrice: i.unitPrice,
+    })),
     totalAmount,
     emisorRuc: tenant.ruc ?? undefined,
     emisorBusinessName: tenant.businessName,
@@ -113,6 +127,7 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
             description: i.description,
             quantity: i.quantity,
             unitCode: i.unitCode,
+            taxAffectationCode: i.taxAffectationCode,
             unitPrice: i.unitPrice,
             igvAmount: i.igvAmount,
             totalAmount: i.totalAmount,

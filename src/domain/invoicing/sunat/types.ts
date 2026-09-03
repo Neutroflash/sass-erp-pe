@@ -35,6 +35,11 @@ export interface SunatInvoiceLine {
    * venden unidades; el generador de XML asume NIU cuando falta.
    */
   unitCode?: string;
+  /**
+   * Catálogo 07 de SUNAT — afectación al IGV de esta línea. Opcional en el tipo por la misma razón
+   * que `unitCode`: los llamadores que no la conocen obtienen gravado, el comportamiento previo.
+   */
+  taxAffectationCode?: string;
   /** Precio de venta unitario, CON IGV — lo que el cliente efectivamente paga por unidad. */
   unitPriceWithTax: number;
 }

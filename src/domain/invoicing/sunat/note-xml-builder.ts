@@ -66,7 +66,7 @@ export function generateCreditNoteXML(payload: SunatNotePayload): string {
   <cac:CreditNoteLine>
     <cbc:ID>${i + 1}</cbc:ID>
     <cbc:CreditedQuantity unitCode="${resolveUnitCode(line.unitCode)}">${formatQuantity(line.quantity)}</cbc:CreditedQuantity>
-    <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(line.taxedAmount)}</cbc:LineExtensionAmount>
+    <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(line.lineValue)}</cbc:LineExtensionAmount>
     <cac:PricingReference>
       <cac:AlternativeConditionPrice>
         <cbc:PriceAmount currencyID="PEN">${formatAmount(line.unitPriceWithTax)}</cbc:PriceAmount>
@@ -99,7 +99,7 @@ export function generateCreditNoteXML(payload: SunatNotePayload): string {
   ${buildCustomerPartyBlock(cliente)}
   ${buildTaxTotalBlock(totals)}
   <cac:LegalMonetaryTotal>
-    <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(totals.totalGravada)}</cbc:LineExtensionAmount>
+    <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(totals.totalValorVenta)}</cbc:LineExtensionAmount>
     <cbc:TaxInclusiveAmount currencyID="PEN">${formatAmount(totals.totalVenta)}</cbc:TaxInclusiveAmount>
     <cbc:PayableAmount currencyID="PEN">${formatAmount(totals.totalVenta)}</cbc:PayableAmount>
   </cac:LegalMonetaryTotal>${noteLines}
@@ -130,7 +130,7 @@ export function generateDebitNoteXML(payload: SunatNotePayload): string {
   <cac:DebitNoteLine>
     <cbc:ID>${i + 1}</cbc:ID>
     <cbc:DebitedQuantity unitCode="${resolveUnitCode(line.unitCode)}">${formatQuantity(line.quantity)}</cbc:DebitedQuantity>
-    <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(line.taxedAmount)}</cbc:LineExtensionAmount>
+    <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(line.lineValue)}</cbc:LineExtensionAmount>
     <cac:PricingReference>
       <cac:AlternativeConditionPrice>
         <cbc:PriceAmount currencyID="PEN">${formatAmount(line.unitPriceWithTax)}</cbc:PriceAmount>
@@ -163,7 +163,7 @@ export function generateDebitNoteXML(payload: SunatNotePayload): string {
   ${buildCustomerPartyBlock(cliente)}
   ${buildTaxTotalBlock(totals)}
   <cac:RequestedMonetaryTotal>
-    <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(totals.totalGravada)}</cbc:LineExtensionAmount>
+    <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(totals.totalValorVenta)}</cbc:LineExtensionAmount>
     <cbc:TaxInclusiveAmount currencyID="PEN">${formatAmount(totals.totalVenta)}</cbc:TaxInclusiveAmount>
     <cbc:PayableAmount currencyID="PEN">${formatAmount(totals.totalVenta)}</cbc:PayableAmount>
   </cac:RequestedMonetaryTotal>${noteLines}

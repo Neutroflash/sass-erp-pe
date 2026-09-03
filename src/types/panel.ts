@@ -8,6 +8,8 @@ export interface AdminProductVariant {
   reservedStock: number;
   /** Catálogo 03 de SUNAT: la tabla muestra "12.5 m", no "12.5". */
   unitCode: string;
+  /** Catálogo 07 de SUNAT: qué IGV se le cobra al cliente por este producto. */
+  taxAffectationCode: string;
 }
 
 export interface AdminProductImage {

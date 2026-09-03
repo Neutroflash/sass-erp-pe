@@ -352,6 +352,11 @@ model ProductVariant {
   reservedStock Decimal  @default(0) @map("reserved_stock") @db.Decimal(12, 3)
   // Catálogo 03 de SUNAT — la unidad en que se vende y se factura este producto (NIU, MTR, KGM...)
   unitCode      String   @default("NIU") @map("unit_code")
+  // Catálogo 07 de SUNAT — cómo afecta al IGV la venta de este producto: "10" gravado, "20"
+  // exonerado, "30" inafecto (ver src/domain/invoicing/tax-affectation.ts). No es una preferencia
+  // del negocio sino una propiedad del producto según la ley: un negocio puede vender arroz
+  // (exonerado) y ollas (gravado) en el mismo comprobante, así que vive acá y no en Tenant.
+  taxAffectationCode String @default("10") @map("tax_affectation_code")
   attributes    Json     @default("{}")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
@@ -565,6 +570,9 @@ model InvoiceItem {
   // Congelada igual que la descripción: si mañana el producto pasa de METRO a UNIDAD, el
   // comprobante ya emitido debe seguir diciendo lo que se envió a SUNAT.
   unitCode    String          @default("NIU") @map("unit_code")
+  // Congelada por el mismo motivo que unitCode: si el producto se reclasifica después, el
+  // comprobante ya emitido debe seguir declarando la afectación con la que se envió a SUNAT.
+  taxAffectationCode String   @default("10") @map("tax_affectation_code")
   unitPrice   Decimal         @map("unit_price") @db.Decimal(10, 2)
   igvAmount   Decimal         @default(0) @map("igv_amount") @db.Decimal(10, 2)
   totalAmount Decimal         @map("total_amount") @db.Decimal(10, 2)

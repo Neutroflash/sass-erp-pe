@@ -2,13 +2,14 @@ import type { PrismaClient, Prisma } from "@prisma/client";
 import { resolveInvoicingGateway } from "@/lib/invoicing-gateway";
 import { sunatRetryScheduler } from "@/lib/sunat-retry-queue";
 import { withTenantRLS } from "@/lib/tenant-rls";
-import { calculateTaxBreakdown } from "./tax";
+import { calculateTaxBreakdown, sumTaxBreakdowns } from "./tax";
 import { RelatedInvoiceNotIssuedError, InvalidNoteReasonError } from "./errors";
 import { reserveInvoiceNumber } from "./counter";
 import { getTenantForInvoicing } from "./tenant-invoicing-info";
 import { findNoteReason, resolveNoteSeries } from "./sunat/note-catalogs";
 import { lineTotal, toQty } from "@/domain/inventory/quantity";
 import { DEFAULT_UNIT_CODE } from "@/domain/inventory/units";
+import { DEFAULT_TAX_AFFECTATION } from "./tax-affectation";
 
 export interface IssueCreditDebitNoteParams {
   tenantId: string;
@@ -33,6 +34,20 @@ export interface IssueCreditDebitNoteParams {
  * corre todo dentro de un único `$transaction` por la misma razón (un PSE/SUNAT real necesita su
  * propio número para poder emitir el documento).
  */
+
+/**
+ * Afectación de una línea de ajuste CUSTOM, que no corresponde a ningún ítem del original.
+ *
+ * Si todo el comprobante corregido comparte una afectación, el ajuste hereda esa: un descuento
+ * sobre una venta enteramente exonerada no puede llevar IGV. Si el original mezclaba afectaciones
+ * no hay una respuesta correcta derivable — cae a gravado, el default de cualquier venta, y el
+ * negocio corrige con una nota si hacía falta otra cosa.
+ */
+function adjustmentAffectation(items: { taxAffectationCode: string }[]): string {
+  const codes = new Set(items.map((i) => i.taxAffectationCode));
+  return codes.size === 1 ? [...codes][0] : DEFAULT_TAX_AFFECTATION;
+}
+
 export async function issueCreditDebitNoteForInvoice(prisma: PrismaClient, params: IssueCreditDebitNoteParams) {
   const relatedInvoice = await withTenantRLS(prisma, params.tenantId, (tx) =>
     tx.invoice.findFirst({
@@ -64,6 +79,7 @@ export async function issueCreditDebitNoteForInvoice(prisma: PrismaClient, param
           description: item.description,
           quantity: toQty(item.quantity),
           unitCode: item.unitCode,
+          taxAffectationCode: item.taxAffectationCode,
           unitPrice: Number(item.unitPrice),
         }))
       : [
@@ -74,18 +90,19 @@ export async function issueCreditDebitNoteForInvoice(prisma: PrismaClient, param
             // Un ajuste que no mapea 1:1 con líneas del original se expresa como un concepto,
             // no como una medida: NIU es la unidad correcta para eso, no el metro del original.
             unitCode: DEFAULT_UNIT_CODE,
+            taxAffectationCode: adjustmentAffectation(relatedInvoice.items),
             unitPrice: params.customAmount ?? 0,
           },
         ];
 
-  const totalAmount = items.reduce((sum, i) => sum + lineTotal(i.quantity, i.unitPrice), 0);
-  const noteBreakdown = calculateTaxBreakdown(totalAmount);
-
   const itemsWithTax = items.map((item) => {
     const itemTotal = lineTotal(item.quantity, item.unitPrice);
-    const { igvAmount } = calculateTaxBreakdown(itemTotal);
-    return { ...item, igvAmount, totalAmount: itemTotal };
+    const breakdown = calculateTaxBreakdown(itemTotal, item.taxAffectationCode);
+    return { ...item, breakdown, igvAmount: breakdown.igvAmount, totalAmount: itemTotal };
   });
+
+  const totalAmount = itemsWithTax.reduce((sum, i) => sum + i.totalAmount, 0);
+  const noteBreakdown = sumTaxBreakdowns(itemsWithTax.map((i) => i.breakdown));
 
   const series = resolveNoteSeries(params.type, relatedInvoice.type);
   const number = await reserveInvoiceNumber(prisma, params.tenantId, params.type, series);
@@ -102,7 +119,13 @@ export async function issueCreditDebitNoteForInvoice(prisma: PrismaClient, param
     documentType: relatedInvoice.documentType,
     documentNumber: relatedInvoice.documentNumber,
     businessName: relatedInvoice.businessName ?? undefined,
-    items: itemsWithTax.map((i) => ({ description: i.description, quantity: i.quantity, unitCode: i.unitCode, unitPrice: i.unitPrice })),
+    items: itemsWithTax.map((i) => ({
+      description: i.description,
+      quantity: i.quantity,
+      unitCode: i.unitCode,
+      taxAffectationCode: i.taxAffectationCode,
+      unitPrice: i.unitPrice,
+    })),
     totalAmount,
     emisorRuc: tenant.ruc ?? undefined,
     emisorBusinessName: tenant.businessName,
@@ -137,6 +160,8 @@ export async function issueCreditDebitNoteForInvoice(prisma: PrismaClient, param
             variantId: i.variantId,
             description: i.description,
             quantity: i.quantity,
+            unitCode: i.unitCode,
+            taxAffectationCode: i.taxAffectationCode,
             unitPrice: i.unitPrice,
             igvAmount: i.igvAmount,
             totalAmount: i.totalAmount,

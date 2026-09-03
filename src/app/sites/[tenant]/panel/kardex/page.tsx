@@ -89,6 +89,7 @@ export default async function KardexPage({
           stock: toQty(v.stock),
           reservedStock: toQty(v.reservedStock),
           unitCode: v.unitCode,
+          taxAffectationCode: v.taxAffectationCode,
           price: 0,
           costPrice: 0,
         }))}

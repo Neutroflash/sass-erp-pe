@@ -1,5 +1,5 @@
 import PDFDocument from "pdfkit";
-import { calculateTaxBreakdown } from "../tax";
+import { computeLineBreakdowns, sumTotals } from "./xml-common";
 import { buildQrContent } from "./qr";
 import QRCode from "qrcode";
 import type { SunatInvoicePayload } from "./types";
@@ -13,8 +13,7 @@ function formatAmount(n: number): string {
  * es el "Valor Resumen" del QR (10° campo, ver qr.ts) — el llamador lo extrae de `invoice.signedXml`
  * ya persistido (`extractDocumentDigestValue`). */
 export async function generatePDFComprobante(payload: SunatInvoicePayload, documentDigest: string): Promise<Buffer> {
-  const totalVenta = payload.lineas.reduce((sum, l) => sum + l.unitPriceWithTax * l.quantity, 0);
-  const { taxedAmount, igvAmount } = calculateTaxBreakdown(totalVenta);
+  const totals = sumTotals(computeLineBreakdowns(payload.lineas));
   const qrPngBuffer = await QRCode.toBuffer(buildQrContent(payload, documentDigest), { errorCorrectionLevel: "M", margin: 1, width: 150 });
 
   return new Promise((resolve, reject) => {
@@ -62,9 +61,19 @@ export async function generatePDFComprobante(payload: SunatInvoicePayload, docum
     }
 
     doc.moveDown();
-    doc.text(`Op. Gravada: S/ ${formatAmount(taxedAmount)}`, { align: "right" });
-    doc.text(`IGV (18%): S/ ${formatAmount(igvAmount)}`, { align: "right" });
-    doc.fontSize(11).text(`Importe Total: S/ ${formatAmount(totalVenta)}`, { align: "right" });
+    // Solo las operaciones que el comprobante realmente tiene: imprimir "Op. Exonerada: S/ 0.00"
+    // en una venta gravada normal es ruido, y peor, sugiere un desglose que no existe. Si todas
+    // son cero (comprobante en cero) igual se imprime la gravada, para no dejar el bloque vacío.
+    const operaciones = [
+      ["Op. Gravada", totals.totalGravada],
+      ["Op. Exonerada", totals.totalExonerada],
+      ["Op. Inafecta", totals.totalInafecta],
+    ].filter(([, amount]) => amount !== 0);
+    for (const [label, amount] of operaciones.length > 0 ? operaciones : [["Op. Gravada", 0]]) {
+      doc.text(`${label}: S/ ${formatAmount(amount as number)}`, { align: "right" });
+    }
+    doc.text(`IGV (18%): S/ ${formatAmount(totals.totalIgv)}`, { align: "right" });
+    doc.fontSize(11).text(`Importe Total: S/ ${formatAmount(totals.totalVenta)}`, { align: "right" });
 
     doc.image(qrPngBuffer, 40, doc.page.height - 200, { width: 100 });
     doc.fontSize(7).text("Representación impresa del comprobante electrónico", 150, doc.page.height - 160, { width: 300 });

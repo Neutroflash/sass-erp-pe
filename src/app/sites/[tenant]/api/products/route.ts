@@ -12,6 +12,7 @@ import { resolvePlanLimits } from "@/domain/plan-limits";
 import { isPositiveQty } from "@/domain/inventory/quantity";
 import { stockSchema } from "@/domain/inventory/quantity-schema";
 import { unitCodeSchema } from "@/domain/inventory/quantity-schema";
+import { DEFAULT_TAX_AFFECTATION, TAX_AFFECTATION_CODES } from "@/domain/invoicing/tax-affectation";
 import { DEFAULT_UNIT_CODE } from "@/domain/inventory/units";
 
 const productInclude = { variants: true, images: true } satisfies Prisma.ProductInclude;
@@ -70,6 +71,7 @@ const variantSchema = z.object({
   costPrice: z.number().nonnegative(),
   stock: stockSchema,
   unitCode: unitCodeSchema.optional(),
+  taxAffectationCode: z.enum(TAX_AFFECTATION_CODES).optional(),
   attributes: z.record(z.unknown()).optional(),
 });
 
@@ -165,6 +167,7 @@ export async function POST(req: NextRequest) {
             costPrice: v.costPrice,
             stock: v.stock,
             unitCode: v.unitCode ?? DEFAULT_UNIT_CODE,
+            taxAffectationCode: v.taxAffectationCode ?? DEFAULT_TAX_AFFECTATION,
             attributes: (v.attributes ?? {}) as Prisma.InputJsonValue,
           })),
         },

@@ -13,6 +13,7 @@ export interface CreateProductVariantInput {
   stock: number;
   /** Catálogo 03 de SUNAT (NIU, MTR, KGM...). Ausente = NIU. */
   unitCode?: string;
+  taxAffectationCode?: string;
   attributes?: Record<string, string>;
 }
 
@@ -56,7 +57,10 @@ export function updateProduct(productId: string, data: Partial<CreateProductInpu
   return request(`/api/products/${productId}`, { method: "PATCH", body: JSON.stringify(data) });
 }
 
-export function updateVariant(variantId: string, data: { price?: number; costPrice?: number; stock?: number }) {
+export function updateVariant(
+  variantId: string,
+  data: { price?: number; costPrice?: number; stock?: number; taxAffectationCode?: string },
+) {
   return request(`/api/products/variants/${variantId}`, { method: "PATCH", body: JSON.stringify(data) });
 }
 

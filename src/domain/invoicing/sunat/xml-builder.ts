@@ -52,7 +52,7 @@ export function generateInvoiceXML(payload: SunatInvoicePayload): string {
   <cac:InvoiceLine>
     <cbc:ID>${i + 1}</cbc:ID>
     <cbc:InvoicedQuantity unitCode="${resolveUnitCode(line.unitCode)}">${formatQuantity(line.quantity)}</cbc:InvoicedQuantity>
-    <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(line.taxedAmount)}</cbc:LineExtensionAmount>
+    <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(line.lineValue)}</cbc:LineExtensionAmount>
     <cac:PricingReference>
       <cac:AlternativeConditionPrice>
         <cbc:PriceAmount currencyID="PEN">${formatUnitAmount(line.unitPriceWithTax)}</cbc:PriceAmount>
@@ -89,7 +89,7 @@ export function generateInvoiceXML(payload: SunatInvoicePayload): string {
   </cac:PaymentTerms>
   ${buildTaxTotalBlock(totals)}
   <cac:LegalMonetaryTotal>
-    <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(totals.totalGravada)}</cbc:LineExtensionAmount>
+    <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(totals.totalValorVenta)}</cbc:LineExtensionAmount>
     <cbc:TaxInclusiveAmount currencyID="PEN">${formatAmount(totals.totalVenta)}</cbc:TaxInclusiveAmount>
     <cbc:PayableAmount currencyID="PEN">${formatAmount(totals.totalVenta)}</cbc:PayableAmount>
   </cac:LegalMonetaryTotal>${invoiceLines}

@@ -35,6 +35,7 @@ export function buildInvoicePdfPayload(
       description: item.description,
       quantity: toQty(item.quantity),
       unitCode: item.unitCode,
+      taxAffectationCode: item.taxAffectationCode,
       unitPriceWithTax: Number(item.unitPrice),
     })),
   };

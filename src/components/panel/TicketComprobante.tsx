@@ -116,10 +116,15 @@ export function TicketComprobante({ data }: { data: TicketComprobanteData }) {
 
       {/* 5. Totales tributarios */}
       <div className="flex flex-col gap-0.5 print:break-inside-avoid print:[page-break-inside:avoid]">
-        <Row label="Op. Gravada" value={`S/ ${formatMoney(totales.opGravada)}`} />
-        <Row label="IGV (18%)" value={`S/ ${formatMoney(totales.igv)}`} />
+        {/* Solo las operaciones que la venta realmente tuvo. La gravada se muestra siempre que
+            haya alguna, o cuando no hay ninguna de las otras dos — un negocio que vende puro
+            exonerado no debería ver "Op. Gravada S/ 0.00" en cada ticket que imprime. */}
+        {(!!totales.opGravada || (!totales.opExonerada && !totales.opInafecta)) && (
+          <Row label="Op. Gravada" value={`S/ ${formatMoney(totales.opGravada)}`} />
+        )}
         {!!totales.opExonerada && <Row label="Op. Exonerada" value={`S/ ${formatMoney(totales.opExonerada)}`} />}
         {!!totales.opInafecta && <Row label="Op. Inafecta" value={`S/ ${formatMoney(totales.opInafecta)}`} />}
+        <Row label="IGV (18%)" value={`S/ ${formatMoney(totales.igv)}`} />
         <div className="mt-1 flex justify-between text-sm font-bold">
           <span>TOTAL</span>
           <span>S/ {formatMoney(totales.total)}</span>

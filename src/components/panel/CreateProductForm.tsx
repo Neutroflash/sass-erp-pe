@@ -8,6 +8,7 @@ import { createCategory, createProduct, CreateProductVariantInput } from "@/lib/
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DEFAULT_UNIT_CODE, UNIT_CODES } from "@/domain/inventory/units";
+import { DEFAULT_TAX_AFFECTATION, TAX_AFFECTATION_OPTIONS } from "@/domain/invoicing/tax-affectation";
 
 const inputClass =
   "h-9 rounded-lg border border-border bg-input px-2 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
@@ -17,7 +18,16 @@ interface VariantDraft extends CreateProductVariantInput {
 }
 
 function emptyVariant(): VariantDraft {
-  return { sku: "", name: "", price: 0, costPrice: 0, stock: 0, unitCode: DEFAULT_UNIT_CODE, attributesList: [{ key: "", value: "" }] };
+  return {
+    sku: "",
+    name: "",
+    price: 0,
+    costPrice: 0,
+    stock: 0,
+    unitCode: DEFAULT_UNIT_CODE,
+    taxAffectationCode: DEFAULT_TAX_AFFECTATION,
+    attributesList: [{ key: "", value: "" }],
+  };
 }
 
 interface ImageDraft {
@@ -118,6 +128,7 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
           costPrice: v.costPrice,
           stock: v.stock,
           unitCode: v.unitCode,
+          taxAffectationCode: v.taxAffectationCode,
           attributes: Object.fromEntries(v.attributesList.filter((a) => a.key.trim()).map((a) => [a.key, a.value])),
         })),
         images: (() => {
@@ -273,7 +284,7 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
 
         {variants.map((variant, vIndex) => (
           <div key={vIndex} className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/60 p-4">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <input required placeholder="SKU" value={variant.sku} onChange={(e) => updateVariant(vIndex, { sku: e.target.value })} className={inputClass} />
               <input
                 required
@@ -321,6 +332,21 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
                 {Object.entries(UNIT_CODES).map(([code, label]) => (
                   <option key={code} value={code}>
                     {label}
+                  </option>
+                ))}
+              </select>
+              {/* Afectación al IGV: no es una preferencia del negocio sino una propiedad del
+                  producto según la ley (Apéndice I del TUO de la Ley del IGV). Marcar como gravado
+                  algo exonerado le cobra al cliente un 18% que no corresponde. */}
+              <select
+                value={variant.taxAffectationCode ?? DEFAULT_TAX_AFFECTATION}
+                onChange={(e) => updateVariant(vIndex, { taxAffectationCode: e.target.value })}
+                title="Afectación al IGV"
+                className={cn(inputClass, "text-foreground")}
+              >
+                {TAX_AFFECTATION_OPTIONS.map((affectation) => (
+                  <option key={affectation.code} value={affectation.code}>
+                    {affectation.label}
                   </option>
                 ))}
               </select>
