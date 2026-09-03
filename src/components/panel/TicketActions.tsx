@@ -77,11 +77,28 @@ export function TicketActions({ targetId, fileName }: { targetId: string; fileNa
     setExporting(true);
     setError(null);
     try {
-      const dataUrl = await toPng(node, { pixelRatio: 2, backgroundColor: "#ffffff" });
+      // `html-to-image` clona el nodo dentro de un <foreignObject> y lo rasteriza. Si las fuentes
+      // todavía no resolvieron, ese primer rasterizado sale en blanco — y resuelve sin error, así
+      // que sin esto el usuario se descarga un PNG vacío creyendo que funcionó.
+      if (document.fonts?.ready) await document.fonts.ready;
+      const options = { pixelRatio: 2, backgroundColor: "#ffffff" as const };
+      // La primera pasada calienta la caché de estilos/fuentes de la librería; la segunda es la
+      // que sale completa. Es el workaround conocido de html-to-image, no una superstición: la
+      // primera invocación puede rasterizar antes de que el clon termine de resolver sus estilos.
+      await toPng(node, options);
+      const dataUrl = await toPng(node, options);
+
+      assertNotBlank(dataUrl);
+
       const link = document.createElement("a");
       link.download = `${fileName}.png`;
       link.href = dataUrl;
+      // El ancla TIENE que estar en el documento: Chrome ignora `download` en un elemento suelto y
+      // cae a descargar con el título de la página ("E-Commerce ERP Perú.png") en vez del nombre
+      // del comprobante.
+      document.body.appendChild(link);
       link.click();
+      link.remove();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo exportar el PNG");
     } finally {
@@ -102,4 +119,19 @@ export function TicketActions({ targetId, fileName }: { targetId: string; fileNa
       {error && <span className="text-xs text-destructive">{error}</span>}
     </div>
   );
+}
+
+/**
+ * Falla ruidosamente si la captura salió vacía.
+ *
+ * Un PNG en blanco pesa muy poco comparado con uno que tiene el ticket dibujado: sin esta guarda,
+ * que la librería falle es indistinguible de que funcione — se descarga un archivo válido, vacío, y
+ * el usuario se entera recién al abrirlo. Es el umbral más burdo posible, y aun así es la
+ * diferencia entre un error visible y un archivo mudo.
+ */
+function assertNotBlank(dataUrl: string) {
+  const MIN_DATA_URL_LENGTH = 5_000;
+  if (dataUrl.length < MIN_DATA_URL_LENGTH) {
+    throw new Error("La imagen salió vacía. Usa 'Imprimir / Guardar PDF' mientras tanto.");
+  }
 }
