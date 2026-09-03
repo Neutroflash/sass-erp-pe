@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   const invoice = await withTenantRLS(prisma, auth.tenantId, (tx) =>
     tx.invoice.findFirst({
       where: { id: params.id, tenantId: auth.tenantId },
-      include: { items: true },
+      include: { items: true, order: { select: { customerName: true } } },
     }),
   );
   if (!invoice) {

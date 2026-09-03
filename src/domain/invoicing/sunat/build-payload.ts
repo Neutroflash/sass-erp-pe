@@ -17,7 +17,7 @@ const BUSINESS_DOCUMENT_TYPE_TO_SUNAT: Record<string, SunatDocumentTypeCode> = {
  * sentido en esta plantilla), no está cableada todavía.
  */
 export function buildInvoicePdfPayload(
-  invoice: Invoice & { items: InvoiceItem[] },
+  invoice: Invoice & { items: InvoiceItem[]; order?: { customerName: string | null } | null },
   tenant: { ruc: string | null; businessName: string; fiscalAddress: string | null },
 ): SunatInvoicePayload {
   return {
@@ -29,7 +29,10 @@ export function buildInvoicePdfPayload(
     cliente: {
       documentTypeCode: BUSINESS_DOCUMENT_TYPE_TO_SUNAT[invoice.documentType] ?? DOCUMENT_TYPE_CODE.SIN_DOCUMENTO,
       documentNumber: invoice.documentNumber,
-      name: invoice.businessName ?? invoice.documentNumber,
+      // Razón social si es factura; si es boleta, el nombre del cliente de la orden. El número de
+      // documento es el último recurso, no un "nombre": el PDF mostraba "Cliente: 72084153" en una
+      // venta de mostrador mientras el ticket del mismo comprobante decía "Cliente de mostrador".
+      name: invoice.businessName ?? invoice.order?.customerName ?? invoice.documentNumber,
     },
     lineas: invoice.items.map((item) => ({
       description: item.description,

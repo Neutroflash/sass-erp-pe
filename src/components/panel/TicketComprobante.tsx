@@ -1,6 +1,7 @@
 import { QRCodeSVG } from "qrcode.react";
 import type { TicketComprobanteData } from "@/types/ticket";
 import { cn } from "@/lib/utils";
+import { formatNumeroComprobante } from "@/domain/invoicing/comprobante-number";
 
 function formatMoney(n: number): string {
   return n.toFixed(2);
@@ -8,10 +9,6 @@ function formatMoney(n: number): string {
 
 // Correlativo SUNAT: serie de 4 + guion + 8 dígitos (ej. B001-00000142) — no es negociable el
 // padding, es el formato exigido para la representación impresa.
-function formatNumeroComprobante(serie: string, numero: number): string {
-  return `${serie}-${String(numero).padStart(8, "0")}`;
-}
-
 function formatFechaHora(iso: string): string {
   const d = new Date(iso);
   const fecha = d.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" });

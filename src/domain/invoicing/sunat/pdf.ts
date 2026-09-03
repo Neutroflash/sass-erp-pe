@@ -1,6 +1,7 @@
 import PDFDocument from "pdfkit";
 import { computeLineBreakdowns, sumTotals } from "./xml-common";
 import { buildQrContent } from "./qr";
+import { formatNumeroComprobante } from "../comprobante-number";
 import QRCode from "qrcode";
 import type { SunatInvoicePayload } from "./types";
 
@@ -32,7 +33,7 @@ export async function generatePDFComprobante(payload: SunatInvoicePayload, docum
 
     doc.rect(doc.x, doc.y, 220, 50).stroke();
     doc.fontSize(11).text(tipoLabel, doc.x + 10, doc.y + 10, { width: 200 });
-    doc.fontSize(12).text(`${payload.serie}-${payload.numero}`, doc.x + 10, doc.y + 4, { width: 200 });
+    doc.fontSize(12).text(formatNumeroComprobante(payload.serie, payload.numero), doc.x + 10, doc.y + 4, { width: 200 });
     doc.moveDown(3);
 
     doc.fontSize(9);
