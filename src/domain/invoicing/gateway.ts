@@ -1,6 +1,8 @@
 export interface InvoiceLineInput {
   description: string;
   quantity: number;
+  /** Catálogo 03 de SUNAT. Ausente = NIU (unidad), que es como se comportaba todo antes. */
+  unitCode?: string;
   unitPrice: number;
 }
 

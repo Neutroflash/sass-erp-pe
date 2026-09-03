@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { withTenantRLS } from "@/lib/tenant-rls";
+import { addQty, lineTotal } from "@/domain/inventory/quantity";
 
 export interface DailySales {
   date: string; // YYYY-MM-DD
@@ -140,8 +141,8 @@ export async function getInventoryValuation(prisma: PrismaClient, tenantId: stri
 
   return variants.reduce(
     (acc, v) => ({
-      totalUnits: acc.totalUnits + v.stock,
-      totalValue: acc.totalValue + v.stock * Number(v.costPrice),
+      totalUnits: addQty(acc.totalUnits, v.stock),
+      totalValue: acc.totalValue + lineTotal(v.stock, v.costPrice),
     }),
     { totalUnits: 0, totalValue: 0 },
   );

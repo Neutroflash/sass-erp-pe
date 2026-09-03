@@ -7,6 +7,7 @@ import type { AdminCategory } from "@/types/panel";
 import { createCategory, createProduct, CreateProductVariantInput } from "@/lib/panel-mutations";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { DEFAULT_UNIT_CODE, UNIT_CODES } from "@/domain/inventory/units";
 
 const inputClass =
   "h-9 rounded-lg border border-border bg-input px-2 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
@@ -16,7 +17,7 @@ interface VariantDraft extends CreateProductVariantInput {
 }
 
 function emptyVariant(): VariantDraft {
-  return { sku: "", name: "", price: 0, costPrice: 0, stock: 0, attributesList: [{ key: "", value: "" }] };
+  return { sku: "", name: "", price: 0, costPrice: 0, stock: 0, unitCode: DEFAULT_UNIT_CODE, attributesList: [{ key: "", value: "" }] };
 }
 
 interface ImageDraft {
@@ -116,6 +117,7 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
           price: v.price,
           costPrice: v.costPrice,
           stock: v.stock,
+          unitCode: v.unitCode,
           attributes: Object.fromEntries(v.attributesList.filter((a) => a.key.trim()).map((a) => [a.key, a.value])),
         })),
         images: (() => {
@@ -271,7 +273,7 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
 
         {variants.map((variant, vIndex) => (
           <div key={vIndex} className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/60 p-4">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
               <input required placeholder="SKU" value={variant.sku} onChange={(e) => updateVariant(vIndex, { sku: e.target.value })} className={inputClass} />
               <input
                 required
@@ -301,11 +303,27 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
               <input
                 required
                 type="number"
+                step="0.001"
+                min="0"
                 placeholder="Stock inicial"
                 value={variant.stock || ""}
                 onChange={(e) => updateVariant(vIndex, { stock: Number(e.target.value) })}
                 className={inputClass}
               />
+              {/* La unidad decide cómo se factura: una tela se vende por metro y el XML de SUNAT
+                  lleva ese código, no "unidad". */}
+              <select
+                value={variant.unitCode ?? DEFAULT_UNIT_CODE}
+                onChange={(e) => updateVariant(vIndex, { unitCode: e.target.value })}
+                title="Unidad de medida"
+                className={cn(inputClass, "text-foreground")}
+              >
+                {Object.entries(UNIT_CODES).map(([code, label]) => (
+                  <option key={code} value={code}>
+                    {label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="flex flex-col gap-2">

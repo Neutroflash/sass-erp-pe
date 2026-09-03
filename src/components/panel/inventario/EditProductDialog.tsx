@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn, formatPrice } from "@/lib/utils";
+import { unitLabel, unitShort } from "@/domain/inventory/units";
 
 const inputClass =
   "h-9 rounded-lg border border-border bg-input px-2 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
@@ -241,7 +242,16 @@ function VariantEditRow({ variant, canSeeCost }: { variant: AdminProduct["varian
           <span className={cn("w-16 shrink-0 text-xs", margin >= 0 ? "text-emerald-400" : "text-destructive")}>{formatPrice(margin)}</span>
         </>
       )}
-      <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} className={cn(inputClass, "w-16")} title="Stock" />
+      <input
+        type="number"
+        step="0.001"
+        min="0"
+        value={stock}
+        onChange={(e) => setStock(e.target.value)}
+        className={cn(inputClass, "w-24")}
+        title={`Stock en ${unitLabel(variant.unitCode).toLowerCase()}`}
+      />
+      <span className="text-xs text-muted-foreground">{unitShort(variant.unitCode)}</span>
       <Button size="sm" disabled={saving} onClick={handleSave}>
         {saving ? "..." : "Guardar"}
       </Button>

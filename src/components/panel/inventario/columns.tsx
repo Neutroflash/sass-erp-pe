@@ -7,9 +7,11 @@ import { formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/panel/data-table/data-table-column-header";
 import { EditProductDialog } from "./EditProductDialog";
+import { addQty, formatQty } from "@/domain/inventory/quantity";
+import { DEFAULT_UNIT_CODE, unitShort } from "@/domain/inventory/units";
 
 function totalStock(product: AdminProduct): number {
-  return product.variants.reduce((sum, v) => sum + v.stock, 0);
+  return product.variants.reduce((sum, v) => addQty(sum, v.stock), 0);
 }
 
 function priceLabel(product: AdminProduct): string {
@@ -78,7 +80,10 @@ export function getInventoryColumns(categories: AdminCategory[], canSeeCost: boo
         const label = stock === 0 ? "Agotado" : stock <= lowStockThreshold ? "Stock bajo" : "En stock";
         return (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-foreground">{stock}</span>
+            <span className="text-sm text-foreground">
+              {formatQty(stock)}{" "}
+              <span className="text-xs text-muted-foreground">{unitShort(row.original.variants[0]?.unitCode ?? DEFAULT_UNIT_CODE)}</span>
+            </span>
             <Badge variant={variant}>{label}</Badge>
           </div>
         );

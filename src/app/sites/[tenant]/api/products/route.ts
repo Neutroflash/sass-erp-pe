@@ -9,6 +9,10 @@ import { withTenantRLS } from "@/lib/tenant-rls";
 import { slugify } from "@/lib/slugify";
 import { toPublicProduct } from "@/domain/inventory/product";
 import { resolvePlanLimits } from "@/domain/plan-limits";
+import { isPositiveQty } from "@/domain/inventory/quantity";
+import { stockSchema } from "@/domain/inventory/quantity-schema";
+import { unitCodeSchema } from "@/domain/inventory/quantity-schema";
+import { DEFAULT_UNIT_CODE } from "@/domain/inventory/units";
 
 const productInclude = { variants: true, images: true } satisfies Prisma.ProductInclude;
 
@@ -64,7 +68,8 @@ const variantSchema = z.object({
   name: z.string().min(1),
   price: z.number().positive(),
   costPrice: z.number().nonnegative(),
-  stock: z.number().int().nonnegative(),
+  stock: stockSchema,
+  unitCode: unitCodeSchema.optional(),
   attributes: z.record(z.unknown()).optional(),
 });
 
@@ -159,6 +164,7 @@ export async function POST(req: NextRequest) {
             price: v.price,
             costPrice: v.costPrice,
             stock: v.stock,
+            unitCode: v.unitCode ?? DEFAULT_UNIT_CODE,
             attributes: (v.attributes ?? {}) as Prisma.InputJsonValue,
           })),
         },
@@ -180,7 +186,7 @@ export async function POST(req: NextRequest) {
 
   // Todo producto nuevo con stock inicial > 0 arranca con un movimiento de kardex tipo IN — el
   // historial de "de dónde salió el stock" empieza desde el primer día, nunca desde cero sin rastro.
-  const initialStockEntries = product.variants.filter((v) => v.stock > 0);
+  const initialStockEntries = product.variants.filter((v) => isPositiveQty(v.stock));
   if (initialStockEntries.length > 0) {
     await withTenantRLS(prisma, auth.tenantId, (tx) =>
       tx.stockMovement.createMany({

@@ -3,9 +3,12 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { withTenantRLS } from "@/lib/tenant-rls";
+import { quantitySchema } from "@/domain/inventory/quantity-schema";
+import { hasEnough, subQty } from "@/domain/inventory/quantity";
+import { DEFAULT_UNIT_CODE } from "@/domain/inventory/units";
 
 const schema = z.object({
-  items: z.array(z.object({ variantId: z.string().uuid(), quantity: z.number().int().positive() })).min(1),
+  items: z.array(z.object({ variantId: z.string().uuid(), quantity: quantitySchema })).min(1),
 });
 
 // Chequeo NO autoritativo (sin lock de fila) para UX antes de ir a checkout — solo para avisar
@@ -27,8 +30,14 @@ export async function POST(req: NextRequest) {
 
   const items = parsed.data.items.map((item) => {
     const variant = byId.get(item.variantId);
-    const available = variant ? variant.stock - variant.reservedStock : 0;
-    return { variantId: item.variantId, requested: item.quantity, available, ok: available >= item.quantity };
+    const available = variant ? subQty(variant.stock, variant.reservedStock) : 0;
+    return {
+      variantId: item.variantId,
+      requested: item.quantity,
+      available,
+      unitCode: variant?.unitCode ?? DEFAULT_UNIT_CODE,
+      ok: hasEnough(available, item.quantity),
+    };
   });
 
   return NextResponse.json({ ok: items.every((i) => i.ok), items });

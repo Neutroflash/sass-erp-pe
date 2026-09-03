@@ -1,5 +1,6 @@
 import type { Invoice, InvoiceItem } from "@prisma/client";
 import { DOCUMENT_TYPE_CODE, type SunatDocumentTypeCode, type SunatInvoicePayload } from "./types";
+import { toQty } from "@/domain/inventory/quantity";
 
 const BUSINESS_DOCUMENT_TYPE_TO_SUNAT: Record<string, SunatDocumentTypeCode> = {
   DNI: DOCUMENT_TYPE_CODE.DNI,
@@ -32,7 +33,8 @@ export function buildInvoicePdfPayload(
     },
     lineas: invoice.items.map((item) => ({
       description: item.description,
-      quantity: item.quantity,
+      quantity: toQty(item.quantity),
+      unitCode: item.unitCode,
       unitPriceWithTax: Number(item.unitPrice),
     })),
   };

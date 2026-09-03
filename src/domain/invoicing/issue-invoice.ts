@@ -7,6 +7,7 @@ import { OrderNotPaidError, InvoiceAlreadyIssuedError } from "./errors";
 import { reserveInvoiceNumber } from "./counter";
 import { getTenantForInvoicing } from "./tenant-invoicing-info";
 import { notifyInvoiceIssued } from "./notify-invoice-issued";
+import { lineTotal, toQty } from "@/domain/inventory/quantity";
 
 const SERIES: Record<"BOLETA" | "FACTURA", string> = { BOLETA: "B001", FACTURA: "F001" };
 
@@ -31,7 +32,7 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
   const order = await withTenantRLS(prisma, params.tenantId, (tx) =>
     tx.order.findFirst({
       where: { id: params.orderId, tenantId: params.tenantId },
-      include: { items: { include: { variant: { select: { name: true, sku: true } } } }, invoice: true },
+      include: { items: { include: { variant: { select: { name: true, sku: true, unitCode: true } } } }, invoice: true },
     }),
   );
   if (!order) {
@@ -50,12 +51,15 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
   const orderBreakdown = calculateTaxBreakdown(totalAmount);
 
   const items = order.items.map((item) => {
-    const itemTotal = Number(item.price) * item.quantity;
+    const itemTotal = lineTotal(item.quantity, item.price);
     const { igvAmount } = calculateTaxBreakdown(itemTotal);
     return {
       variantId: item.variantId,
       description: `${item.variant.name} (${item.variant.sku})`,
-      quantity: item.quantity,
+      quantity: toQty(item.quantity),
+      // La unidad se copia del producto y queda congelada acá: el comprobante debe seguir
+      // diciendo lo mismo que se le envió a SUNAT aunque el producto cambie después.
+      unitCode: item.variant.unitCode,
       unitPrice: Number(item.price),
       igvAmount,
       totalAmount: itemTotal,
@@ -74,7 +78,7 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
     documentType: params.documentType,
     documentNumber: params.documentNumber,
     businessName: params.businessName,
-    items: items.map((i) => ({ description: i.description, quantity: i.quantity, unitPrice: i.unitPrice })),
+    items: items.map((i) => ({ description: i.description, quantity: i.quantity, unitCode: i.unitCode, unitPrice: i.unitPrice })),
     totalAmount,
     emisorRuc: tenant.ruc ?? undefined,
     emisorBusinessName: tenant.businessName,
@@ -108,6 +112,7 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
             variantId: i.variantId,
             description: i.description,
             quantity: i.quantity,
+            unitCode: i.unitCode,
             unitPrice: i.unitPrice,
             igvAmount: i.igvAmount,
             totalAmount: i.totalAmount,

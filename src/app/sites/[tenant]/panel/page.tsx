@@ -21,6 +21,7 @@ import { cn, formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { KpiCard } from "@/components/panel/reportes/KpiCard";
 import { STATUS_LABEL, STATUS_BADGE_VARIANT } from "@/domain/orders/order-status";
+import { lineTotal } from "@/domain/inventory/quantity";
 
 // Nunca estática — cada tarjeta refleja el estado del negocio en este momento.
 export const dynamic = "force-dynamic";
@@ -85,7 +86,7 @@ export default async function TenantDashboardPage() {
   ]);
 
   const marginTotal = todaysMargin?.reduce(
-    (sum, item) => sum + (Number(item.price) - Number(item.variant.costPrice)) * item.quantity,
+    (sum, item) => sum + lineTotal(item.quantity, Number(item.price) - Number(item.variant.costPrice)),
     0,
   );
 

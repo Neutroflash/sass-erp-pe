@@ -6,6 +6,8 @@ export interface AdminProductVariant {
   costPrice: number;
   stock: number;
   reservedStock: number;
+  /** Catálogo 03 de SUNAT: la tabla muestra "12.5 m", no "12.5". */
+  unitCode: string;
 }
 
 export interface AdminProductImage {

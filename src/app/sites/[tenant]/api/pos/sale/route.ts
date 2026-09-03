@@ -5,10 +5,11 @@ import { requireTenantStaff } from "@/lib/api-guards";
 import { assertFeatureOrRespond403 } from "@/lib/feature-guards";
 import { createPosSale } from "@/domain/orders/create-pos-sale";
 import { InsufficientStockError } from "@/domain/orders/errors";
+import { quantitySchema } from "@/domain/inventory/quantity-schema";
 
 const saleSchema = z.object({
   customerName: z.string().trim().optional(),
-  items: z.array(z.object({ variantId: z.string().uuid(), quantity: z.number().int().positive() })).min(1),
+  items: z.array(z.object({ variantId: z.string().uuid(), quantity: quantitySchema })).min(1),
 });
 
 export async function POST(req: NextRequest) {

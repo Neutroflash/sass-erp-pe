@@ -3,6 +3,7 @@ import { getCurrentTenant } from "@/lib/tenant-context";
 import { requireFeature } from "@/lib/feature-guards";
 import { withTenantRLS } from "@/lib/tenant-rls";
 import { PosTerminal, type PosVariant } from "@/components/panel/PosTerminal";
+import { toQty } from "@/domain/inventory/quantity";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +25,9 @@ export default async function PosPage() {
     name: v.name,
     productName: v.product.name,
     price: Number(v.price),
-    stock: v.stock,
-    reservedStock: v.reservedStock,
+    stock: toQty(v.stock),
+    reservedStock: toQty(v.reservedStock),
+    unitCode: v.unitCode,
   }));
 
   return (

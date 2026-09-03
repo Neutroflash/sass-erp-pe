@@ -6,6 +6,8 @@ import type { AdminProductVariant } from "@/types/panel";
 import { createStockMovement, StockMovementInput } from "@/lib/panel-mutations";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { DEFAULT_UNIT_CODE } from "@/domain/inventory/units";
+import { unitShort } from "@/domain/inventory/units";
 
 const inputClass =
   "h-9 rounded-lg border border-border bg-input px-2 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
@@ -22,6 +24,8 @@ export function StockMovementForm({ variants }: { variants: VariantOption[] }) {
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const selected = variants.find((v) => v.id === variantId);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -57,14 +61,21 @@ export function StockMovementForm({ variants }: { variants: VariantOption[] }) {
           <option value="OUT">Salida (merma, robo)</option>
           <option value="ADJUSTMENT">Ajuste por conteo físico</option>
         </select>
-        <input
-          required
-          type="number"
-          placeholder={type === "ADJUSTMENT" ? "Stock real contado" : "Cantidad"}
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className={inputClass}
-        />
+        <div className="relative">
+          <input
+            required
+            type="number"
+            step="0.001"
+            min="0"
+            placeholder={type === "ADJUSTMENT" ? "Stock real contado" : "Cantidad"}
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={cn(inputClass, "w-full pr-12")}
+          />
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+            {unitShort(selected?.unitCode ?? DEFAULT_UNIT_CODE)}
+          </span>
+        </div>
         <input placeholder="Motivo (opcional)" value={reason} onChange={(e) => setReason(e.target.value)} className={inputClass} />
       </div>
       {error && <span className="text-xs text-destructive">{error}</span>}

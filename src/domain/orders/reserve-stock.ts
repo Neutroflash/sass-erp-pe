@@ -1,6 +1,8 @@
 import type { OrderChannel, Prisma } from "@prisma/client";
 import { InsufficientStockError } from "./errors";
 import { setTenantForTransaction } from "@/lib/tenant-rls";
+import { formatQty, hasEnough, lineTotal, subQty, toParam, toQty } from "@/domain/inventory/quantity";
+import { unitShort } from "@/domain/inventory/units";
 
 export interface CartLineInput {
   variantId: string;
@@ -25,9 +27,12 @@ export interface CreateOrderResult {
 
 interface LockedVariantRow {
   id: string;
-  stock: number;
-  reserved_stock: number;
-  price: string; // Decimal llega como string desde $queryRaw crudo — Number() lo normaliza
+  // `numeric` llega como string desde $queryRaw crudo, igual que `price` — los helpers de
+  // quantity.ts lo normalizan. Tiparlos como number invitaría a restarlos directamente.
+  stock: string;
+  reserved_stock: string;
+  price: string;
+  unit_code: string;
 }
 
 /**
@@ -62,7 +67,7 @@ export async function createOrderWithStockReservation(
     // tenant_id en el WHERE del lock, no solo validado después — así el lock de fila también
     // confirma que la variante es de ESTE negocio, no solo que existe.
     const rows = await tx.$queryRaw<LockedVariantRow[]>`
-      SELECT id, stock, reserved_stock, price FROM product_variants
+      SELECT id, stock, reserved_stock, price, unit_code FROM product_variants
       WHERE id = ${item.variantId} AND tenant_id = ${params.tenantId}
       FOR UPDATE
     `;
@@ -71,19 +76,25 @@ export async function createOrderWithStockReservation(
       throw new InsufficientStockError(`Producto no encontrado`);
     }
 
-    const available = row.stock - row.reserved_stock;
-    if (available < item.quantity) {
-      throw new InsufficientStockError(`Stock insuficiente (disponible: ${available})`);
+    const available = subQty(row.stock, row.reserved_stock);
+    if (!hasEnough(available, item.quantity)) {
+      throw new InsufficientStockError(
+        `Stock insuficiente (disponible: ${formatQty(available)} ${unitShort(row.unit_code)})`,
+      );
     }
 
+    // `::numeric` sobre el literal decimal: un number de JS viaja como double precision y
+    // sumarlo a una columna numeric metería el resultado por punto flotante antes de guardarlo.
     await tx.$executeRaw`
-      UPDATE product_variants SET reserved_stock = reserved_stock + ${item.quantity}, updated_at = now()
+      UPDATE product_variants
+      SET reserved_stock = reserved_stock + ${toParam(item.quantity)}::numeric, updated_at = now()
       WHERE id = ${item.variantId}
     `;
 
     const price = Number(row.price);
-    totalAmount += price * item.quantity;
-    frozenItems.push({ variantId: item.variantId, quantity: item.quantity, price });
+    const quantity = toQty(item.quantity);
+    totalAmount = Math.round((totalAmount + lineTotal(quantity, price)) * 100) / 100;
+    frozenItems.push({ variantId: item.variantId, quantity, price });
   }
 
   const order = await tx.order.create({

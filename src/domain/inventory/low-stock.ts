@@ -1,11 +1,13 @@
 import type { PrismaClient } from "@prisma/client";
 import { withTenantRLS } from "@/lib/tenant-rls";
 import { sendLowStockDigestEmail } from "@/lib/email";
+import { subQty } from "./quantity";
 
 export interface LowStockVariant {
   sku: string;
   name: string;
   available: number;
+  unitCode: string;
   threshold: number;
 }
 
@@ -17,11 +19,11 @@ export async function getLowStockVariants(prisma: PrismaClient, tenantId: string
   const variants = await withTenantRLS(prisma, tenantId, (tx) =>
     tx.productVariant.findMany({
       where: { tenantId },
-      select: { sku: true, name: true, stock: true, reservedStock: true },
+      select: { sku: true, name: true, stock: true, reservedStock: true, unitCode: true },
     }),
   );
   return variants
-    .map((v) => ({ sku: v.sku, name: v.name, available: v.stock - v.reservedStock, threshold }))
+    .map((v) => ({ sku: v.sku, name: v.name, available: subQty(v.stock, v.reservedStock), unitCode: v.unitCode, threshold }))
     .filter((v) => v.available <= threshold)
     .sort((a, b) => a.available - b.available);
 }

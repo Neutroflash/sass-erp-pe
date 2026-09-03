@@ -5,6 +5,7 @@ import { requireTenantStaff } from "@/lib/api-guards";
 import { assertFeatureOrRespond403 } from "@/lib/feature-guards";
 import { withTenantRLS } from "@/lib/tenant-rls";
 import { issueDispatchGuide, GreNotConfiguredError } from "@/domain/dispatch-guides/issue-dispatch-guide";
+import { toQty } from "@/domain/inventory/quantity";
 
 const schema = z.object({
   destinatario: z.object({
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const order = await withTenantRLS(prisma, auth.tenantId, (tx) =>
     tx.order.findFirst({
       where: { id: params.id, tenantId: auth.tenantId },
-      include: { items: { include: { variant: { select: { name: true, sku: true } } } }, dispatchGuide: true },
+      include: { items: { include: { variant: { select: { name: true, sku: true, unitCode: true } } } }, dispatchGuide: true },
     }),
   );
   if (!order) {
@@ -69,8 +70,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       lineas: order.items.map((item) => ({
         variantId: item.variantId,
         description: `${item.variant.name} (${item.variant.sku})`,
-        quantity: item.quantity,
-        unitCode: "NIU",
+        quantity: toQty(item.quantity),
+        unitCode: item.variant.unitCode,
       })),
       emisorBusinessName: tenant.businessName,
     });

@@ -1,5 +1,8 @@
 import { montoEnLetras } from "./amount-to-words";
 import {
+  resolveUnitCode,
+  formatUnitAmount,
+  formatQuantity,
   buildCustomerPartyBlock,
   buildLineTaxTotalBlock,
   buildSignatureBlock,
@@ -48,11 +51,11 @@ export function generateInvoiceXML(payload: SunatInvoicePayload): string {
       (line, i) => `
   <cac:InvoiceLine>
     <cbc:ID>${i + 1}</cbc:ID>
-    <cbc:InvoicedQuantity unitCode="NIU">${line.quantity}</cbc:InvoicedQuantity>
+    <cbc:InvoicedQuantity unitCode="${resolveUnitCode(line.unitCode)}">${formatQuantity(line.quantity)}</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(line.taxedAmount)}</cbc:LineExtensionAmount>
     <cac:PricingReference>
       <cac:AlternativeConditionPrice>
-        <cbc:PriceAmount currencyID="PEN">${formatAmount(line.unitPriceWithTax)}</cbc:PriceAmount>
+        <cbc:PriceAmount currencyID="PEN">${formatUnitAmount(line.unitPriceWithTax)}</cbc:PriceAmount>
         <cbc:PriceTypeCode>01</cbc:PriceTypeCode>
       </cac:AlternativeConditionPrice>
     </cac:PricingReference>
@@ -61,7 +64,7 @@ export function generateInvoiceXML(payload: SunatInvoicePayload): string {
       <cbc:Description>${cdata(line.description)}</cbc:Description>
     </cac:Item>
     <cac:Price>
-      <cbc:PriceAmount currencyID="PEN">${formatAmount(line.unitValue)}</cbc:PriceAmount>
+      <cbc:PriceAmount currencyID="PEN">${formatUnitAmount(line.unitValue)}</cbc:PriceAmount>
     </cac:Price>
   </cac:InvoiceLine>`,
     )

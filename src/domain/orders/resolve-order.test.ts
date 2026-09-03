@@ -2,6 +2,7 @@ import { describe, test, expect, beforeAll, afterAll, beforeEach } from "bun:tes
 import { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { markOrderPaid, releaseOrderHold } from "./resolve-order";
+import { toQty } from "@/domain/inventory/quantity";
 
 /**
  * markOrderPaid/releaseOrderHold son las dos funciones que corren en paralelo real en producción
@@ -74,8 +75,8 @@ describe("markOrderPaid", () => {
     expect([first, second].filter(Boolean)).toHaveLength(1);
 
     const variant = await setupClient.productVariant.findUniqueOrThrow({ where: { id: variantId } });
-    expect(variant.stock).toBe(5 - RESERVED_QTY); // decrementado UNA sola vez, no dos
-    expect(variant.reservedStock).toBe(0);
+    expect(toQty(variant.stock)).toBe(5 - RESERVED_QTY); // decrementado UNA sola vez, no dos
+    expect(toQty(variant.reservedStock)).toBe(0);
 
     const order = await setupClient.order.findUniqueOrThrow({ where: { id: orderId } });
     expect(order.status).toBe("PAID");
@@ -94,8 +95,8 @@ describe("releaseOrderHold", () => {
     expect(result).toBe(true);
 
     const variant = await setupClient.productVariant.findUniqueOrThrow({ where: { id: variantId } });
-    expect(variant.stock).toBe(5); // intacto
-    expect(variant.reservedStock).toBe(0); // liberado
+    expect(toQty(variant.stock)).toBe(5); // intacto
+    expect(toQty(variant.reservedStock)).toBe(0); // liberado
 
     const order = await setupClient.order.findUniqueOrThrow({ where: { id: orderId } });
     expect(order.status).toBe("CANCELLED");

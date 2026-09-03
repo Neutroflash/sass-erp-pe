@@ -1,5 +1,7 @@
 import { calculateTaxBreakdown } from "../tax";
 import type { SunatCustomerInfo, SunatInvoiceLine, SunatPartyInfo } from "./types";
+import { isPositiveQty, lineTotal as computeLineTotal, toQty, QTY_SCALE } from "@/domain/inventory/quantity";
+import { DEFAULT_UNIT_CODE } from "@/domain/inventory/units";
 
 /** Blinda un CDATA contra el único caso en que "]]>" dentro del texto rompería el cierre. */
 export function cdata(text: string): string {
@@ -8,6 +10,29 @@ export function cdata(text: string): string {
 
 export function formatAmount(n: number): string {
   return n.toFixed(2);
+}
+
+/** Cantidad en la escala del sistema (3 decimales): "3.500" metros es un valor válido para SUNAT. */
+export function formatQuantity(n: number): string {
+  return toQty(n).toFixed(QTY_SCALE);
+}
+
+/**
+ * Valor unitario, con más decimales que un importe.
+ *
+ * SUNAT contrasta el valor de venta de la línea contra `valor unitario × cantidad`. Con dos
+ * decimales y cantidades fraccionarias esa multiplicación se desvía: 254.24 entre 3.5 metros da
+ * 72.6400000; redondeado a 72.64 vuelve a dar 254.24, pero con cantidades como 0.375 el error
+ * supera la tolerancia. El estándar admite hasta 10 decimales acá justamente por eso; usamos 6,
+ * que deja el error del orden del millonésimo de sol y mantiene el XML legible.
+ */
+export function formatUnitAmount(n: number): string {
+  return n.toFixed(6);
+}
+
+/** Catálogo 03: NIU (unidad) es el valor con el que se comportaba todo antes de existir el campo. */
+export function resolveUnitCode(unitCode?: string): string {
+  return unitCode && unitCode.trim() ? unitCode : DEFAULT_UNIT_CODE;
 }
 
 export function formatDate(d: Date): string {
@@ -23,9 +48,9 @@ export interface LineBreakdown extends SunatInvoiceLine {
 
 export function computeLineBreakdowns(lineas: SunatInvoiceLine[]): LineBreakdown[] {
   return lineas.map((line) => {
-    const lineTotal = line.unitPriceWithTax * line.quantity;
+    const lineTotal = computeLineTotal(line.quantity, line.unitPriceWithTax);
     const { taxedAmount, igvAmount } = calculateTaxBreakdown(lineTotal);
-    const unitValue = line.quantity > 0 ? taxedAmount / line.quantity : 0;
+    const unitValue = isPositiveQty(line.quantity) ? taxedAmount / toQty(line.quantity) : 0;
     return { ...line, lineTotal, taxedAmount, igvAmount, unitValue };
   });
 }

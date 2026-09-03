@@ -1,5 +1,8 @@
 import { montoEnLetras } from "./amount-to-words";
 import {
+  resolveUnitCode,
+  formatUnitAmount,
+  formatQuantity,
   buildCustomerPartyBlock,
   buildLineTaxTotalBlock,
   buildSignatureBlock,
@@ -62,7 +65,7 @@ export function generateCreditNoteXML(payload: SunatNotePayload): string {
       (line, i) => `
   <cac:CreditNoteLine>
     <cbc:ID>${i + 1}</cbc:ID>
-    <cbc:CreditedQuantity unitCode="NIU">${line.quantity}</cbc:CreditedQuantity>
+    <cbc:CreditedQuantity unitCode="${resolveUnitCode(line.unitCode)}">${formatQuantity(line.quantity)}</cbc:CreditedQuantity>
     <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(line.taxedAmount)}</cbc:LineExtensionAmount>
     <cac:PricingReference>
       <cac:AlternativeConditionPrice>
@@ -126,7 +129,7 @@ export function generateDebitNoteXML(payload: SunatNotePayload): string {
       (line, i) => `
   <cac:DebitNoteLine>
     <cbc:ID>${i + 1}</cbc:ID>
-    <cbc:DebitedQuantity unitCode="NIU">${line.quantity}</cbc:DebitedQuantity>
+    <cbc:DebitedQuantity unitCode="${resolveUnitCode(line.unitCode)}">${formatQuantity(line.quantity)}</cbc:DebitedQuantity>
     <cbc:LineExtensionAmount currencyID="PEN">${formatAmount(line.taxedAmount)}</cbc:LineExtensionAmount>
     <cac:PricingReference>
       <cac:AlternativeConditionPrice>

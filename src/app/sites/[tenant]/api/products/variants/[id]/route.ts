@@ -3,13 +3,17 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireTenantStaff } from "@/lib/api-guards";
 import { setTenantForTransaction, withTenantRLS } from "@/lib/tenant-rls";
+import { subQty } from "@/domain/inventory/quantity";
+import { stockSchema } from "@/domain/inventory/quantity-schema";
+import { unitCodeSchema } from "@/domain/inventory/quantity-schema";
 
 // reservedStock intencionalmente ausente — lo gestiona solo el motor de reserva de órdenes
 // (src/domain/orders/reserve-stock.ts), nunca una edición manual.
 const updateVariantSchema = z.object({
   price: z.number().positive().optional(),
   costPrice: z.number().nonnegative().optional(),
-  stock: z.number().int().nonnegative().optional(),
+  stock: stockSchema.optional(),
+  unitCode: unitCodeSchema.optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -34,7 +38,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   const { stock, ...rest } = parsed.data;
-  const stockDelta = stock !== undefined ? stock - existing.stock : 0;
+  const stockDelta = stock !== undefined ? subQty(stock, existing.stock) : 0;
 
   // Si el stock cambió, el ajuste y el movimiento de kardex se registran en la MISMA transacción —
   // nunca debería poder existir un cambio de stock sin su fila correspondiente en StockMovement

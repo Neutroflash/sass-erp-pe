@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createOrderWithStockReservation } from "./reserve-stock";
 import { InsufficientStockError } from "./errors";
+import { toQty } from "@/domain/inventory/quantity";
 
 /**
  * Contra Postgres real, no un Prisma mockeado — es lo único que valida de verdad el `FOR UPDATE`
@@ -84,8 +85,8 @@ describe("createOrderWithStockReservation — concurrencia real contra Postgres"
     }
 
     const finalVariant = await setupClient.productVariant.findUniqueOrThrow({ where: { id: variantId } });
-    expect(finalVariant.reservedStock).toBe(STARTING_STOCK); // nunca sobrevendido
-    expect(finalVariant.stock).toBe(STARTING_STOCK); // el stock físico no se toca acá, solo el hold
+    expect(toQty(finalVariant.reservedStock)).toBe(STARTING_STOCK); // nunca sobrevendido
+    expect(toQty(finalVariant.stock)).toBe(STARTING_STOCK); // el stock físico no se toca acá, solo el hold
 
     const orderCount = await setupClient.order.count({ where: { tenantId } });
     expect(orderCount).toBe(STARTING_STOCK); // un Order real por cada reserva exitosa, ni uno más

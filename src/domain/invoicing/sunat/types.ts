@@ -30,6 +30,11 @@ export interface SunatCustomerInfo {
 export interface SunatInvoiceLine {
   description: string;
   quantity: number;
+  /**
+   * Catálogo 03 de SUNAT. Opcional en el tipo por compatibilidad con los llamadores que solo
+   * venden unidades; el generador de XML asume NIU cuando falta.
+   */
+  unitCode?: string;
   /** Precio de venta unitario, CON IGV — lo que el cliente efectivamente paga por unidad. */
   unitPriceWithTax: number;
 }

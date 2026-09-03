@@ -1,4 +1,5 @@
 import type { Product, ProductImage, ProductVariant } from "@prisma/client";
+import { isPositiveQty, subQty } from "./quantity";
 
 export type ProductWithRelations = Product & {
   variants: ProductVariant[];
@@ -11,6 +12,8 @@ export interface PublicVariant {
   sku: string;
   name: string;
   price: number;
+  /** Catálogo 03 de SUNAT: la tienda necesita mostrar "S/ 24.00 / m", no "S/ 24.00". */
+  unitCode: string;
   inStock: boolean;
   attributes: Record<string, unknown>;
 }
@@ -34,7 +37,8 @@ export function toPublicVariant(variant: ProductVariant): PublicVariant {
     sku: variant.sku,
     name: variant.name,
     price: Number(variant.price),
-    inStock: variant.stock - variant.reservedStock > 0,
+    unitCode: variant.unitCode,
+    inStock: isPositiveQty(subQty(variant.stock, variant.reservedStock)),
     attributes: variant.attributes as Record<string, unknown>,
   };
 }

@@ -8,8 +8,9 @@ import { InsufficientStockError } from "@/domain/orders/errors";
 import { stockHoldScheduler } from "@/lib/stock-hold-queue";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { assertPublicStorefrontOrRespond404 } from "@/lib/feature-guards";
+import { quantitySchema } from "@/domain/inventory/quantity-schema";
 
-const cartItemSchema = z.object({ variantId: z.string().uuid(), quantity: z.number().int().positive() });
+const cartItemSchema = z.object({ variantId: z.string().uuid(), quantity: quantitySchema });
 
 const createOrderSchema = z.object({
   customerName: z.string().min(2),

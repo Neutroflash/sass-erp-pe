@@ -3,6 +3,9 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireTenantStaff } from "@/lib/api-guards";
 import { setTenantForTransaction, withTenantRLS } from "@/lib/tenant-rls";
+import { quantitySchema, stockSchema } from "@/domain/inventory/quantity-schema";
+import { addQty, formatQty, hasEnough, subQty, toQty } from "@/domain/inventory/quantity";
+import { unitShort } from "@/domain/inventory/units";
 
 const baseSchema = z.object({
   variantId: z.string().uuid(),
@@ -16,9 +19,9 @@ const baseSchema = z.object({
 // Cada miembro con un único z.literal como discriminante (no z.enum) — es lo que permite que
 // TypeScript/Zod narroween `input.type === "IN"` correctamente más abajo; un enum de 2 valores
 // como discriminante de discriminatedUnion no infiere tan preciso.
-const inSchema = baseSchema.extend({ type: z.literal("IN"), quantity: z.number().int().positive() });
-const outSchema = baseSchema.extend({ type: z.literal("OUT"), quantity: z.number().int().positive() });
-const adjustmentSchema = baseSchema.extend({ type: z.literal("ADJUSTMENT"), newStock: z.number().int().nonnegative() });
+const inSchema = baseSchema.extend({ type: z.literal("IN"), quantity: quantitySchema });
+const outSchema = baseSchema.extend({ type: z.literal("OUT"), quantity: quantitySchema });
+const adjustmentSchema = baseSchema.extend({ type: z.literal("ADJUSTMENT"), newStock: stockSchema });
 const stockMovementSchema = z.discriminatedUnion("type", [inSchema, outSchema, adjustmentSchema]);
 
 export async function GET() {
@@ -52,21 +55,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Variante no encontrada" }, { status: 404 });
   }
 
-  if (input.type === "OUT" && input.quantity > variant.stock) {
-    return NextResponse.json({ error: `No hay suficiente stock: quedan ${variant.stock} unidades` }, { status: 409 });
+  if (input.type === "OUT" && !hasEnough(variant.stock, input.quantity)) {
+    return NextResponse.json(
+      { error: `No hay suficiente stock: quedan ${formatQty(variant.stock)} ${unitShort(variant.unitCode)}` },
+      { status: 409 },
+    );
   }
 
   let newStock: number;
   let quantity: number;
   if (input.type === "IN") {
-    newStock = variant.stock + input.quantity;
-    quantity = input.quantity;
+    newStock = addQty(variant.stock, input.quantity);
+    quantity = toQty(input.quantity);
   } else if (input.type === "OUT") {
-    newStock = variant.stock - input.quantity;
-    quantity = input.quantity;
+    newStock = subQty(variant.stock, input.quantity);
+    quantity = toQty(input.quantity);
   } else {
-    newStock = input.newStock;
-    quantity = Math.abs(input.newStock - variant.stock);
+    newStock = toQty(input.newStock);
+    quantity = Math.abs(subQty(input.newStock, variant.stock));
   }
 
   const movement = await prisma.$transaction(async (tx) => {

@@ -6,6 +6,8 @@ import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { createPosSale } from "@/lib/panel-mutations";
 import { formatPrice, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { addQty, formatQty, hasEnough, isPositiveQty, lineTotal, subQty, toQty, QTY_SCALE } from "@/domain/inventory/quantity";
+import { unitShort } from "@/domain/inventory/units";
 
 export interface PosVariant {
   id: string;
@@ -15,6 +17,7 @@ export interface PosVariant {
   price: number;
   stock: number;
   reservedStock: number;
+  unitCode: string;
 }
 
 interface SaleLine {
@@ -23,6 +26,10 @@ interface SaleLine {
   price: number;
   quantity: number;
   available: number;
+  unitCode: string;
+  /** Lo que el vendedor está tecleando. Se guarda aparte de `quantity` para no pelearle al
+   *  cursor mientras escribe estados intermedios como "3." o "0.7" antes de completar. */
+  input: string;
 }
 
 const inputClass =
@@ -48,22 +55,66 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
   }, [query, variants]);
 
   function addToCart(variant: PosVariant) {
-    const available = variant.stock - variant.reservedStock;
+    const available = subQty(variant.stock, variant.reservedStock);
     setCart((prev) => {
       const existing = prev.find((l) => l.variantId === variant.id);
       if (existing) {
-        return prev.map((l) => (l.variantId === variant.id ? { ...l, quantity: Math.min(l.quantity + 1, available) } : l));
+        const next = clamp(addQty(existing.quantity, 1), available);
+        return prev.map((l) => (l.variantId === variant.id ? { ...l, quantity: next, input: formatQty(next) } : l));
       }
-      return [...prev, { variantId: variant.id, label: `${variant.productName} — ${variant.name}`, price: variant.price, quantity: 1, available }];
+      const quantity = clamp(1, available);
+      return [
+        ...prev,
+        {
+          variantId: variant.id,
+          label: `${variant.productName} — ${variant.name}`,
+          price: variant.price,
+          quantity,
+          available,
+          unitCode: variant.unitCode,
+          input: formatQty(quantity),
+        },
+      ];
     });
     setQuery("");
+  }
+
+  /** Nunca por encima de lo disponible ni por debajo de cero. */
+  function clamp(quantity: number, available: number) {
+    if (!hasEnough(available, quantity)) return toQty(available);
+    return Math.max(0, toQty(quantity));
   }
 
   function changeQuantity(variantId: string, delta: number) {
     setCart((prev) =>
       prev
-        .map((l) => (l.variantId === variantId ? { ...l, quantity: Math.max(0, Math.min(l.quantity + delta, l.available)) } : l))
-        .filter((l) => l.quantity > 0),
+        .map((l) => {
+          if (l.variantId !== variantId) return l;
+          const next = clamp(addQty(l.quantity, delta), l.available);
+          return { ...l, quantity: next, input: formatQty(next) };
+        })
+        .filter((l) => isPositiveQty(l.quantity)),
+    );
+  }
+
+  /** Teclear la cantidad: lo que se ve es lo que el vendedor escribió; lo que se cobra es lo validado. */
+  function typeQuantity(variantId: string, raw: string) {
+    setCart((prev) =>
+      prev.map((l) => {
+        if (l.variantId !== variantId) return l;
+        const parsed = Number(raw);
+        if (raw === "" || !Number.isFinite(parsed)) return { ...l, input: raw, quantity: 0 };
+        return { ...l, input: raw, quantity: clamp(parsed, l.available) };
+      }),
+    );
+  }
+
+  /** Al salir del campo se normaliza a la escala real y se descarta la línea vacía. */
+  function commitQuantity(variantId: string) {
+    setCart((prev) =>
+      prev
+        .map((l) => (l.variantId === variantId ? { ...l, input: formatQty(l.quantity) } : l))
+        .filter((l) => isPositiveQty(l.quantity)),
     );
   }
 
@@ -71,7 +122,7 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
     setCart((prev) => prev.filter((l) => l.variantId !== variantId));
   }
 
-  const total = cart.reduce((sum, l) => sum + l.price * l.quantity, 0);
+  const total = cart.reduce((sum, l) => sum + lineTotal(l.quantity, l.price), 0);
 
   async function handleCharge() {
     setSubmitting(true);
@@ -105,19 +156,27 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
           {results.length > 0 && (
             <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-border/80 bg-card shadow-xl">
               {results.map((v) => {
-                const available = v.stock - v.reservedStock;
+                const available = subQty(v.stock, v.reservedStock);
                 return (
                   <button
                     key={v.id}
                     type="button"
-                    disabled={available <= 0}
+                    disabled={!isPositiveQty(available)}
                     onClick={() => addToCart(v)}
                     className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <span>
                       {v.productName} — {v.name} <span className="text-muted-foreground">({v.sku})</span>
                     </span>
-                    <span className="text-primary">{formatPrice(v.price)}</span>
+                    <span className="flex items-center gap-3">
+                      <span className="text-xs text-muted-foreground">
+                        {formatQty(available)} {unitShort(v.unitCode)}
+                      </span>
+                      <span className="text-primary">
+                        {formatPrice(v.price)}
+                        <span className="text-xs text-muted-foreground">/{unitShort(v.unitCode)}</span>
+                      </span>
+                    </span>
                   </button>
                 );
               })}
@@ -153,13 +212,25 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
                         <Button size="icon" variant="outline" onClick={() => changeQuantity(line.variantId, -1)}>
                           <Minus className="h-3 w-3" />
                         </Button>
-                        <span className="w-6 text-center text-sm text-foreground">{line.quantity}</span>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          step={1 / 10 ** QTY_SCALE}
+                          min={0}
+                          max={line.available}
+                          value={line.input}
+                          onChange={(e) => typeQuantity(line.variantId, e.target.value)}
+                          onBlur={() => commitQuantity(line.variantId)}
+                          aria-label={`Cantidad de ${line.label}`}
+                          className={cn(inputClass, "h-9 w-24 text-center")}
+                        />
+                        <span className="text-xs text-muted-foreground">{unitShort(line.unitCode)}</span>
                         <Button size="icon" variant="outline" onClick={() => changeQuantity(line.variantId, 1)}>
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
                     </td>
-                    <td className="p-3 text-sm font-medium text-foreground">{formatPrice(line.price * line.quantity)}</td>
+                    <td className="p-3 text-sm font-medium text-foreground">{formatPrice(lineTotal(line.quantity, line.price))}</td>
                     <td className="p-3">
                       <Button size="icon" variant="ghost" onClick={() => removeLine(line.variantId)}>
                         <Trash2 className="h-4 w-4 text-red-400" />
@@ -193,7 +264,7 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
 
         {error && <span className="text-sm text-destructive">{error}</span>}
 
-        <Button disabled={cart.length === 0 || submitting} onClick={handleCharge}>
+        <Button disabled={cart.length === 0 || !cart.every((l) => isPositiveQty(l.quantity)) || submitting} onClick={handleCharge}>
           {submitting ? "Procesando..." : "Cobrar"}
         </Button>
 

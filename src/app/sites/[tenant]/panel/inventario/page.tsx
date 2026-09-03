@@ -8,6 +8,7 @@ import { withTenantRLS } from "@/lib/tenant-rls";
 import { InventoryDataTable } from "@/components/panel/inventario/InventoryDataTable";
 import { Button } from "@/components/ui/button";
 import type { AdminProduct } from "@/types/panel";
+import { toQty } from "@/domain/inventory/quantity";
 
 export const dynamic = "force-dynamic";
 
@@ -73,8 +74,9 @@ export default async function InventoryPage({
       name: v.name,
       price: Number(v.price),
       costPrice: canSeeCost ? Number(v.costPrice) : 0,
-      stock: v.stock,
-      reservedStock: v.reservedStock,
+      stock: toQty(v.stock),
+      reservedStock: toQty(v.reservedStock),
+      unitCode: v.unitCode,
     })),
   }));
 

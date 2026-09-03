@@ -5,6 +5,7 @@ import { withTenantRLS } from "@/lib/tenant-rls";
 import { StockMovementForm } from "@/components/panel/StockMovementForm";
 import { DataTable } from "@/components/panel/data-table/data-table";
 import { columns, TYPE_LABEL, type AdminMovementRow } from "@/components/panel/kardex/columns";
+import { toQty } from "@/domain/inventory/quantity";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +55,7 @@ export default async function KardexPage({
     }),
     await tx.stockMovement.findMany({
       where,
-      include: { variant: { select: { sku: true, name: true, product: { select: { name: true } } } }, createdBy: { select: { name: true } } },
+      include: { variant: { select: { sku: true, name: true, unitCode: true, product: { select: { name: true } } } }, createdBy: { select: { name: true } } },
       orderBy,
       skip: (page - 1) * pageSize,
       take: pageSize,
@@ -66,7 +67,8 @@ export default async function KardexPage({
     id: m.id,
     createdAt: m.createdAt.toISOString(),
     type: m.type,
-    quantity: m.quantity,
+    quantity: toQty(m.quantity),
+    unitCode: m.variant.unitCode,
     reason: m.reason,
     productName: m.variant.product.name,
     variantName: m.variant.name,
@@ -78,7 +80,19 @@ export default async function KardexPage({
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold text-foreground">Kardex</h1>
 
-      <StockMovementForm variants={variants.map((v) => ({ ...v, price: 0, costPrice: 0, productName: v.product.name }))} />
+      <StockMovementForm
+        variants={variants.map((v) => ({
+          id: v.id,
+          sku: v.sku,
+          name: v.name,
+          productName: v.product.name,
+          stock: toQty(v.stock),
+          reservedStock: toQty(v.reservedStock),
+          unitCode: v.unitCode,
+          price: 0,
+          costPrice: 0,
+        }))}
+      />
 
       <DataTable
         columns={columns}

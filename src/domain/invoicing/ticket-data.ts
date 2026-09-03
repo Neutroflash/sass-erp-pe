@@ -5,6 +5,7 @@ import { extractDocumentDigestValue } from "./sunat/extract-digest";
 import { buildQrContent } from "./sunat/qr";
 import { montoEnLetras } from "./sunat/amount-to-words";
 import type { TicketComprobanteData } from "@/types/ticket";
+import { toQty } from "@/domain/inventory/quantity";
 
 /**
  * Compartido entre `/api/invoices/[id]/ticket-data` (JSON, por si algún consumidor externo lo
@@ -58,7 +59,7 @@ export async function buildTicketComprobanteData(
     // pago (manual vs. Izipay) — nunca se inventa un dato que no se tiene.
     pago: { forma: "CONTADO" },
     items: invoice.items.map((item) => ({
-      cantidad: item.quantity,
+      cantidad: toQty(item.quantity),
       descripcion: item.description,
       precioUnitario: Number(item.unitPrice),
       importe: Number(item.totalAmount),

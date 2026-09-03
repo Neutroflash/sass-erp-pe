@@ -4,6 +4,8 @@ import { getCurrentTenant } from "@/lib/tenant-context";
 import { withTenantRLS } from "@/lib/tenant-rls";
 import { formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { formatQty, lineTotal, toQty } from "@/domain/inventory/quantity";
+import { unitShort } from "@/domain/inventory/units";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +20,7 @@ export default async function OrderConfirmationPage({ params }: { params: { orde
   const order = await withTenantRLS(prisma, tenant.id, (tx) =>
     tx.order.findFirst({
       where: { id: params.orderId, tenantId: tenant.id },
-      include: { items: { include: { variant: { select: { sku: true, name: true } } } } },
+      include: { items: { include: { variant: { select: { sku: true, name: true, unitCode: true } } } } },
     }),
   );
   if (!order) notFound();
@@ -41,9 +43,10 @@ export default async function OrderConfirmationPage({ params }: { params: { orde
         {order.items.map((item) => (
           <div key={item.id} className="flex justify-between text-sm text-foreground/90">
             <span>
-              {item.variant.name} <span className="text-muted-foreground">({item.variant.sku})</span> x{item.quantity}
+              {item.variant.name} <span className="text-muted-foreground">({item.variant.sku})</span> x{formatQty(item.quantity)}{" "}
+              <span className="text-muted-foreground">{unitShort(item.variant.unitCode)}</span>
             </span>
-            <span>{formatPrice(Number(item.price) * item.quantity)}</span>
+            <span>{formatPrice(lineTotal(item.quantity, item.price))}</span>
           </div>
         ))}
         <div className="mt-2 flex justify-between border-t border-border pt-2 font-bold text-foreground">

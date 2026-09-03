@@ -9,6 +9,7 @@ export interface AdminMovementRow {
   createdAt: string;
   type: "IN" | "OUT" | "ADJUSTMENT";
   quantity: number;
+  unitCode: string;
   reason: string | null;
   productName: string;
   variantName: string;

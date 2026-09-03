@@ -7,6 +7,8 @@ import { RelatedInvoiceNotIssuedError, InvalidNoteReasonError } from "./errors";
 import { reserveInvoiceNumber } from "./counter";
 import { getTenantForInvoicing } from "./tenant-invoicing-info";
 import { findNoteReason, resolveNoteSeries } from "./sunat/note-catalogs";
+import { lineTotal, toQty } from "@/domain/inventory/quantity";
+import { DEFAULT_UNIT_CODE } from "@/domain/inventory/units";
 
 export interface IssueCreditDebitNoteParams {
   tenantId: string;
@@ -60,7 +62,8 @@ export async function issueCreditDebitNoteForInvoice(prisma: PrismaClient, param
       ? relatedInvoice.items.map((item) => ({
           variantId: item.variantId,
           description: item.description,
-          quantity: item.quantity,
+          quantity: toQty(item.quantity),
+          unitCode: item.unitCode,
           unitPrice: Number(item.unitPrice),
         }))
       : [
@@ -68,15 +71,18 @@ export async function issueCreditDebitNoteForInvoice(prisma: PrismaClient, param
             variantId: null as string | null,
             description: params.customDescription?.trim() || reason.label,
             quantity: 1,
+            // Un ajuste que no mapea 1:1 con líneas del original se expresa como un concepto,
+            // no como una medida: NIU es la unidad correcta para eso, no el metro del original.
+            unitCode: DEFAULT_UNIT_CODE,
             unitPrice: params.customAmount ?? 0,
           },
         ];
 
-  const totalAmount = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+  const totalAmount = items.reduce((sum, i) => sum + lineTotal(i.quantity, i.unitPrice), 0);
   const noteBreakdown = calculateTaxBreakdown(totalAmount);
 
   const itemsWithTax = items.map((item) => {
-    const itemTotal = item.unitPrice * item.quantity;
+    const itemTotal = lineTotal(item.quantity, item.unitPrice);
     const { igvAmount } = calculateTaxBreakdown(itemTotal);
     return { ...item, igvAmount, totalAmount: itemTotal };
   });
@@ -96,7 +102,7 @@ export async function issueCreditDebitNoteForInvoice(prisma: PrismaClient, param
     documentType: relatedInvoice.documentType,
     documentNumber: relatedInvoice.documentNumber,
     businessName: relatedInvoice.businessName ?? undefined,
-    items: itemsWithTax.map((i) => ({ description: i.description, quantity: i.quantity, unitPrice: i.unitPrice })),
+    items: itemsWithTax.map((i) => ({ description: i.description, quantity: i.quantity, unitCode: i.unitCode, unitPrice: i.unitPrice })),
     totalAmount,
     emisorRuc: tenant.ruc ?? undefined,
     emisorBusinessName: tenant.businessName,

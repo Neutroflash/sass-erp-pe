@@ -11,6 +11,8 @@ export interface CreateProductVariantInput {
   price: number;
   costPrice: number;
   stock: number;
+  /** Catálogo 03 de SUNAT (NIU, MTR, KGM...). Ausente = NIU. */
+  unitCode?: string;
   attributes?: Record<string, string>;
 }
 

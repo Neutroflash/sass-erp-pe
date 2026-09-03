@@ -9,6 +9,8 @@ import { formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { InvoiceSection, type OrderInvoiceSummary } from "@/components/panel/InvoiceSection";
 import { DispatchGuideSection, type OrderDispatchGuideSummary } from "@/components/panel/DispatchGuideSection";
+import { formatQty, lineTotal, toQty } from "@/domain/inventory/quantity";
+import { unitShort } from "@/domain/inventory/units";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +31,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
       tx.order.findFirst({
         where: { id: params.id, tenantId: tenant.id },
         include: {
-          items: { include: { variant: { select: { sku: true, name: true } } } },
+          items: { include: { variant: { select: { sku: true, name: true, unitCode: true } } } },
           invoice: { include: { corrections: true } },
           dispatchGuide: true,
         },
@@ -102,9 +104,10 @@ export default async function OrderDetailPage({ params }: { params: { id: string
           {order.items.map((item) => (
             <div key={item.id} className="flex justify-between text-sm text-foreground/90">
               <span>
-                {item.variant.name} <span className="text-muted-foreground">({item.variant.sku})</span> x{item.quantity}
+                {item.variant.name} <span className="text-muted-foreground">({item.variant.sku})</span> x{formatQty(item.quantity)}{" "}
+                <span className="text-muted-foreground">{unitShort(item.variant.unitCode)}</span>
               </span>
-              <span>{formatPrice(Number(item.price) * item.quantity)}</span>
+              <span>{formatPrice(lineTotal(item.quantity, item.price))}</span>
             </div>
           ))}
           <div className="mt-2 flex justify-between border-t border-border/60 pt-2 font-bold text-foreground">
