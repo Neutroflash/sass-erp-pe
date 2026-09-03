@@ -53,6 +53,8 @@ export class SunatInvoicingGateway implements InvoicingGateway {
       lineas: input.items.map((item) => ({
         description: item.description,
         quantity: item.quantity,
+        unitCode: item.unitCode,
+        taxAffectationCode: item.taxAffectationCode,
         unitPriceWithTax: item.unitPrice,
       })),
     };
@@ -89,6 +91,8 @@ export class SunatInvoicingGateway implements InvoicingGateway {
       lineas: input.items.map((item) => ({
         description: item.description,
         quantity: item.quantity,
+        unitCode: item.unitCode,
+        taxAffectationCode: item.taxAffectationCode,
         unitPriceWithTax: item.unitPrice,
       })),
     };
