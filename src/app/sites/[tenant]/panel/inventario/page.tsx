@@ -6,6 +6,7 @@ import { getCurrentTenant } from "@/lib/tenant-context";
 import { getCurrentTenantUser } from "@/lib/auth";
 import { withTenantRLS } from "@/lib/tenant-rls";
 import { InventoryDataTable } from "@/components/panel/inventario/InventoryDataTable";
+import { ImportProductsDialog } from "@/components/panel/inventario/ImportProductsDialog";
 import { Button } from "@/components/ui/button";
 import type { AdminProduct } from "@/types/panel";
 import { toQty } from "@/domain/inventory/quantity";
@@ -87,12 +88,15 @@ export default async function InventoryPage({
         <h1 className="text-2xl font-bold text-foreground">Inventario</h1>
         {/* Crear un producto fija su costo inicial — decisión de OWNER, ver POST /api/products. */}
         {canSeeCost && (
-          <Link href="/panel/inventario/nuevo">
-            <Button size="sm">
-              <Plus className="h-4 w-4" />
-              Nuevo producto
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <ImportProductsDialog />
+            <Link href="/panel/inventario/nuevo">
+              <Button size="sm">
+                <Plus className="h-4 w-4" />
+                Nuevo producto
+              </Button>
+            </Link>
+          </div>
         )}
       </div>
       <InventoryDataTable
