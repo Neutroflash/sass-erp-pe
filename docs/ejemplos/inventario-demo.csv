@@ -1,0 +1,20 @@
+Cód. Interno;Nombre;Grupo;Categoría;Unidad;Stock;P.Público;Costo;Tiene Igv (Venta)
+42;Abreojal;;Avíos;Unidades;120;1.50;0.90;Si
+98;Aceite para máquina;;Insumos;Unidades;18;5.00;3.20;Si
+96;Aguja;;Avíos;Unidades;340;1.00;0.55;Si
+94;Alfiler;;Avíos;Unidades;500;1.50;0.80;Si
+39;Algodón estampado;;Telas;Metros;62.5;15.00;9.50;Si
+38;Algodón llano;;Telas;Metros;145.5;14.00;8.80;Si
+00124;Antifluido;;Telas;Metros;80;14.00;9.00;Si
+84;Ballenas;;Avíos;Unidades;200;1.00;0.45;Si
+24;Bersarch;;Telas;Unidades;35;25.00;16.00;Si
+19;Blonda;;Avíos;Metros;210.5;2.00;1.10;Si
+00122;Bobina;;Insumos;Unidades;90;10.00;6.50;Si
+60;Boina;;Confección;Unidades;44;4.00;2.30;Si
+88;Bolsillo;;Confección;Unidades;260;5.00;2.80;Si
+TT-LLANO-BLA;Blanco;Tela toalla llana;Telas;Metros;70;18.00;11.50;Si
+TT-LLANO-CEL;Celeste;Tela toalla llana;Telas;Metros;55.5;18.00;11.50;Si
+TT-LLANO-ROS;Rosado;Tela toalla llana;Telas;Metros;48;18.00;11.50;Si
+TT-EST-00301;Estampado 00301;Tela toalla estampada;Telas;Metros;32.5;22.00;14.00;Si
+TT-EST-00302;Estampado 00302;Tela toalla estampada;Telas;Metros;27;22.00;14.00;Si
+TT-EST-00305;Estampado 00305;Tela toalla estampada;Telas;Metros;15.5;22.00;14.00;Si
