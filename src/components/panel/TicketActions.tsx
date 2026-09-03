@@ -4,6 +4,57 @@ import { useState } from "react";
 import { toPng } from "html-to-image";
 import { Button } from "@/components/ui/button";
 
+const PAGE_WIDTH_MM = 80; // rollo POS-80 completo (el contenido va a 72mm, ver TicketComprobante)
+const CSS_PX_PER_INCH = 96;
+const MM_PER_INCH = 25.4;
+/** Un par de milímetros de aire: si la altura se queda corta, el ticket se parte en dos páginas. */
+const HEIGHT_SAFETY_MM = 3;
+
+/**
+ * Mide cuánto va a medir el ticket IMPRESO, no el que se ve en pantalla.
+ *
+ * No son lo mismo: en pantalla el ticket se muestra a 320px para que se pueda leer cómodo, y al
+ * imprimir pasa a 72mm (~272px). Una columna más angosta parte más líneas, así que el ticket
+ * impreso es más ALTO que el de pantalla — medir el de pantalla da de menos y el ticket termina
+ * cortado en dos hojas. Por eso se le aplica el ancho y el padding reales de impresión, se mide, y
+ * se revierte antes de que el navegador llegue a pintar.
+ */
+function measurePrintHeightMm(node: HTMLElement): number {
+  node.classList.add("ticket-measuring");
+  const heightPx = node.getBoundingClientRect().height;
+  node.classList.remove("ticket-measuring");
+  return Math.ceil((heightPx / CSS_PX_PER_INCH) * MM_PER_INCH) + HEIGHT_SAFETY_MM;
+}
+
+/**
+ * Fija el tamaño de página al alto real del ticket, justo antes de imprimir.
+ *
+ * Esto vivía en globals.css como `@page { size: 80mm auto }` y **no funcionaba**: la gramática de
+ * `size` (CSS Paged Media 3) es `<length>{1,2} | auto | <page-size>`, o sea que `auto` no se puede
+ * combinar con una medida. La declaración entera era inválida, el navegador la descartaba, y el
+ * ticket salía de 72mm arriba a la izquierda de una hoja A4.
+ *
+ * Con una altura concreta la regla es válida. Además queda EXACTA: en una térmica de rollo continuo
+ * una página más alta que el ticket es papel en blanco que se alimenta y se corta de más.
+ */
+function withTicketPageSize(node: HTMLElement, print: () => void) {
+  const style = document.createElement("style");
+  style.textContent = `@page { size: ${PAGE_WIDTH_MM}mm ${measurePrintHeightMm(node)}mm; margin: 0; }`;
+  document.head.appendChild(style);
+
+  const cleanup = () => {
+    style.remove();
+    window.removeEventListener("afterprint", cleanup);
+  };
+  window.addEventListener("afterprint", cleanup);
+
+  print();
+
+  // Safari no dispara `afterprint` de forma confiable — sin esta red de seguridad la regla se
+  // quedaría pegada y la siguiente impresión usaría la altura del ticket anterior.
+  window.setTimeout(cleanup, 60_000);
+}
+
 /**
  * Imprimir/PDF usa el diálogo nativo del navegador (`window.print()` → "Guardar como PDF") en vez
  * de una librería — es la forma más confiable de respetar el layout exacto del ticket (CSS real,
@@ -13,6 +64,12 @@ import { Button } from "@/components/ui/button";
 export function TicketActions({ targetId, fileName }: { targetId: string; fileName: string }) {
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function handlePrint() {
+    const node = document.getElementById(targetId);
+    if (!node) return;
+    withTicketPageSize(node, () => window.print());
+  }
 
   async function handleExportPng() {
     const node = document.getElementById(targetId);
@@ -35,7 +92,7 @@ export function TicketActions({ targetId, fileName }: { targetId: string; fileNa
   return (
     <div className="flex flex-col items-center gap-2 print:hidden">
       <div className="flex gap-2">
-        <Button size="sm" onClick={() => window.print()}>
+        <Button size="sm" onClick={handlePrint}>
           Imprimir / Guardar PDF
         </Button>
         <Button size="sm" variant="outline" disabled={exporting} onClick={handleExportPng}>

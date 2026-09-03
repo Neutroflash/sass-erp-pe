@@ -106,19 +106,25 @@
   }
 }
 
-/* Tamaño de página para el ticket térmico (TicketComprobante.tsx / POS-80, Epson TM-T20, 80mm de
-   rollo continuo) — @page solo tiene efecto en impresión/vista previa de impresión, así que
-   declararlo acá no afecta el layout en pantalla de ningún otro componente. Es la única superficie
-   imprimible de todo el proyecto hoy (`grep window.print` da un solo resultado): si en algún
-   momento se agrega otra (ej. un PDF A4), esta regla global va a necesitar volverse una @page con
-   nombre (`page: ticket` en el contenedor + `@page ticket { ... }`) para no pisarla.
-   `margin: 0` es también lo que hace que Chrome/Edge dejen de imprimir su cabecera/pie por
-   defecto (URL, fecha, "Página 1 de 1") — no hay margen donde dibujarlos. Sigue existiendo la
-   casilla "Encabezados y pies de página" del diálogo de impresión del navegador, que ninguna regla
-   de CSS puede forzar desde afuera; `margin: 0` es lo que sí controla el proyecto. */
+/* Impresión del ticket térmico (TicketComprobante.tsx / POS-80, Epson TM-T20, 80mm de rollo).
+   Acá va SOLO el margen; el tamaño de página lo inyecta TicketActions.tsx justo antes de imprimir,
+   porque depende de cuán largo sea el ticket. Ver el comentario ahí.
+
+   `margin: 0` es lo que hace que Chrome/Edge dejen de imprimir su cabecera/pie por defecto (URL,
+   fecha, "Página 1 de 1"): no queda margen donde dibujarlos. Sigue existiendo la casilla
+   "Encabezados y pies de página" del diálogo del navegador, que ninguna regla CSS puede forzar
+   desde afuera. */
 @page {
-  size: 80mm auto;
   margin: 0;
+}
+
+/* Ancho e interlineado REALES de impresión, aplicados momentáneamente en pantalla para poder medir
+   cuánto mide el ticket impreso. No se usa para mostrar nada: se agrega, se mide y se quita en el
+   mismo frame (ver measurePrintHeightMm en TicketActions.tsx). Tiene que quedar sincronizada con
+   las clases `print:` del contenedor del ticket. */
+.ticket-measuring {
+  width: 72mm !important;
+  padding: 0.25rem !important;
 }
 
 @media print {
