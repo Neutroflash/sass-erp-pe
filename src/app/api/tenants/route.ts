@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { PasswordHasher } from "@/lib/password";
-import { DEFAULT_TENANT_FEATURES } from "@/domain/tenant-features";
 import { generateEmailVerificationToken, hashEmailVerificationToken, emailVerificationTokenExpiresAt } from "@/domain/email-verification";
 import { sendVerificationEmail } from "@/lib/email";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { createTenantWithOwner } from "@/domain/tenant-registration";
 
 const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "flashstock.pe";
 
@@ -45,33 +44,16 @@ export async function POST(req: NextRequest) {
   // debería poder existir un negocio sin al menos un dueño, ni un tenant sin una fila de
   // suscripción (incluso en FREE, que nunca se cobra — ver billing-cycle.ts) que trackee desde
   // cuándo es cliente de la plataforma.
-  const now = new Date();
-  const oneMonthFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
   const verificationToken = generateEmailVerificationToken();
 
-  const tenant = await prisma.$transaction(async (tx) => {
-    const newTenant = await tx.tenant.create({
-      data: {
-        slug,
-        businessName,
-        features: DEFAULT_TENANT_FEATURES as unknown as Prisma.InputJsonValue,
-      },
-    });
-    await tx.user.create({
-      data: {
-        tenantId: newTenant.id,
-        email,
-        passwordHash,
-        name: ownerName,
-        role: "OWNER",
-        emailVerificationTokenHash: hashEmailVerificationToken(verificationToken),
-        emailVerificationTokenExpiresAt: emailVerificationTokenExpiresAt(),
-      },
-    });
-    await tx.platformSubscription.create({
-      data: { tenantId: newTenant.id, currentPeriodStart: now, currentPeriodEnd: oneMonthFromNow },
-    });
-    return newTenant;
+  const tenant = await createTenantWithOwner(prisma, {
+    slug,
+    businessName,
+    ownerName,
+    email,
+    passwordHash,
+    emailVerificationTokenHash: hashEmailVerificationToken(verificationToken),
+    emailVerificationTokenExpiresAt: emailVerificationTokenExpiresAt(),
   });
 
   // Best-effort: si el correo falla (proveedor caído, etc.) el registro ya se completó igual — no
