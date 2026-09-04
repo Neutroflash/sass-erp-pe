@@ -3,7 +3,8 @@ import { resolveInvoicingGateway } from "@/lib/invoicing-gateway";
 import { sunatRetryScheduler } from "@/lib/sunat-retry-queue";
 import { withTenantRLS } from "@/lib/tenant-rls";
 import { calculateTaxBreakdown, sumTaxBreakdowns } from "./tax";
-import { OrderNotPaidError, InvoiceAlreadyIssuedError } from "./errors";
+import { OrderNotPaidError, InvoiceAlreadyIssuedError, BuyerIdentificationRequiredError } from "./errors";
+import { validateBuyerIdentification, type BuyerDocumentType } from "./buyer-identification";
 import { reserveInvoiceNumber } from "./counter";
 import { getTenantForInvoicing } from "./tenant-invoicing-info";
 import { notifyInvoiceIssued } from "./notify-invoice-issued";
@@ -15,7 +16,7 @@ export interface IssueInvoiceParams {
   tenantId: string;
   orderId: string;
   type: "BOLETA" | "FACTURA";
-  documentType: string;
+  documentType: BuyerDocumentType;
   documentNumber: string;
   businessName?: string;
 }
@@ -51,6 +52,18 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
   const tenant = await getTenantForInvoicing(prisma, params.tenantId);
 
   const totalAmount = Number(order.totalAmount);
+
+  // Se valida acá y no en el esquema de la ruta porque la regla depende del MONTO, y el monto sale
+  // del pedido, no del cuerpo de la petición. Una boleta chica puede ir sin identificar al
+  // comprador; una de más de S/ 700 no, y una factura nunca.
+  const identificationError = validateBuyerIdentification({
+    type: params.type,
+    documentType: params.documentType,
+    totalAmount,
+  });
+  if (identificationError) {
+    throw new BuyerIdentificationRequiredError(identificationError);
+  }
 
   const items = order.items.map((item) => {
     const itemTotal = lineTotal(item.quantity, item.price);

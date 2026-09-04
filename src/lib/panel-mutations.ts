@@ -150,8 +150,8 @@ export function registerPayment(data: RegisterPaymentInput) {
 
 export interface IssueInvoiceInput {
   type: "BOLETA" | "FACTURA";
-  documentType: "DNI" | "RUC" | "CE" | "PASAPORTE";
-  documentNumber: string;
+  documentType: "SIN_DOCUMENTO" | "DNI" | "RUC" | "CE" | "PASAPORTE";
+  documentNumber?: string;
   businessName?: string;
 }
 

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { issueInvoice, type IssueInvoiceInput } from "@/lib/panel-mutations";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { BOLETA_IDENTIFICATION_THRESHOLD_PEN } from "@/domain/invoicing/buyer-identification";
 import { CreditDebitNoteForm, type NoteSummary } from "./CreditDebitNoteForm";
 
 const inputClass =
@@ -26,7 +27,16 @@ export interface OrderInvoiceSummary {
 
 // Emisión manual: ningún tenant está registrado como emisor electrónico ante SUNAT todavía, así
 // que esto no ocurre automáticamente al confirmarse el pago — ver domain/invoicing/gateway.ts.
-export function InvoiceSection({ orderId, invoice }: { orderId: string; invoice: OrderInvoiceSummary | null }) {
+export function InvoiceSection({
+  orderId,
+  orderTotal,
+  invoice,
+}: {
+  orderId: string;
+  /** Decide si la boleta puede ir sin identificar al comprador — ver buyer-identification.ts. */
+  orderTotal: number;
+  invoice: OrderInvoiceSummary | null;
+}) {
   const router = useRouter();
   const [type, setType] = useState<IssueInvoiceInput["type"]>("BOLETA");
   const [documentType, setDocumentType] = useState<IssueInvoiceInput["documentType"]>("DNI");
@@ -81,7 +91,7 @@ export function InvoiceSection({ orderId, invoice }: { orderId: string; invoice:
       await issueInvoice(orderId, {
         type,
         documentType,
-        documentNumber,
+        documentNumber: documentType === "SIN_DOCUMENTO" ? undefined : documentNumber,
         businessName: type === "FACTURA" ? businessName : undefined,
       });
       router.refresh();
@@ -99,7 +109,17 @@ export function InvoiceSection({ orderId, invoice }: { orderId: string; invoice:
       <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
         <div>
           <label className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">Tipo</label>
-          <select value={type} onChange={(e) => setType(e.target.value as IssueInvoiceInput["type"])} className={cn(inputClass, "text-foreground")}>
+          <select
+            value={type}
+            onChange={(e) => {
+              const next = e.target.value as IssueInvoiceInput["type"];
+              setType(next);
+              // "Sin documento" no existe para una factura: si estaba elegido, queda un estado
+              // imposible que el servidor rechazaría recién al enviar.
+              if (next === "FACTURA" && documentType === "SIN_DOCUMENTO") setDocumentType("RUC");
+            }}
+            className={cn(inputClass, "text-foreground")}
+          >
             <option value="BOLETA">Boleta</option>
             <option value="FACTURA">Factura</option>
           </select>
@@ -111,21 +131,32 @@ export function InvoiceSection({ orderId, invoice }: { orderId: string; invoice:
             onChange={(e) => setDocumentType(e.target.value as IssueInvoiceInput["documentType"])}
             className={cn(inputClass, "text-foreground")}
           >
+            {/* Una boleta chica puede ir sin identificar al comprador — es el caso más común del
+                mostrador, y hasta ahora el sistema lo hacía imposible. Solo aplica a boleta:
+                una factura siempre exige RUC. */}
+            {type === "BOLETA" && <option value="SIN_DOCUMENTO">Sin documento</option>}
             <option value="DNI">DNI</option>
             <option value="RUC">RUC</option>
             <option value="CE">CE</option>
             <option value="PASAPORTE">Pasaporte</option>
           </select>
         </div>
-        <div>
-          <label className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">N° documento</label>
-          <input required value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} className={inputClass} />
-        </div>
+        {documentType !== "SIN_DOCUMENTO" && (
+          <div>
+            <label className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">N° documento</label>
+            <input required value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} className={inputClass} />
+          </div>
+        )}
         {type === "FACTURA" && (
           <div>
             <label className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">Razón social</label>
             <input required value={businessName} onChange={(e) => setBusinessName(e.target.value)} className={inputClass} />
           </div>
+        )}
+        {documentType === "SIN_DOCUMENTO" && orderTotal > BOLETA_IDENTIFICATION_THRESHOLD_PEN && (
+          <span className="w-full text-xs text-amber-500">
+            Esta venta supera S/ {BOLETA_IDENTIFICATION_THRESHOLD_PEN}: hay que pedirle el DNI al cliente para poder emitirla.
+          </span>
         )}
         <Button type="submit" size="sm" disabled={submitting}>
           {submitting ? "Emitiendo..." : "Emitir comprobante"}

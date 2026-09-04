@@ -7,6 +7,14 @@ export class OrderNotPaidError extends Error {
   }
 }
 
+/** Falta identificar al comprador para el tipo/monto de este comprobante. */
+export class BuyerIdentificationRequiredError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BuyerIdentificationRequiredError";
+  }
+}
+
 export class InvoiceAlreadyIssuedError extends Error {
   constructor(message = "Esta orden ya tiene un comprobante emitido") {
     super(message);

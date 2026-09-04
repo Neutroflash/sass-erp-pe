@@ -153,7 +153,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
         </div>
       </div>
 
-      {features.sunatInvoicing && canInvoice && <InvoiceSection orderId={order.id} invoice={invoiceSummary} />}
+      {features.sunatInvoicing && canInvoice && <InvoiceSection orderId={order.id} orderTotal={Number(order.totalAmount)} invoice={invoiceSummary} />}
       {features.sunatInvoicing && canInvoice && (
         <DispatchGuideSection orderId={order.id} dispatchGuide={dispatchGuideSummary} />
       )}

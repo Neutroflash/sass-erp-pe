@@ -13,6 +13,9 @@ import {
 } from "./types";
 
 const BUSINESS_DOCUMENT_TYPE_TO_SUNAT: Record<string, SunatDocumentTypeCode> = {
+  // Explícito y no vía el `??` de abajo: que "sin documento" funcione por el fallback de un tipo
+  // desconocido es un accidente que se rompe en cuanto alguien cambie ese default.
+  SIN_DOCUMENTO: DOCUMENT_TYPE_CODE.SIN_DOCUMENTO,
   DNI: DOCUMENT_TYPE_CODE.DNI,
   RUC: DOCUMENT_TYPE_CODE.RUC,
   CE: DOCUMENT_TYPE_CODE.CE,
