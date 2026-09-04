@@ -8,3 +8,10 @@ dist
 tsconfig.tsbuildinfo
 .idea
 backups/
+
+# Credenciales — nunca al repositorio. Un certificado digital tributario permite firmar
+# comprobantes a nombre de un negocio real; el .gitignore es la última barrera antes de que uno
+# termine en un repo por un `git add .` distraído.
+*.pfx
+*.p12
+*.key
