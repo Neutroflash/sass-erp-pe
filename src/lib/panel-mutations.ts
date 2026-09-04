@@ -93,10 +93,59 @@ export function createStockMovement(data: StockMovementInput) {
 export interface PosSaleInput {
   customerName?: string;
   items: { variantId: string; quantity: number }[];
+  paymentTerm?: "CASH" | "CREDIT";
+  /** Obligatorio a crédito: una deuda a nombre de un texto libre no se puede cobrar. */
+  customerId?: string;
+  /** ISO 8601. Solo aplica a crédito. */
+  dueDate?: string;
 }
 
 export function createPosSale(data: PosSaleInput) {
   return request<{ orderId: string; totalAmount: number }>("/api/pos/sale", { method: "POST", body: JSON.stringify(data) });
+}
+
+export interface CustomerSummary {
+  id: string;
+  name: string;
+  address: string | null;
+  phone: string | null;
+  docType: string | null;
+  docNumber: string | null;
+  creditLimit: number | null;
+  outstanding: number;
+}
+
+export function searchCustomers(query: string) {
+  return request<{ items: CustomerSummary[] }>(`/api/customers?q=${encodeURIComponent(query)}`);
+}
+
+export interface CreateCustomerInput {
+  name: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  docType?: "DNI" | "RUC" | "CE" | "PASAPORTE";
+  docNumber?: string;
+  creditLimit?: number;
+  notes?: string;
+}
+
+export function createCustomer(data: CreateCustomerInput) {
+  return request<{ customer: CustomerSummary }>("/api/customers", { method: "POST", body: JSON.stringify(data) });
+}
+
+export interface RegisterPaymentInput {
+  customerId: string;
+  amount: number;
+  method?: "EFECTIVO" | "TRANSFERENCIA" | "YAPE" | "PLIN" | "TARJETA" | "OTRO";
+  note?: string;
+}
+
+export function registerPayment(data: RegisterPaymentInput) {
+  return request<{ payment: { paymentId: string; ordersClosed: number; outstandingAfter: number } }>("/api/payments", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
 
 export interface IssueInvoiceInput {

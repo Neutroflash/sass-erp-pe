@@ -145,6 +145,38 @@ export async function getReceivables(prisma: PrismaClient, tenantId: string, now
   };
 }
 
+/**
+ * Saldo pendiente de cada cliente, en soles. Solo aparecen los que deben algo.
+ *
+ * Se exporta para que el listado de clientes no vuelva a implementar la misma resta: hay una sola
+ * definición de "cuánto debe alguien" en el proyecto, y es esta.
+ */
+export async function getOutstandingByCustomer(prisma: PrismaClient, tenantId: string): Promise<Map<string, number>> {
+  const [orders, allocations] = await withTenantRLS(prisma, tenantId, async (tx) => [
+    await tx.order.findMany({
+      where: { tenantId, status: "PENDING_COLLECTION", customerId: { not: null } },
+      select: { id: true, customerId: true, totalAmount: true },
+    }),
+    await tx.paymentAllocation.groupBy({
+      by: ["orderId"],
+      where: { order: { tenantId, status: "PENDING_COLLECTION" } },
+      _sum: { amount: true },
+    }),
+  ]);
+
+  const appliedByOrder = new Map(allocations.map((a) => [a.orderId, toCents(a._sum.amount ?? 0)]));
+  const centsByCustomer = new Map<string, number>();
+
+  for (const order of orders) {
+    if (!order.customerId) continue;
+    const outstanding = toCents(order.totalAmount) - (appliedByOrder.get(order.id) ?? 0);
+    if (outstanding <= 0) continue;
+    centsByCustomer.set(order.customerId, (centsByCustomer.get(order.customerId) ?? 0) + outstanding);
+  }
+
+  return new Map([...centsByCustomer].map(([id, cents]) => [id, fromCents(cents)]));
+}
+
 /** Saldo de un solo cliente — lo que la ficha necesita sin traer la cartera entera. */
 export async function getCustomerOutstanding(prisma: PrismaClient, tenantId: string, customerId: string): Promise<number> {
   const [orders, allocations] = await withTenantRLS(prisma, tenantId, async (tx) => [

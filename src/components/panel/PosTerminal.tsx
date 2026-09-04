@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
-import { createPosSale } from "@/lib/panel-mutations";
+import { createPosSale, type CustomerSummary } from "@/lib/panel-mutations";
+import { CustomerPicker } from "@/components/panel/pos/CustomerPicker";
 import { formatPrice, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { addQty, formatQty, hasEnough, isPositiveQty, lineTotal, subQty, toQty, QTY_SCALE } from "@/domain/inventory/quantity";
@@ -37,11 +38,14 @@ const inputClass =
 
 // El check de `available` acá es solo UX (evita que el vendedor arme una venta que va a fallar) —
 // la verdad final sigue siendo el lock de fila en createPosSale(), igual que en el checkout online.
-export function PosTerminal({ variants }: { variants: PosVariant[] }) {
+export function PosTerminal({ variants, creditEnabled }: { variants: PosVariant[]; creditEnabled: boolean }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<SaleLine[]>([]);
   const [customerName, setCustomerName] = useState("");
+  const [onCredit, setOnCredit] = useState(false);
+  const [customer, setCustomer] = useState<CustomerSummary | null>(null);
+  const [dueDate, setDueDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSale, setLastSale] = useState<{ orderId: string; totalAmount: number } | null>(null);
@@ -129,12 +133,24 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
     setError(null);
     try {
       const sale = await createPosSale({
-        customerName: customerName || undefined,
         items: cart.map((l) => ({ variantId: l.variantId, quantity: l.quantity })),
+        ...(onCredit && customer
+          ? {
+              paymentTerm: "CREDIT" as const,
+              customerId: customer.id,
+              customerName: customer.name,
+              // Fecha suelta -> fin de ese día. Sin esto, un vencimiento "el 15" vencería a las
+              // 00:00 del 15 y la cartera lo marcaría atrasado el mismo día que toca pagar.
+              dueDate: dueDate ? new Date(`${dueDate}T23:59:59`).toISOString() : undefined,
+            }
+          : { customerName: customerName || undefined }),
       });
       setLastSale(sale);
       setCart([]);
       setCustomerName("");
+      setCustomer(null);
+      setDueDate("");
+      setOnCredit(false);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo registrar la venta");
@@ -247,15 +263,51 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
       <div className="flex h-fit flex-col gap-4 rounded-2xl border border-border/80 bg-card/60 p-4 backdrop-blur-md">
         <div className="flex items-center gap-2 text-primary">
           <ShoppingCart className="h-4 w-4" />
-          <span className="text-sm font-semibold">Cobro</span>
+          <span className="text-sm font-semibold">{onCredit ? "Venta a crédito" : "Cobro"}</span>
         </div>
 
-        <input
-          placeholder="Cliente (opcional)"
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-          className={inputClass}
-        />
+        {creditEnabled && (
+          <div className="flex rounded-lg border border-border p-0.5">
+            {([
+              ["Contado", false],
+              ["A crédito", true],
+            ] as const).map(([label, value]) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => setOnCredit(value)}
+                className={cn(
+                  "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  onCredit === value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {onCredit ? (
+          <div className="flex flex-col gap-2">
+            <CustomerPicker selected={customer} onSelect={setCustomer} />
+            <label className="flex flex-col gap-1">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Vence el (opcional)</span>
+              <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={inputClass} />
+            </label>
+            {/* Lo que el negocio tiene que tener presente al fiar: el comprobante sale hoy, así
+                que el IGV se declara hoy, se cobre o no. */}
+            <p className="text-xs text-muted-foreground">
+              La mercadería sale ahora y el comprobante se emite hoy — el IGV se declara aunque el cobro venga después.
+            </p>
+          </div>
+        ) : (
+          <input
+            placeholder="Cliente (opcional)"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            className={inputClass}
+          />
+        )}
 
         <div className="flex justify-between border-t border-border/60 pt-3 text-lg font-bold text-foreground">
           <span>Total</span>
@@ -264,9 +316,16 @@ export function PosTerminal({ variants }: { variants: PosVariant[] }) {
 
         {error && <span className="text-sm text-destructive">{error}</span>}
 
-        <Button disabled={cart.length === 0 || !cart.every((l) => isPositiveQty(l.quantity)) || submitting} onClick={handleCharge}>
-          {submitting ? "Procesando..." : "Cobrar"}
+        <Button
+          disabled={cart.length === 0 || !cart.every((l) => isPositiveQty(l.quantity)) || submitting || (onCredit && !customer)}
+          onClick={handleCharge}
+        >
+          {submitting ? "Procesando..." : onCredit ? "Entregar a crédito" : "Cobrar"}
         </Button>
+
+        {onCredit && !customer && (
+          <p className="text-xs text-muted-foreground">Elige un cliente: una deuda sin nombre no se puede cobrar.</p>
+        )}
 
         {lastSale && (
           <p className="text-xs text-emerald-400">
