@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, BarChart3, Clock, HandCoins, LayoutGrid, MessageSquareWarning, Package, Receipt, ShoppingCart, Sliders, TrendingUp, Wallet, Warehouse } from "lucide-react";
+import { AlertTriangle, BarChart3, ClipboardList, Clock, HandCoins, LayoutGrid, MessageSquareWarning, Package, Receipt, ShoppingCart, Sliders, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { getCurrentTenantUser } from "@/lib/auth";
 import { getTenantFeatures } from "@/lib/features";
@@ -29,11 +29,16 @@ interface QuickLink {
   ownerOnly?: boolean;
 }
 
+// Mismo orden que el Sidebar y por la misma razón (ver el comentario ahí): sigue el recorrido de
+// una venta, no una jerarquía de módulos. Faltaban Clientes y Cuentas por cobrar — el módulo de
+// crédito existía en el menú lateral pero no acá, así que desde el dashboard era invisible.
 const QUICK_LINKS: QuickLink[] = [
   { href: "/panel/inventario", label: "Inventario", description: "Productos y stock", icon: Package, feature: "inventoryManagement" },
-  { href: "/panel/kardex", label: "Kardex", description: "Movimientos de stock", icon: Warehouse, feature: "inventoryManagement" },
-  { href: "/panel/pedidos", label: "Pedidos", description: "Validar pagos y envíos", icon: ShoppingCart, feature: "orderValidation" },
   { href: "/panel/pos", label: "Punto de venta", description: "Vender presencial", icon: ShoppingCart, feature: "posWeb" },
+  { href: "/panel/pedidos", label: "Pedidos", description: "Validar pagos y emitir comprobantes", icon: ClipboardList, feature: "orderValidation" },
+  { href: "/panel/clientes", label: "Clientes", description: "Fichas, saldos y abonos", icon: Users, feature: "creditSales" },
+  { href: "/panel/cuentas-por-cobrar", label: "Cuentas por cobrar", description: "Quién debe y desde cuándo", icon: Wallet, feature: "creditSales" },
+  { href: "/panel/kardex", label: "Kardex", description: "Movimientos de stock", icon: Warehouse, feature: "inventoryManagement" },
   { href: "/panel/facturacion", label: "Facturación SUNAT", description: "Boletas y facturas", icon: Receipt, feature: "sunatInvoicing" },
   { href: "/panel/reportes", label: "Reportes", description: "Ventas y KPIs", icon: BarChart3, ownerOnly: true },
 ];

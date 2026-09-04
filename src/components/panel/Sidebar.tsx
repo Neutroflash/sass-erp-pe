@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, LayoutGrid, MessageSquareWarning, Package, Receipt, ShoppingCart, Sliders, Users, Wallet, Warehouse } from "lucide-react";
+import { BarChart3, ClipboardList, LayoutGrid, MessageSquareWarning, Package, Receipt, ShoppingCart, Sliders, Users, Wallet, Warehouse } from "lucide-react";
 import type { TenantFeatures } from "@/domain/tenant-features";
 import type { UserRole } from "@prisma/client";
 import { cn } from "@/lib/utils";
@@ -19,16 +19,25 @@ interface NavLink {
   ownerOnly?: boolean;
 }
 
-// El orden acá es el orden en pantalla. "Dashboard" y "Configuración" no tienen `feature`: todo
-// negocio los ve, sin importar qué módulos tenga activos.
+// El orden acá es el orden en pantalla, y sigue el recorrido real de una venta, no una jerarquía
+// de módulos: veo lo que tengo (Inventario) → lo vendo (Punto de venta) → aparece el pedido y le
+// emito el comprobante (Pedidos) → si lo fié, veo a quién y le cobro (Clientes, Cuentas por
+// cobrar) → reviso el rastro que dejó (Kardex, Facturación) → miro cómo me fue (Reportes).
+//
+// Importa más de lo que parece: alguien que abre el panel por primera vez recorre el menú de
+// arriba hacia abajo, y ese recorrido es lo que le explica el sistema. Kardex arriba de Punto de
+// venta —como estaba— obliga a entender un concepto de inventario antes de haber vendido nada.
+//
+// "Dashboard" y "Configuración" no tienen `feature`: todo negocio los ve, sin importar qué
+// módulos tenga activos.
 const LINKS: NavLink[] = [
   { href: "/panel", label: "Dashboard", icon: LayoutGrid },
   { href: "/panel/inventario", label: "Inventario", icon: Package, feature: "inventoryManagement" },
-  { href: "/panel/kardex", label: "Kardex", icon: Warehouse, feature: "inventoryManagement" },
-  { href: "/panel/pedidos", label: "Pedidos", icon: ShoppingCart, feature: "orderValidation" },
   { href: "/panel/pos", label: "Punto de venta", icon: ShoppingCart, feature: "posWeb" },
+  { href: "/panel/pedidos", label: "Pedidos", icon: ClipboardList, feature: "orderValidation" },
   { href: "/panel/clientes", label: "Clientes", icon: Users, feature: "creditSales" },
   { href: "/panel/cuentas-por-cobrar", label: "Cuentas por cobrar", icon: Wallet, feature: "creditSales" },
+  { href: "/panel/kardex", label: "Kardex", icon: Warehouse, feature: "inventoryManagement" },
   { href: "/panel/facturacion", label: "Facturación SUNAT", icon: Receipt, feature: "sunatInvoicing" },
   { href: "/panel/reportes", label: "Reportes", icon: BarChart3, ownerOnly: true },
   { href: "/panel/reclamos", label: "Reclamos", icon: MessageSquareWarning, ownerOnly: true },
