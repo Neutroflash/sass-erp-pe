@@ -30,6 +30,16 @@ export type BuyerDocumentType = (typeof BUYER_DOCUMENT_TYPES)[number];
  */
 export const UNIDENTIFIED_DOCUMENT_NUMBER = "0";
 
+/**
+ * Nombre que viaja a SUNAT cuando no se identifica al comprador.
+ *
+ * NO puede quedar vacío ni caer al número de documento: SUNAT valida
+ * `cac:PartyLegalEntity/cbc:RegistrationName` contra un estándar de texto y rechaza el
+ * comprobante con "INFO: 2022 - El dato ingresado no cumple con el estandar" si recibe "0".
+ * Encontrado emitiendo de verdad contra e-beta; ninguna validación local lo habría detectado.
+ */
+export const UNIDENTIFIED_BUYER_NAME = "CLIENTE VARIOS";
+
 export interface BuyerIdentificationInput {
   type: "BOLETA" | "FACTURA";
   documentType: BuyerDocumentType;

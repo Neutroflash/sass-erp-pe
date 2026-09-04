@@ -102,6 +102,9 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
     documentType: params.documentType,
     documentNumber: params.documentNumber,
     businessName: params.businessName,
+    // El nombre congelado del pedido, para que una boleta sin identificar al comprador no viaje
+    // con el número de documento como nombre — SUNAT lo rechaza.
+    customerName: order.customerName,
     items: items.map((i) => ({
       description: i.description,
       quantity: i.quantity,

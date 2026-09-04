@@ -11,6 +11,7 @@ import {
   type SunatInvoicePayload,
   type SunatNotePayload,
 } from "./types";
+import { UNIDENTIFIED_BUYER_NAME } from "../buyer-identification";
 
 const BUSINESS_DOCUMENT_TYPE_TO_SUNAT: Record<string, SunatDocumentTypeCode> = {
   // Explícito y no vía el `??` de abajo: que "sin documento" funcione por el fallback de un tipo
@@ -21,6 +22,15 @@ const BUSINESS_DOCUMENT_TYPE_TO_SUNAT: Record<string, SunatDocumentTypeCode> = {
   CE: DOCUMENT_TYPE_CODE.CE,
   PASAPORTE: DOCUMENT_TYPE_CODE.PASAPORTE,
 };
+
+/**
+ * Nombre del comprador para el XML. El número de documento NO sirve de nombre: SUNAT valida
+ * `RegistrationName` contra un estándar de texto y rechaza un "0" con INFO: 2022 — que es
+ * exactamente lo que pasaba con una boleta sin identificar al comprador.
+ */
+function resolveBuyerName(input: { businessName?: string; customerName?: string }): string {
+  return input.businessName?.trim() || input.customerName?.trim() || UNIDENTIFIED_BUYER_NAME;
+}
 
 /**
  * Implementación real (sin PSE/OSE) del puerto InvoicingGateway: arma el XML UBL 2.1, lo firma
@@ -51,7 +61,7 @@ export class SunatInvoicingGateway implements InvoicingGateway {
       cliente: {
         documentTypeCode,
         documentNumber: input.documentNumber,
-        name: input.businessName ?? input.documentNumber,
+        name: resolveBuyerName(input),
       },
       lineas: input.items.map((item) => ({
         description: item.description,
@@ -89,7 +99,7 @@ export class SunatInvoicingGateway implements InvoicingGateway {
       cliente: {
         documentTypeCode,
         documentNumber: input.documentNumber,
-        name: input.businessName ?? input.documentNumber,
+        name: resolveBuyerName(input),
       },
       lineas: input.items.map((item) => ({
         description: item.description,

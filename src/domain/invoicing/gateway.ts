@@ -16,6 +16,8 @@ export interface IssueInvoiceInput {
   documentType: string;
   documentNumber: string;
   businessName?: string;
+  /** Nombre del comprador cuando no hay razón social (boleta). Congelado del pedido. */
+  customerName?: string;
   items: InvoiceLineInput[];
   totalAmount: number;
   /** Datos del emisor — solo los usa un gateway real (SUNAT); fakeInvoicingGateway los ignora. */
@@ -56,6 +58,8 @@ export interface IssueCreditDebitNoteInput {
   documentType: string;
   documentNumber: string;
   businessName?: string;
+  /** Nombre del comprador cuando no hay razón social (boleta). Congelado del pedido. */
+  customerName?: string;
   items: InvoiceLineInput[];
   totalAmount: number;
   emisorRuc?: string;
