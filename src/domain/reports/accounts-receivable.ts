@@ -196,6 +196,35 @@ export async function getCustomerOutstanding(prisma: PrismaClient, tenantId: str
   return fromCents(cents);
 }
 
+export interface CollectionTotals {
+  /** Lo efectivamente cobrado de deudas en el período. */
+  collected: number;
+  paymentCount: number;
+}
+
+/**
+ * Cobranza del período: cuánto dinero ENTRÓ por abonos de ventas a crédito.
+ *
+ * Es el complemento de `getSalesByDay` y deliberadamente no vive junto a él. "Vendí S/ 5,000 hoy"
+ * y "cobré S/ 3,200 hoy" son dos números distintos desde que existe el crédito, y el segundo es el
+ * que paga los sueldos. Se mide sobre `Payment` —el acto de recibir plata— y no sobre `Order`,
+ * que es el acto de vender.
+ *
+ * NO incluye las ventas al contado: esas nunca fueron deuda. Este número responde "cuánto recuperé
+ * de lo que me debían", no "cuánto entró a la caja en total".
+ */
+export async function getCollectedSince(prisma: PrismaClient, tenantId: string, since: Date): Promise<CollectionTotals> {
+  const result = await withTenantRLS(prisma, tenantId, (tx) =>
+    tx.payment.aggregate({
+      where: { tenantId, paidAt: { gte: since } },
+      _sum: { amount: true },
+      _count: true,
+    }),
+  );
+
+  return { collected: Number(result._sum.amount ?? 0), paymentCount: result._count };
+}
+
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 function daysBetween(from: Date, to: Date): number {

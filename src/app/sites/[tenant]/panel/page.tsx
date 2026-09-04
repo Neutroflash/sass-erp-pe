@@ -1,17 +1,5 @@
 import Link from "next/link";
-import {
-  AlertTriangle,
-  BarChart3,
-  Clock,
-  LayoutGrid,
-  MessageSquareWarning,
-  Package,
-  Receipt,
-  ShoppingCart,
-  Sliders,
-  TrendingUp,
-  Warehouse,
-} from "lucide-react";
+import { AlertTriangle, BarChart3, Clock, HandCoins, LayoutGrid, MessageSquareWarning, Package, Receipt, ShoppingCart, Sliders, TrendingUp, Wallet, Warehouse } from "lucide-react";
 import { getCurrentTenant } from "@/lib/tenant-context";
 import { getCurrentTenantUser } from "@/lib/auth";
 import { getTenantFeatures } from "@/lib/features";
@@ -22,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { KpiCard } from "@/components/panel/reportes/KpiCard";
 import { STATUS_LABEL, STATUS_BADGE_VARIANT } from "@/domain/orders/order-status";
 import { lineTotal } from "@/domain/inventory/quantity";
+import { getCollectedSince, getReceivables } from "@/domain/reports/accounts-receivable";
 
 // Nunca estática — cada tarjeta refleja el estado del negocio en este momento.
 export const dynamic = "force-dynamic";
@@ -60,7 +49,8 @@ export default async function TenantDashboardPage() {
 
   // Cada query condicionada a su propio feature — no tiene sentido pagar el costo de una consulta
   // (ni mostrar el dato) de un módulo que este negocio no tiene activo.
-  const [salesToday, pendingValidations, todaysMargin, lowStockCount, recentOrders] = await Promise.all([
+  const [salesToday, pendingValidations, todaysMargin, lowStockCount, recentOrders, receivables, collectedToday] =
+    await Promise.all([
     showRecentOrders
       ? withTenantRLS(prisma, tenant.id, (tx) => tx.order.count({ where: { tenantId: tenant.id, createdAt: { gte: startOfToday } } }))
       : null,
@@ -83,6 +73,8 @@ export default async function TenantDashboardPage() {
           tx.order.findMany({ where: { tenantId: tenant.id }, orderBy: { createdAt: "desc" }, take: RECENT_ORDERS_LIMIT }),
         )
       : null,
+    features.creditSales ? getReceivables(prisma, tenant.id) : null,
+    features.creditSales ? getCollectedSince(prisma, tenant.id, startOfToday) : null,
   ]);
 
   const marginTotal = todaysMargin?.reduce(
@@ -103,6 +95,29 @@ export default async function TenantDashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {salesToday !== null && (
           <KpiCard label="Ventas del día" value={String(salesToday)} sublabel="pedidos creados hoy" icon={<ShoppingCart className="h-4 w-4" />} />
+        )}
+        {/* Estas dos son plata, no pedidos, y son DISTINTAS entre sí: "por cobrar" es lo que se
+            vendió y no entró todavía; "cobrado hoy" es lo que sí entró, de deudas viejas. Que
+            estén juntas es a propósito — leídas por separado cada una engaña. */}
+        {receivables && (
+          <KpiCard
+            label="Por cobrar"
+            value={formatPrice(receivables.summary.totalOutstanding)}
+            sublabel={
+              receivables.summary.totalOverdue > 0
+                ? `${formatPrice(receivables.summary.totalOverdue)} vencido`
+                : `${receivables.summary.customersWithDebt} ${receivables.summary.customersWithDebt === 1 ? "cliente" : "clientes"}`
+            }
+            icon={<Wallet className="h-4 w-4" />}
+          />
+        )}
+        {collectedToday && (
+          <KpiCard
+            label="Cobrado hoy"
+            value={formatPrice(collectedToday.collected)}
+            sublabel={`${collectedToday.paymentCount} ${collectedToday.paymentCount === 1 ? "abono" : "abonos"} de deudas`}
+            icon={<HandCoins className="h-4 w-4" />}
+          />
         )}
         {pendingValidations !== null && (
           <KpiCard

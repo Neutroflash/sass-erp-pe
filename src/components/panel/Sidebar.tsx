@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, LayoutGrid, MessageSquareWarning, Package, Receipt, ShoppingCart, Sliders, Users, Warehouse } from "lucide-react";
+import { BarChart3, LayoutGrid, MessageSquareWarning, Package, Receipt, ShoppingCart, Sliders, Users, Wallet, Warehouse } from "lucide-react";
 import type { TenantFeatures } from "@/domain/tenant-features";
 import type { UserRole } from "@prisma/client";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,7 @@ const LINKS: NavLink[] = [
   { href: "/panel/pedidos", label: "Pedidos", icon: ShoppingCart, feature: "orderValidation" },
   { href: "/panel/pos", label: "Punto de venta", icon: ShoppingCart, feature: "posWeb" },
   { href: "/panel/clientes", label: "Clientes", icon: Users, feature: "creditSales" },
+  { href: "/panel/cuentas-por-cobrar", label: "Cuentas por cobrar", icon: Wallet, feature: "creditSales" },
   { href: "/panel/facturacion", label: "Facturación SUNAT", icon: Receipt, feature: "sunatInvoicing" },
   { href: "/panel/reportes", label: "Reportes", icon: BarChart3, ownerOnly: true },
   { href: "/panel/reclamos", label: "Reclamos", icon: MessageSquareWarning, ownerOnly: true },

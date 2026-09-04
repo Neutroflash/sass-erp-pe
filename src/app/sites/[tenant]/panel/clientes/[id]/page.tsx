@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FileText } from "lucide-react";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant } from "@/lib/tenant-context";
@@ -81,7 +82,18 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
             </p>
           )}
         </div>
-        <RegisterPaymentDialog customerId={customer.id} customerName={customer.name} outstanding={outstanding} />
+        <div className="flex items-center gap-2">
+          {outstanding > 0 && (
+            <Link
+              href={`/panel/clientes/${customer.id}/nota-de-deuda`}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-sm text-foreground transition-colors hover:border-primary/50"
+            >
+              <FileText className="h-4 w-4" />
+              Nota de deuda
+            </Link>
+          )}
+          <RegisterPaymentDialog customerId={customer.id} customerName={customer.name} outstanding={outstanding} />
+        </div>
       </div>
 
       <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-md">
