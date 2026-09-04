@@ -11,7 +11,14 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // Conexión de la app. En un hosting serverless conviene que sea la POOLED del proveedor: cada
+  // invocación abre su propia conexión y sin un pooler se agota el límite del servidor.
   url      = env("DATABASE_URL")
+  // Conexión DIRECTA, solo para migraciones. Un pooler en modo transacción (PgBouncer, que es lo
+  // que usa Neon) no soporta los advisory locks ni las prepared statements que `prisma migrate`
+  // necesita: las migraciones fallan o, peor, se quedan colgadas esperando un lock que nunca llega.
+  // En local las dos apuntan al mismo Postgres y no cambia nada.
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 // ── Plataforma (SaaS) ─────────────────────────────────────────────────────────────────────────
