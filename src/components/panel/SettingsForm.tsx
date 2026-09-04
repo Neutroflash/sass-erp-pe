@@ -25,6 +25,10 @@ const FEATURE_LABELS: Record<keyof TenantFeatures, { label: string; hint: string
     label: "Tienda pública",
     hint: "Catálogo, producto y checkout en línea. Desactívalo si solo vendes por POS/mostrador/WhatsApp — el resto del panel sigue funcionando igual.",
   },
+  creditSales: {
+    label: "Ventas a crédito",
+    hint: "Permite entregar mercadería y cobrarla después: clientes, saldos y cuentas por cobrar. El comprobante se emite al entregar, así que el IGV se declara antes de haber cobrado.",
+  },
 };
 
 export interface TenantSettingsData {

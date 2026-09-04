@@ -29,6 +29,9 @@ export interface TenantFeatures {
    * la excepción, no el estado inicial de un negocio recién registrado que sí espera vender
    * online por default. `/panel/pos` y el resto del panel no dependen de esto en absoluto. */
   publicStorefront: boolean;
+  /** Ventas a crédito y cuentas por cobrar. Opt-in como posWeb: un negocio que cobra todo al
+   * contado no necesita ver clientes, saldos ni vencimientos en su panel. */
+  creditSales: boolean;
 }
 
 /**
@@ -47,6 +50,7 @@ export const DEFAULT_TENANT_FEATURES: TenantFeatures = {
   posWeb: false,
   autoSendInvoiceEmail: true,
   publicStorefront: true,
+  creditSales: false,
 };
 
 /**

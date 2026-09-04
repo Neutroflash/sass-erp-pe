@@ -38,7 +38,10 @@ export async function issueInvoiceForOrder(prisma: PrismaClient, params: IssueIn
   if (!order) {
     throw new Error("Orden no encontrada");
   }
-  if (order.status !== "PAID") {
+  // PENDING_COLLECTION cuenta igual que PAID: en una venta a crédito la obligación tributaria
+  // nace con la ENTREGA, no con el cobro. El comprobante sale al entregar, con el saldo abierto, y
+  // los abonos posteriores no lo modifican ni generan notas.
+  if (order.status !== "PAID" && order.status !== "PENDING_COLLECTION") {
     throw new OrderNotPaidError();
   }
   if (order.invoice) {

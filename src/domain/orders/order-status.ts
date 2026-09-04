@@ -7,6 +7,7 @@ import type { OrderStatus } from "@prisma/client";
 // ("Could not find the module ... in the React Client Manifest").
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   PENDING_PAYMENT: "Pendiente de pago",
+  PENDING_COLLECTION: "Por cobrar",
   PAID: "Pagado",
   IN_PREPARATION: "En preparación",
   SHIPPED: "Enviado",
@@ -14,8 +15,11 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
   CANCELLED: "Cancelado",
 };
 
-export const STATUS_BADGE_VARIANT: Record<OrderStatus, "success" | "destructive" | "outline"> = {
+export const STATUS_BADGE_VARIANT: Record<OrderStatus, "success" | "warning" | "destructive" | "outline"> = {
   PENDING_PAYMENT: "outline",
+  // Ámbar, no verde: la mercadería salió pero la plata no entró. Verlo en verde junto a las
+  // ventas cobradas es exactamente la confusión que este estado existe para evitar.
+  PENDING_COLLECTION: "warning",
   PAID: "success",
   IN_PREPARATION: "success",
   SHIPPED: "success",

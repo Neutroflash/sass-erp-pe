@@ -9,7 +9,7 @@ import { OrderRowActions } from "./order-row-actions";
 
 export interface AdminOrderRow {
   id: string;
-  status: "PENDING_PAYMENT" | "PAID" | "IN_PREPARATION" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+  status: "PENDING_PAYMENT" | "PENDING_COLLECTION" | "PAID" | "IN_PREPARATION" | "SHIPPED" | "DELIVERED" | "CANCELLED";
   channel: "ONLINE" | "POS";
   totalAmount: number;
   customerName: string;

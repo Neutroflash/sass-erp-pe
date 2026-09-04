@@ -1,5 +1,7 @@
+/** El nombre quedó de cuando "pagada" era la única condición; hoy una venta a crédito entregada
+ *  también puede facturar. Se conserva para no romper a quien lo captura por nombre. */
 export class OrderNotPaidError extends Error {
-  constructor(message = "Solo se puede emitir un comprobante para una orden ya pagada") {
+  constructor(message = "Solo se puede emitir un comprobante para una orden ya entregada o pagada") {
     super(message);
     this.name = "OrderNotPaidError";
   }

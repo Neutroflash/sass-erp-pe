@@ -13,6 +13,8 @@ export interface CreateOrderParams {
   tenantId: string;
   userId: string | null;
   channel: OrderChannel;
+  /** Ficha del cliente del negocio. Ausente en toda venta online de invitado. */
+  customerId?: string | null;
   customerName: string;
   customerEmail?: string;
   customerPhone?: string;
@@ -103,6 +105,7 @@ export async function createOrderWithStockReservation(
       userId: params.userId,
       channel: params.channel,
       totalAmount,
+      customerId: params.customerId ?? null,
       customerName: params.customerName,
       customerEmail: params.customerEmail,
       customerPhone: params.customerPhone,

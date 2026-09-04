@@ -1,6 +1,17 @@
-import type { PrismaClient } from "@prisma/client";
+import type { OrderStatus, PrismaClient } from "@prisma/client";
 import { withTenantRLS } from "@/lib/tenant-rls";
 import { addQty, lineTotal } from "@/domain/inventory/quantity";
+
+/**
+ * Estados que cuentan como VENTA realizada.
+ *
+ * Con crédito, "vendí" y "cobré" dejan de ser el mismo número: una venta a crédito es una venta el
+ * día que la mercadería sale, aunque el dinero entre semanas después (o nunca). Todo lo de este
+ * módulo mide ventas — la cobranza se mide sobre `Payment`, que es otra cosa y vive en
+ * accounts-receivable.ts. Confundir los dos es el error más caro que puede cometer un negocio que
+ * fía, así que ninguna función de acá debe rotularse como "ingresos" o "cobrado".
+ */
+const SOLD_STATUSES: OrderStatus[] = ["PAID", "PENDING_COLLECTION"];
 
 export interface DailySales {
   date: string; // YYYY-MM-DD
@@ -21,7 +32,7 @@ export async function getSalesByDay(prisma: PrismaClient, tenantId: string, days
 
   const orders = await withTenantRLS(prisma, tenantId, (tx) =>
     tx.order.findMany({
-      where: { tenantId, status: "PAID", createdAt: { gte: since } },
+      where: { tenantId, status: { in: SOLD_STATUSES }, createdAt: { gte: since } },
       select: { totalAmount: true, createdAt: true },
     }),
   );
@@ -58,7 +69,7 @@ export async function getTopProducts(prisma: PrismaClient, tenantId: string, lim
   const grouped = await withTenantRLS(prisma, tenantId, (tx) =>
     tx.orderItem.groupBy({
       by: ["variantId"],
-      where: { order: { tenantId, status: "PAID" } },
+      where: { order: { tenantId, status: { in: SOLD_STATUSES } } },
       _sum: { quantity: true },
       orderBy: { _sum: { quantity: "desc" } },
       take: limit,
@@ -109,7 +120,7 @@ export async function getPreviousPeriodSales(prisma: PrismaClient, tenantId: str
 
   const orders = await withTenantRLS(prisma, tenantId, (tx) =>
     tx.order.findMany({
-      where: { tenantId, status: "PAID", createdAt: { gte: periodStart, lt: periodEnd } },
+      where: { tenantId, status: { in: SOLD_STATUSES }, createdAt: { gte: periodStart, lt: periodEnd } },
       select: { totalAmount: true },
     }),
   );

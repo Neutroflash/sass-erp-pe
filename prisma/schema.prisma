@@ -42,53 +42,53 @@ model PlatformAdmin {
 }
 
 enum SunatEnvironment {
-  BETA        // e-beta.sunat.gob.pe — homologación, nunca genera comprobantes válidos
-  PRODUCCION  // e-factura.sunat.gob.pe — comprobantes reales, válidos ante SUNAT
+  BETA // e-beta.sunat.gob.pe — homologación, nunca genera comprobantes válidos
+  PRODUCCION // e-factura.sunat.gob.pe — comprobantes reales, válidos ante SUNAT
 }
 
 model Tenant {
-  id                String   @id @default(uuid())
-  slug              String   @unique // subdominio: {slug}.flashstock.pe — ver middleware.ts
+  id                            String    @id @default(uuid())
+  slug                          String    @unique // subdominio: {slug}.flashstock.pe — ver middleware.ts
   // Dominio propio (ej. tiendadeljuan.pe) — solo `customDomain` importa para el middleware
   // (único, y solo se llena tras verificar). Los otros dos son el estado de una verificación EN
   // CURSO: nunca se resuelve tráfico hacia un dominio reclamado pero no verificado — ver
   // src/domain/custom-domain.ts. Sin `@unique` en `customDomainPending` a propósito: dos tenants
   // pueden estar en medio de "reclamar" el mismo dominio sin conflicto hasta que uno lo verifique
   // de verdad (que sí exige el `@unique` de `customDomain`).
-  customDomain                 String?   @unique @map("custom_domain")
-  customDomainPending          String?   @map("custom_domain_pending")
-  customDomainVerificationToken String?  @map("custom_domain_verification_token")
-  customDomainVerifiedAt       DateTime? @map("custom_domain_verified_at")
-  businessName      String   @map("business_name")
-  ruc               String?
-  fiscalAddress     String?  @map("fiscal_address")
-  logoUrl           String?  @map("logo_url")
+  customDomain                  String?   @unique @map("custom_domain")
+  customDomainPending           String?   @map("custom_domain_pending")
+  customDomainVerificationToken String?   @map("custom_domain_verification_token")
+  customDomainVerifiedAt        DateTime? @map("custom_domain_verified_at")
+  businessName                  String    @map("business_name")
+  ruc                           String?
+  fiscalAddress                 String?   @map("fiscal_address")
+  logoUrl                       String?   @map("logo_url")
   // Imagen de fondo del Hero de la tienda pública — opcional, sin ella el Hero usa solo el glow de
   // color (--primary). Ninguna otra parte del sitio la usa.
-  coverImageUrl     String?  @map("cover_image_url")
+  coverImageUrl                 String?   @map("cover_image_url")
   // Formato E.164 sin "+" (ej. "51987654321", como lo pide la URL wa.me) — habilita el botón
   // flotante de WhatsApp y el contacto del Footer. `null` = ninguno de los dos se muestra.
-  whatsappNumber    String?  @map("whatsapp_number")
+  whatsappNumber                String?   @map("whatsapp_number")
   // Texto libre, editable desde /panel/configuracion (ver SettingsForm). `null` = la página
   // pública usa la plantilla genérica de src/domain/legal/templates.ts, interpolando
   // businessName/ruc/fiscalAddress — nunca un 404, incluso si el negocio no los personalizó.
-  termsAndConditions String? @map("terms_and_conditions") @db.Text
-  privacyPolicy      String? @map("privacy_policy") @db.Text
+  termsAndConditions            String?   @map("terms_and_conditions") @db.Text
+  privacyPolicy                 String?   @map("privacy_policy") @db.Text
   // Correlativo de folio del Libro de Reclamaciones — un solo contador para RECLAMO y QUEJA (la
   // norma no exige series separadas, a diferencia de los comprobantes SUNAT). Incrementado
   // atómicamente en la misma transacción que crea el Complaint, ver submit-complaint.ts.
-  complaintCounter  Int      @default(0) @map("complaint_counter")
-  primaryColor      String?  @map("primary_color")
-  planTier          PlanTier @default(FREE)
-  planProductLimit  Int?     @map("plan_product_limit")
-  planInvoiceLimit  Int?     @map("plan_invoice_limit")
+  complaintCounter              Int       @default(0) @map("complaint_counter")
+  primaryColor                  String?   @map("primary_color")
+  planTier                      PlanTier  @default(FREE)
+  planProductLimit              Int?      @map("plan_product_limit")
+  planInvoiceLimit              Int?      @map("plan_invoice_limit")
   // Umbral de "stock disponible" (stock - reservedStock) bajo el cual una variante entra en el
   // resumen diario de stock bajo (ver src/domain/inventory/low-stock.ts) — un solo número global
   // por negocio, no por SKU, a propósito (YAGNI: si algún tenant necesita umbrales distintos por
   // producto es una extensión futura, no algo que se necesite desde el día uno). `null` = alertas
   // desactivadas para este negocio; el default `5` en negocios nuevos es "actívalo salvo que lo
   // apagues", igual que `autoSendInvoiceEmail`.
-  lowStockThreshold Int?     @default(5) @map("low_stock_threshold")
+  lowStockThreshold             Int?      @default(5) @map("low_stock_threshold")
 
   // Credenciales SUNAT propias del negocio (integración directa, sin PSE/OSE) — ver
   // src/domain/invoicing/sunat/. Todo lo que termina en "Enc" está cifrado con AES-256-GCM
@@ -97,11 +97,11 @@ model Tenant {
   // credenciales que permiten firmar comprobantes tributarios a nombre de un negocio real.
   // `sunatEnvironment` nace en BETA a propósito: subir a PRODUCCION es una decisión explícita del
   // OWNER desde /panel/configuracion, nunca un default.
-  sunatEnvironment             SunatEnvironment @default(BETA) @map("sunat_environment")
-  sunatSolUser                 String?          @map("sunat_sol_user") // usuario secundario SOL, no la Clave SOL principal
-  sunatSolPasswordEnc          Bytes?           @map("sunat_sol_password_enc")
-  sunatCertificateEnc          Bytes?           @map("sunat_certificate_enc") // .pfx/.p12 completo, cifrado
-  sunatCertificatePasswordEnc  Bytes?           @map("sunat_certificate_password_enc")
+  sunatEnvironment            SunatEnvironment @default(BETA) @map("sunat_environment")
+  sunatSolUser                String?          @map("sunat_sol_user") // usuario secundario SOL, no la Clave SOL principal
+  sunatSolPasswordEnc         Bytes?           @map("sunat_sol_password_enc")
+  sunatCertificateEnc         Bytes?           @map("sunat_certificate_enc") // .pfx/.p12 completo, cifrado
+  sunatCertificatePasswordEnc Bytes?           @map("sunat_certificate_password_enc")
 
   // Credenciales OAuth2 de la API GRE (guías de remisión electrónica) — API REST separada de la
   // SOAP de boletas/facturas/notas, con su propio par client_id/client_secret generado en un menú
@@ -118,10 +118,10 @@ model Tenant {
   // igual que las credenciales SUNAT. Sin credenciales completas → el checkout sigue con
   // confirmación manual (orderValidation), exactamente el comportamiento de antes de esta
   // integración — ver src/lib/izipay-credentials.ts.
-  izipayUsername    String?  @map("izipay_username")
-  izipayPasswordEnc Bytes?   @map("izipay_password_enc")
-  izipayPublicKey   String?  @map("izipay_public_key")
-  izipayHmacKeyEnc  Bytes?   @map("izipay_hmac_key_enc")
+  izipayUsername    String? @map("izipay_username")
+  izipayPasswordEnc Bytes?  @map("izipay_password_enc")
+  izipayPublicKey   String? @map("izipay_public_key")
+  izipayHmacKeyEnc  Bytes?  @map("izipay_hmac_key_enc")
 
   // Matriz de módulos activos para este negocio (inventario, márgenes, validación de
   // órdenes, POS, facturación SUNAT...). Guardado como JSON en vez de una columna booleana por
@@ -130,19 +130,21 @@ model Tenant {
   // interfaz es la que valida/rellena valores por defecto para tenants creados antes de que ese
   // campo existiera, así que un @default acá abajo NO es la fuente de verdad de qué pasa si
   // falta una clave; lo es parseTenantFeatures().
-  features          Json     @default("{}")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  features  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  users          User[]
-  categories     Category[]
-  products       Product[]
-  orders         Order[]
-  invoices       Invoice[]
-  invoiceCounters InvoiceCounter[]
-  dispatchGuides DispatchGuide[]
-  stockMovements StockMovement[]
-  complaints     Complaint[]
+  users                User[]
+  categories           Category[]
+  products             Product[]
+  orders               Order[]
+  invoices             Invoice[]
+  invoiceCounters      InvoiceCounter[]
+  dispatchGuides       DispatchGuide[]
+  stockMovements       StockMovement[]
+  complaints           Complaint[]
+  customers            Customer[]
+  payments             Payment[]
   platformSubscription PlatformSubscription?
 
   @@map("tenants")
@@ -156,7 +158,7 @@ model Tenant {
 
 enum ComplaintType {
   RECLAMO // disconformidad relacionada con el producto/servicio en sí
-  QUEJA   // disconformidad con la atención al cliente, no vinculada al producto/servicio
+  QUEJA // disconformidad con la atención al cliente, no vinculada al producto/servicio
 }
 
 enum ComplaintStatus {
@@ -182,8 +184,8 @@ model Complaint {
   consumerEmail     String  @map("consumer_email")
 
   // Identificación del bien contratado
-  productDescription String   @map("product_description")
-  claimedAmount      Decimal? @map("claimed_amount") @db.Decimal(10, 2)
+  productDescription String    @map("product_description")
+  claimedAmount      Decimal?  @map("claimed_amount") @db.Decimal(10, 2)
   purchaseDate       DateTime? @map("purchase_date")
 
   detail  String // detalle de la reclamación/queja
@@ -204,9 +206,9 @@ model Complaint {
 // un tenant a SU cliente final) ──────────────────────────────────────────────────────────────
 
 enum PlatformSubscriptionStatus {
-  ACTIVE    // al día
-  PAST_DUE  // el último cobro falló — el tenant sigue operando, es una señal para el SuperAdmin,
-            // no un corte de servicio automático (ver Fase 4 del roadmap: sin enforcement duro)
+  ACTIVE // al día
+  PAST_DUE // el último cobro falló — el tenant sigue operando, es una señal para el SuperAdmin,
+  // no un corte de servicio automático (ver Fase 4 del roadmap: sin enforcement duro)
   CANCELLED
 }
 
@@ -237,19 +239,19 @@ model PlatformSubscription {
 // Un cobro puntual de un ciclo — `tenantId` denormalizado (además de vía subscription) porque el
 // listado del SuperAdmin filtra por tenant mucho más seguido que por subscription.
 model PlatformCharge {
-  id               String                @id @default(uuid())
-  subscriptionId   String                @map("subscription_id")
-  subscription     PlatformSubscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  tenantId         String                @map("tenant_id")
-  planTier         PlanTier              @map("plan_tier") // congelado al momento del cobro — si el tenant cambia de plan después, este registro no debe mutar retroactivamente
-  amount           Decimal               @db.Decimal(10, 2)
-  periodStart      DateTime              @map("period_start")
-  periodEnd        DateTime              @map("period_end")
-  status           PlatformChargeStatus  @default(PENDING)
-  providerChargeId String?               @map("provider_charge_id")
-  providerResponse Json?                 @map("provider_response")
-  paidAt           DateTime?             @map("paid_at")
-  createdAt        DateTime              @default(now()) @map("created_at")
+  id               String               @id @default(uuid())
+  subscriptionId   String               @map("subscription_id")
+  subscription     PlatformSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  tenantId         String               @map("tenant_id")
+  planTier         PlanTier             @map("plan_tier") // congelado al momento del cobro — si el tenant cambia de plan después, este registro no debe mutar retroactivamente
+  amount           Decimal              @db.Decimal(10, 2)
+  periodStart      DateTime             @map("period_start")
+  periodEnd        DateTime             @map("period_end")
+  status           PlatformChargeStatus @default(PENDING)
+  providerChargeId String?              @map("provider_charge_id")
+  providerResponse Json?                @map("provider_response")
+  paidAt           DateTime?            @map("paid_at")
+  createdAt        DateTime             @default(now()) @map("created_at")
 
   @@index([tenantId])
   @@index([subscriptionId])
@@ -259,8 +261,8 @@ model PlatformCharge {
 // ── Usuarios de un negocio (tenant-scoped) ───────────────────────────────────────────────────
 
 enum UserRole {
-  OWNER    // dueño del negocio — acceso total a su tenant
-  SELLER   // vendedor/staff — POS, inventario, sin config/facturación fiscal
+  OWNER // dueño del negocio — acceso total a su tenant
+  SELLER // vendedor/staff — POS, inventario, sin config/facturación fiscal
   CUSTOMER // cliente final de la tienda pública de ese tenant
 }
 
@@ -282,12 +284,13 @@ model User {
   // POST /api/tenants sobre por qué), solo trackea si se confirmó o no. `emailVerifiedAt: null`
   // en un User creado por invitación de un OWNER (no en el registro) simplemente nunca se llena;
   // solo el registro inicial (POST /api/tenants) dispara el correo de verificación.
-  emailVerifiedAt                  DateTime? @map("email_verified_at")
-  emailVerificationTokenHash       String?   @map("email_verification_token_hash")
-  emailVerificationTokenExpiresAt  DateTime? @map("email_verification_token_expires_at")
+  emailVerifiedAt                 DateTime? @map("email_verified_at")
+  emailVerificationTokenHash      String?   @map("email_verification_token_hash")
+  emailVerificationTokenExpiresAt DateTime? @map("email_verification_token_expires_at")
 
-  orders         Order[]
-  stockMovements StockMovement[]
+  orders          Order[]
+  stockMovements  StockMovement[]
+  paymentsCreated Payment[]
 
   // El mismo email puede repetirse entre negocios distintos (son clientes/usuarios
   // independientes), pero no dos veces dentro del mismo tenant.
@@ -338,28 +341,28 @@ model Product {
 // attributes es un bag libre (switch, color, talla...) — mismo patrón usado en Flashkings para no
 // requerir una migración cada vez que un negocio vende algo con una dimensión de variante nueva.
 model ProductVariant {
-  id            String   @id @default(uuid())
-  tenantId      String   @map("tenant_id") // denormalizado: permite filtrar por tenant sin JOIN a Product
-  productId     String   @map("product_id")
-  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  sku           String
-  name          String
-  price         Decimal  @db.Decimal(10, 2)
-  costPrice     Decimal  @map("cost_price") @db.Decimal(10, 2)
+  id                 String   @id @default(uuid())
+  tenantId           String   @map("tenant_id") // denormalizado: permite filtrar por tenant sin JOIN a Product
+  productId          String   @map("product_id")
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku                String
+  name               String
+  price              Decimal  @db.Decimal(10, 2)
+  costPrice          Decimal  @map("cost_price") @db.Decimal(10, 2)
   // Cantidades con 3 decimales: hay negocios que despachan 3.5 metros de tela, no 3 ni 4.
   // La aritmética y la comparación viven en src/domain/inventory/quantity.ts, nunca sueltas.
-  stock         Decimal  @default(0) @db.Decimal(12, 3)
-  reservedStock Decimal  @default(0) @map("reserved_stock") @db.Decimal(12, 3)
+  stock              Decimal  @default(0) @db.Decimal(12, 3)
+  reservedStock      Decimal  @default(0) @map("reserved_stock") @db.Decimal(12, 3)
   // Catálogo 03 de SUNAT — la unidad en que se vende y se factura este producto (NIU, MTR, KGM...)
-  unitCode      String   @default("NIU") @map("unit_code")
+  unitCode           String   @default("NIU") @map("unit_code")
   // Catálogo 07 de SUNAT — cómo afecta al IGV la venta de este producto: "10" gravado, "20"
   // exonerado, "30" inafecto (ver src/domain/invoicing/tax-affectation.ts). No es una preferencia
   // del negocio sino una propiedad del producto según la ley: un negocio puede vender arroz
   // (exonerado) y ollas (gravado) en el mismo comprobante, así que vive acá y no en Tenant.
-  taxAffectationCode String @default("10") @map("tax_affectation_code")
-  attributes    Json     @default("{}")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  taxAffectationCode String   @default("10") @map("tax_affectation_code")
+  attributes         Json     @default("{}")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
   stockMovements     StockMovement[]
   orderItems         OrderItem[]
@@ -385,8 +388,8 @@ model ProductImage {
 }
 
 enum StockMovementType {
-  IN         // entrada: compra a proveedor, devolución de cliente
-  OUT        // salida: venta, merma, robo
+  IN // entrada: compra a proveedor, devolución de cliente
+  OUT // salida: venta, merma, robo
   ADJUSTMENT // ajuste manual tras conteo físico
 }
 
@@ -402,7 +405,7 @@ model StockMovement {
   variant     ProductVariant    @relation(fields: [variantId], references: [id])
   type        StockMovementType
   quantity    Decimal           @db.Decimal(12, 3) // siempre positivo; `type` da la dirección
-  reason      String?           // "Compra proveedor X", "Merma", "Conteo físico mensual"
+  reason      String? // "Compra proveedor X", "Merma", "Conteo físico mensual"
   referenceId String?           @map("reference_id") // opcional: id de la Order/Invoice que originó este movimiento
   createdById String            @map("created_by_id")
   createdBy   User              @relation(fields: [createdById], references: [id])
@@ -417,6 +420,12 @@ model StockMovement {
 
 enum OrderStatus {
   PENDING_PAYMENT
+  // Venta a crédito ya entregada: el stock salió y el comprobante se emite, pero el dinero no
+  // entró. Es un estado propio y no un PENDING_PAYMENT con otra etiqueta a propósito — el worker
+  // de holds cancela cualquier PENDING_PAYMENT a los 15 minutos (ver stock-hold-queue.ts), así
+  // que modelar el fiado con ese estado haría que la venta se autodestruyera. Pasa a PAID recién
+  // cuando los abonos cubren el total (ver domain/payments/register-payment.ts).
+  PENDING_COLLECTION
   PAID
   IN_PREPARATION
   SHIPPED
@@ -424,9 +433,25 @@ enum OrderStatus {
   CANCELLED
 }
 
+// Condición de pago de una venta. Vive separada de OrderStatus porque son ejes distintos: el
+// estado dice en qué punto del ciclo está la venta, esto dice si se cobró al momento o se fió.
+enum PaymentTerm {
+  CASH
+  CREDIT
+}
+
+enum PaymentMethod {
+  EFECTIVO
+  TRANSFERENCIA
+  YAPE
+  PLIN
+  TARJETA
+  OTRO
+}
+
 enum OrderChannel {
   ONLINE // tienda pública del tenant
-  POS    // venta presencial registrada por un SELLER/OWNER
+  POS // venta presencial registrada por un SELLER/OWNER
 }
 
 model Order {
@@ -438,6 +463,15 @@ model Order {
   channel         OrderChannel @default(ONLINE)
   status          OrderStatus  @default(PENDING_PAYMENT)
   totalAmount     Decimal      @map("total_amount") @db.Decimal(10, 2)
+  // Ficha del cliente del negocio — null en toda venta online de invitado y en todo lo cargado
+  // antes de que existiera el crédito. Solo las ventas fiadas lo necesitan de verdad.
+  customerId      String?      @map("customer_id")
+  customer        Customer?    @relation(fields: [customerId], references: [id])
+  paymentTerm     PaymentTerm  @default(CASH) @map("payment_term")
+  dueDate         DateTime?    @map("due_date") // solo crédito
+  // Se queda aunque exista `customer`: es el nombre CONGELADO al momento de la venta, mismo
+  // criterio que InvoiceItem.description. Si el cliente se renombra después, este pedido debe
+  // seguir diciendo a nombre de quién se hizo.
   customerName    String       @map("customer_name")
   customerEmail   String?      @map("customer_email")
   customerPhone   String?      @map("customer_phone")
@@ -445,13 +479,106 @@ model Order {
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
 
-  items         OrderItem[]
-  invoice       Invoice?
-  dispatchGuide DispatchGuide?
+  items              OrderItem[]
+  invoice            Invoice?
+  dispatchGuide      DispatchGuide?
+  paymentAllocations PaymentAllocation[]
 
   @@index([tenantId])
   @@index([tenantId, status])
   @@map("orders")
+}
+
+// ── Clientes del negocio y cuentas por cobrar ────────────────────────────────────────────────
+
+// Cliente al que el negocio le vende, y eventualmente le fía. NO es un `User`: `User` es una
+// identidad de autenticación (email único + hash de contraseña obligatorios) y un cliente de
+// mostrador al que se le fía no tiene ninguno de los dos. Forzarlo ahí obligaría a inventar
+// correos falsos para gente que solo pasa a comprar.
+//
+// El orden de los campos es el que dictó el negocio al describir qué anota de un deudor: nombre,
+// dirección, teléfono, monto. La dirección no es un dato de facturación — es a dónde se va a
+// cobrar, y por eso la pantalla de cobranza la muestra en la fila, no escondida en la ficha.
+model Customer {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name    String
+  address String?
+  phone   String?
+  email   String?
+
+  // Nullable a propósito: el alta NO lo exige, porque el negocio no pide documento al fiarle a
+  // alguien que conoce. Se llena en el momento de emitir el primer comprobante que lo necesite
+  // (boleta sobre el umbral, o cualquier factura) y desde ahí queda para no volver a pedirlo.
+  docType   String? @map("doc_type") // DNI | RUC | CE | PASAPORTE
+  docNumber String? @map("doc_number")
+
+  // Tope de deuda que el negocio le acepta a este cliente. `null` = sin límite definido, que es
+  // el estado inicial de todos: fijarlo es una decisión explícita, no un default.
+  creditLimit Decimal? @map("credit_limit") @db.Decimal(10, 2)
+
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders   Order[]
+  payments Payment[]
+
+  @@index([tenantId])
+  @@index([tenantId, name])
+  @@map("customers")
+}
+
+// Un acto de pago: el cliente entregó plata. Cuelga del CLIENTE, no de un pedido, porque así es
+// como el negocio cobra — alguien que compró tres veces y aparece con S/ 100 está abonando a lo
+// que debe, no pagando "el pedido del martes". Contra qué ventas se aplicó ese dinero lo resuelve
+// el sistema y queda registrado en PaymentAllocation.
+model Payment {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customerId String   @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  amount Decimal       @db.Decimal(10, 2) // siempre positivo
+  method PaymentMethod @default(EFECTIVO)
+  paidAt DateTime      @default(now()) @map("paid_at")
+  note   String?
+
+  createdById String? @map("created_by_id")
+  createdBy   User?   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  allocations PaymentAllocation[]
+
+  @@index([tenantId])
+  @@index([customerId])
+  @@map("payments")
+}
+
+// Cómo se repartió un pago entre las ventas abiertas del cliente, de la más antigua a la más
+// nueva. Es lo que permite que el negocio escriba un solo número ("me pagó S/ 100") y que aun así
+// cada pedido pueda cerrarse cuando le toca y el historial explique de dónde salió cada centavo.
+//
+// Inmutable como el kardex: una repartición no se edita. Corregir un pago mal registrado es
+// anularlo y volver a registrarlo.
+model PaymentAllocation {
+  id        String  @id @default(uuid())
+  paymentId String  @map("payment_id")
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  orderId   String  @map("order_id")
+  order     Order   @relation(fields: [orderId], references: [id])
+
+  amount Decimal @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([paymentId])
+  @@index([orderId])
+  @@map("payment_allocations")
 }
 
 model OrderItem {
@@ -487,11 +614,11 @@ enum DispatchGuideStatus {
 }
 
 enum InvoiceStatus {
-  DRAFT          // creada localmente, aún no enviada
-  PENDING_SUNAT  // se intentó enviar y SUNAT no respondió (caído, timeout) — en cola de reintento,
-                 // NO es un rechazo: la venta ya se cerró, solo falta que SUNAT confirme recepción
+  DRAFT // creada localmente, aún no enviada
+  PENDING_SUNAT // se intentó enviar y SUNAT no respondió (caído, timeout) — en cola de reintento,
+  // NO es un rechazo: la venta ya se cerró, solo falta que SUNAT confirme recepción
   ISSUED
-  FAILED         // SUNAT respondió y RECHAZÓ el comprobante (dato inválido, RUC no habido, etc.)
+  FAILED // SUNAT respondió y RECHAZÓ el comprobante (dato inválido, RUC no habido, etc.)
   VOID
 }
 
@@ -521,7 +648,7 @@ model Invoice {
   order    Order?        @relation(fields: [orderId], references: [id])
   type     InvoiceType
   status   InvoiceStatus @default(DRAFT)
-  series   String        // B001, F001... — ver InvoiceCounter
+  series   String // B001, F001... — ver InvoiceCounter
   number   Int
 
   documentType   String  @map("document_type") // DNI, RUC, CE, PASAPORTE
@@ -540,14 +667,14 @@ model Invoice {
   relatedInvoice   Invoice?  @relation("InvoiceCorrections", fields: [relatedInvoiceId], references: [id])
   corrections      Invoice[] @relation("InvoiceCorrections")
 
-  pdfUrl           String?  @map("pdf_url")
-  xmlUrl           String?  @map("xml_url")
-  cdrUrl           String?  @map("cdr_url") // Constancia de Recepción SUNAT
-  providerResponse Json?    @map("provider_response") // respuesta cruda del PSE/OSE, para auditoría
+  pdfUrl           String?   @map("pdf_url")
+  xmlUrl           String?   @map("xml_url")
+  cdrUrl           String?   @map("cdr_url") // Constancia de Recepción SUNAT
+  providerResponse Json?     @map("provider_response") // respuesta cruda del PSE/OSE, para auditoría
   // XML firmado, persistido tal cual se envió (o se intentó enviar) — necesario para reintentar
   // un envío PENDING_SUNAT sin volver a firmar (la firma ya es válida, lo que falló fue la
   // conexión/disponibilidad de SUNAT, no el documento).
-  signedXml        String?   @db.Text @map("signed_xml")
+  signedXml        String?   @map("signed_xml") @db.Text
   sunatRetryCount  Int       @default(0) @map("sunat_retry_count")
   issuedAt         DateTime? @map("issued_at")
   createdAt        DateTime  @default(now()) @map("created_at")
@@ -560,22 +687,22 @@ model Invoice {
 }
 
 model InvoiceItem {
-  id          String          @id @default(uuid())
-  invoiceId   String          @map("invoice_id")
-  invoice     Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  variantId   String?         @map("variant_id")
-  variant     ProductVariant? @relation(fields: [variantId], references: [id])
-  description String          // nombre del producto al momento de facturar — no depende de que el producto siga existiendo
-  quantity    Decimal         @db.Decimal(12, 3)
+  id                 String          @id @default(uuid())
+  invoiceId          String          @map("invoice_id")
+  invoice            Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  variantId          String?         @map("variant_id")
+  variant            ProductVariant? @relation(fields: [variantId], references: [id])
+  description        String // nombre del producto al momento de facturar — no depende de que el producto siga existiendo
+  quantity           Decimal         @db.Decimal(12, 3)
   // Congelada igual que la descripción: si mañana el producto pasa de METRO a UNIDAD, el
   // comprobante ya emitido debe seguir diciendo lo que se envió a SUNAT.
-  unitCode    String          @default("NIU") @map("unit_code")
+  unitCode           String          @default("NIU") @map("unit_code")
   // Congelada por el mismo motivo que unitCode: si el producto se reclasifica después, el
   // comprobante ya emitido debe seguir declarando la afectación con la que se envió a SUNAT.
-  taxAffectationCode String   @default("10") @map("tax_affectation_code")
-  unitPrice   Decimal         @map("unit_price") @db.Decimal(10, 2)
-  igvAmount   Decimal         @default(0) @map("igv_amount") @db.Decimal(10, 2)
-  totalAmount Decimal         @map("total_amount") @db.Decimal(10, 2)
+  taxAffectationCode String          @default("10") @map("tax_affectation_code")
+  unitPrice          Decimal         @map("unit_price") @db.Decimal(10, 2)
+  igvAmount          Decimal         @default(0) @map("igv_amount") @db.Decimal(10, 2)
+  totalAmount        Decimal         @map("total_amount") @db.Decimal(10, 2)
 
   @@index([invoiceId])
   @@map("invoice_items")
@@ -597,13 +724,13 @@ model DispatchGuide {
   status   DispatchGuideStatus @default(PENDING_SUNAT)
 
   transferReasonCode String   @map("transfer_reason_code") // catálogo 20 — "01" (venta) en v1
-  transferDate        DateTime @map("transfer_date")
-  grossWeightKg        Decimal  @map("gross_weight_kg") @db.Decimal(10, 3)
+  transferDate       DateTime @map("transfer_date")
+  grossWeightKg      Decimal  @map("gross_weight_kg") @db.Decimal(10, 3)
 
-  originUbigeo        String @map("origin_ubigeo") // código INEI de 6 dígitos
-  originAddress        String @map("origin_address")
-  destinationUbigeo   String @map("destination_ubigeo")
-  destinationAddress  String @map("destination_address")
+  originUbigeo       String @map("origin_ubigeo") // código INEI de 6 dígitos
+  originAddress      String @map("origin_address")
+  destinationUbigeo  String @map("destination_ubigeo")
+  destinationAddress String @map("destination_address")
 
   recipientDocType   String @map("recipient_doc_type") // catálogo 06
   recipientDocNumber String @map("recipient_doc_number")
@@ -620,7 +747,7 @@ model DispatchGuide {
   numTicket         String?   @map("num_ticket")
   sunatResponseCode String?   @map("sunat_response_code")
   sunatDescription  String?   @map("sunat_description")
-  signedXml         String?   @db.Text @map("signed_xml")
+  signedXml         String?   @map("signed_xml") @db.Text
   issuedAt          DateTime? @map("issued_at")
   createdAt         DateTime  @default(now()) @map("created_at")
 

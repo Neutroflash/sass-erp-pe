@@ -14,6 +14,7 @@ const PILOT_FEATURES: TenantFeatures = {
   posWeb: true,
   autoSendInvoiceEmail: true,
   publicStorefront: true,
+  creditSales: true, // el piloto es un mayorista textil: fía, y es el caso que motivó el módulo
 };
 
 async function main() {
