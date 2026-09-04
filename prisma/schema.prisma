@@ -570,7 +570,11 @@ model PaymentAllocation {
   paymentId String  @map("payment_id")
   payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
   orderId   String  @map("order_id")
-  order     Order   @relation(fields: [orderId], references: [id])
+  // Cascade, no Restrict: una repartición es un detalle del pedido, no un registro independiente
+  // — si el pedido deja de existir, ella no significa nada. Con Restrict, borrar un negocio
+  // fallaba a mitad de camino (el cascade de Tenant llega a `orders` y ahí se traba), dejando el
+  // tenant a medio eliminar. En la operación normal nada borra pedidos: se cancelan.
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   amount Decimal @db.Decimal(10, 2)
 
